@@ -21,4 +21,5 @@ public class DetectResult {
      */
     private String message;
 
+    public DetectResult(boolean detect) {this.detect = detect;}
 }
