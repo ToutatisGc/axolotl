@@ -42,7 +42,7 @@ public class TikaShell {
         if (FileToolkit.exists(file) && file.isFile()){
             try {
                 String detect = tika.detect(file);
-                return new DetectResult(true, );
+                return new DetectResult(true,"TODO" );
             } catch (IOException e) {
                 e.printStackTrace();
                 String msg = "文件读取失败";
