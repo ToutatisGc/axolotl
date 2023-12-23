@@ -34,18 +34,46 @@ public class DetectResult {
      */
     private MimeType wantedMimeType;
 
-    public DetectResult(boolean detect) {this.detect = detect;}
+    /**
+     * 文件读取状态
+     */
+    private FileStatus currentFileStatus;
 
-    public DetectResult(boolean detect, String message) {
+    public enum FileStatus {
+        /**
+         * 识别通过
+         */
+        DETECTED,
+        /**
+         * 文件自身问题识别不通过
+         */
+        FILE_SELF_PROBLEM,
+        /**
+         * 文件内容问题识别不通过
+         */
+        FILE_META_PROBLEM
+    }
+
+    public DetectResult(boolean detect) {
         this.detect = detect;
+        this.currentFileStatus = FileStatus.DETECTED;
+    }
+
+    public DetectResult(boolean detect, FileStatus currentFileStatus, String message) {
+        this.detect = detect;
+        this.currentFileStatus = currentFileStatus;
         this.message = message;
     }
 
-    public Boolean isDetect() {
-        return Objects.requireNonNullElseGet(detect, () -> wantedMimeType.equals(catchMimeType));
+    public boolean isFileSelfProblem() {
+        return !getDetect() && currentFileStatus == FileStatus.FILE_SELF_PROBLEM;
     }
 
-    public Boolean isWantedMimeType() {
+    public boolean isDetect() {
+        return Objects.requireNonNullElseGet(detect, this::isWantedMimeType);
+    }
+
+    public boolean isWantedMimeType() {
         return catchMimeType.equals(wantedMimeType);
     }
 }

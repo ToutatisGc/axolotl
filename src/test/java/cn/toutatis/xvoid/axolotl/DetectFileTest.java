@@ -12,7 +12,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class ExcelTest {
+public class DetectFileTest {
 
     /**
      * 测试识别文件类型
@@ -21,8 +21,8 @@ public class ExcelTest {
      */
     @Test
     public void matchExcelFile() throws IOException, TikaException {
-        File xlsFile = new File(FileToolkit.getResourcesFile("workbook/1.xls").getFile());
-        File xlsxFile = new File(FileToolkit.getResourcesFile("workbook/2.xlsx").getFile());
+        File xlsFile = FileToolkit.getResourceFileAsFile("workbook/1.xls");
+        File xlsxFile = FileToolkit.getResourceFileAsFile("workbook/2.xlsx");
 
         MimeType xlsMimeType = TikaShell.getMimeType(xlsFile);
         Assert.assertEquals(xlsMimeType, TikaShell.MS_EXCEL);
@@ -33,12 +33,12 @@ public class ExcelTest {
 
     @Test
     public void detectExcelFile() {
-        File xlsFile = new File(FileToolkit.getResourcesFile("workbook/1.xls").getFile());
+        File xlsFile = FileToolkit.getResourceFileAsFile("workbook/1.xls");
         DetectResult detect1 = TikaShell.detect(xlsFile, CommonMimeType.MS_EXCEL);
         Assert.assertTrue(detect1.isDetect());
         DetectResult detect2 = TikaShell.detect(xlsFile, CommonMimeType.OOXML_EXCEL);
         Assert.assertFalse(detect2.isDetect());
-        File xlsxFile = new File(FileToolkit.getResourcesFile("workbook/2.xlsx").getFile());
+        File xlsxFile = new File(FileToolkit.getResourceFile("workbook/2.xlsx").getFile());
         DetectResult detect3 = TikaShell.detect(xlsxFile, CommonMimeType.MS_EXCEL);
         Assert.assertFalse(detect3.isDetect());
         DetectResult detect4 = TikaShell.detect(xlsxFile, CommonMimeType.OOXML_EXCEL);
