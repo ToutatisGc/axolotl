@@ -38,7 +38,7 @@ public class DetectFileTest {
         Assert.assertTrue(detect1.isDetect());
         DetectResult detect2 = TikaShell.detect(xlsFile, CommonMimeType.OOXML_EXCEL);
         Assert.assertFalse(detect2.isDetect());
-        File xlsxFile = new File(FileToolkit.getResourceFile("workbook/2.xlsx").getFile());
+        File xlsxFile =FileToolkit.getResourceFileAsFile("workbook/2.xlsx");
         DetectResult detect3 = TikaShell.detect(xlsxFile, CommonMimeType.MS_EXCEL);
         Assert.assertFalse(detect3.isDetect());
         DetectResult detect4 = TikaShell.detect(xlsxFile, CommonMimeType.OOXML_EXCEL);

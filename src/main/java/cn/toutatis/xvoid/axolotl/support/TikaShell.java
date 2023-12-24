@@ -11,6 +11,7 @@ import org.apache.tika.mime.MimeTypes;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
@@ -20,6 +21,9 @@ import java.util.List;
  */
 public class TikaShell {
 
+    /**
+     *
+     */
     private static final Logger LOGGER = LoggerToolkit.getLogger(TikaShell.class);
 
     /**
@@ -27,28 +31,59 @@ public class TikaShell {
      */
     private static final Tika tika = new Tika();
 
+    /**
+     * MS_EXCEL Excel 97-2003文件版本
+     * application/vnd.ms-excel
+     * 后缀为[.xls]
+     */
     public static final MimeType MS_EXCEL = CommonMimeType.MS_EXCEL;
 
+    /**
+     * OOXML_EXCEL Excel 2007及以上版本
+     * application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+     * 后缀为[.xlsx]
+     */
     public static final MimeType OOXML_EXCEL = CommonMimeType.OOXML_EXCEL;
 
 
+    /**
+     *
+     */
     public static DetectResult detect(File file, MimeType mimeType){
         return detect(file, mimeType, false);
     }
+
+    /**
+     *
+     */
+    public static DetectResult detect(File file, MimeType mimeType,boolean alreadyPreCheck){
+        return detect(file, mimeType, false,alreadyPreCheck);
+    }
+    /**
+     *
+     */
     public static DetectResult detectThrowException(File file, MimeType mimeType){
-        return detect(file, mimeType, true);
+        return detect(file, mimeType, true,false);
     }
     /**
      * 判断文件类型是否为需要的类型
+     *
      * @param file 文件
      * @param mimeType 想要匹配的MIME类型
      * @return 检测结果
      */
     @SneakyThrows
-    public static DetectResult detect(File file, MimeType mimeType, boolean throwException) {
-        DetectResult preCheck = preCheckFileNormal(file);
+    public static DetectResult detect(File file, MimeType mimeType, boolean throwException,boolean alreadyPreCheck) {
+        DetectResult preCheck;
+        if (alreadyPreCheck){
+            preCheck = new DetectResult(true);
+        }else{
+            preCheck = preCheckFileNormal(file);
+        }
         if (preCheck.isDetect()){
             try {
+                DetectResult detectResult = new DetectResult(false);
+                detectResult.setWantedMimeType(mimeType);
                 String fileSuffix = '.'+FileToolkit.getFileSuffix(file).toLowerCase();
                 List<String> extensions = mimeType.getExtensions();
                 int idx = -1;
@@ -63,21 +98,25 @@ public class TikaShell {
                 if (idx == -1){
                     String msg = file.getName()+"文件后缀不匹配";
                     if (throwException){throw new IOException(msg);}
-                    return new DetectResult(false, DetectResult.FileStatus.FILE_META_PROBLEM, msg);
+                    return detectResult.returnInfo(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM, msg);
                 }
-                if (tika.detect(file).equals(mimeType.toString())){
-                    return new DetectResult(true);
+                MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(tika.detect(file));
+                if (detectMimeType.equals(mimeType)){
+                    return new DetectResult(true,detectMimeType);
                 }else {
+                    detectResult.setCatchMimeType(detectMimeType);
                     String msg = (file.getName()+"文件媒体类型不匹配，媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType.toString());
                     if (throwException){throw new IOException(msg);}
-                    return new DetectResult(false, DetectResult.FileStatus.FILE_META_PROBLEM, msg);
+                    return detectResult.returnInfo(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM, msg);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 String msg = file.getName()+"文件读取失败";
                 if (throwException){throw new IOException(msg);}
                 LOGGER.error(msg, e);
-                return new DetectResult(false, DetectResult.FileStatus.FILE_META_PROBLEM, msg);
+                DetectResult detectResult = new DetectResult(false, DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM, msg);
+                detectResult.setWantedMimeType(mimeType);
+                return detectResult;
             }
         }else{
             if (throwException){throw new IOException(preCheck.getMessage());}
@@ -87,6 +126,7 @@ public class TikaShell {
 
     /**
      * 获取文件类型
+     *
      * @param file 文件
      * @return MIME类型
      */
@@ -109,16 +149,43 @@ public class TikaShell {
     }
 
     /**
-     * 预检查文件是否正常
+     * 预检查文件是否正常并抛出异常
+     *
      * @param file 文件
      * @return 检测结果
      */
-    private static DetectResult preCheckFileNormal(File file){
+    public static DetectResult preCheckFileNormalThrowException(File file){
+        return preCheckFileNormal(file,true);
+    }
+
+    /**
+     * 预检查文件是否正常
+     *
+     * @param file 文件
+     * @return 检测结果
+     */
+    public static DetectResult preCheckFileNormal(File file){
+        return preCheckFileNormal(file,false);
+    }
+
+    /**
+     * 预检查文件是否正常
+     *
+     * @param file 文件
+     * @param throwException 是否抛出异常
+     * @return 检测结果
+     */
+    @SneakyThrows
+    public static DetectResult preCheckFileNormal(File file,boolean throwException){
         if (file == null || !file.exists()){
-            return new DetectResult(false, DetectResult.FileStatus.FILE_SELF_PROBLEM, "文件不存在");
+            String msg = "文件不存在";
+            if (throwException){throw new FileNotFoundException(msg);}
+            return new DetectResult(false, DetectResult.FileStatus.FILE_SELF_PROBLEM, msg);
         }
         if (file.isDirectory()){
-            return new DetectResult(false, DetectResult.FileStatus.FILE_SELF_PROBLEM,"选择文件不能是目录");
+            String msg = "选择文件不能是目录";
+            if (throwException){throw new IOException(msg);}
+            return new DetectResult(false, DetectResult.FileStatus.FILE_SELF_PROBLEM,msg);
         }else{
             return new DetectResult(true);
         }
