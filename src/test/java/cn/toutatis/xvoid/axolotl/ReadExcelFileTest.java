@@ -1,11 +1,13 @@
 package cn.toutatis.xvoid.axolotl;
 
-import cn.toutatis.xvoid.axolotl.support.WorkBookReaderConfig;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 public class ReadExcelFileTest {
 
@@ -21,9 +23,9 @@ public class ReadExcelFileTest {
     @Test
     public void testReadExcelFileWithConfig() {
         File xlsFile = FileToolkit.getResourceFileAsFile("workbook/1.xls");
-        WorkBookReaderConfig config = new WorkBookReaderConfig();
         GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsFile,false);
-        System.err.println(gracefulExcelReader.readSheetData("Sheet1",Object.class));
+        List<Map> mapList = gracefulExcelReader.readSheetData("Sheet1", Map.class);
+        System.err.println(JSON.toJSONString(mapList));
     }
 
 }

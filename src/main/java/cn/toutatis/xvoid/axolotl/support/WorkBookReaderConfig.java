@@ -5,13 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @ToString
 @Getter
 @Setter
-public class WorkBookReaderConfig {
+public class WorkBookReaderConfig<T> {
 
     /**
      * 表索引
@@ -26,7 +28,7 @@ public class WorkBookReaderConfig {
     /**
      * 读取的Java类型
      */
-    private Class<?> clazz;
+    private Class<T> castClass;
 
     /**
      * 读取的特性
@@ -45,6 +47,7 @@ public class WorkBookReaderConfig {
     private Map<ReadExcelFeature, Object> defaultReadFeature() {
         Map<ReadExcelFeature, Object> defaultReadFeature = new HashMap<>();
         defaultReadFeature.put(ReadExcelFeature.IGNORE_EMPTY_SHEET_ERROR,true);
+        defaultReadFeature.put(ReadExcelFeature.SORTED_READ_SHEET_DATA,true);
         return defaultReadFeature;
     }
 
@@ -54,5 +57,30 @@ public class WorkBookReaderConfig {
 
     public void addReadFeature(ReadExcelFeature feature, Object value) {
         readFeature.put(feature, value);
+    }
+
+    /**
+     * 获取转换类型实例
+     * @return 由类型转换的生成的实例
+     */
+    @SuppressWarnings("unchecked")
+    public T getCastClassInstance(){
+        if(castClass!=null){
+            try {
+                if (castClass == Map.class){
+                    if (getReadFeatureAsBoolean(ReadExcelFeature.SORTED_READ_SHEET_DATA)){
+                        return (T) new LinkedHashMap<String,Object>();
+                    }else{
+                        return (T) new HashMap<String, Object>();
+                    }
+                }
+                return castClass.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException |
+                     InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }else{
+            throw new IllegalArgumentException("转换类型为空");
+        }
     }
 }

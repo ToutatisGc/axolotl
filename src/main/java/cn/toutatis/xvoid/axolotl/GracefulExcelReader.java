@@ -9,15 +9,16 @@ import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Getter;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Excel读取器
@@ -31,6 +32,7 @@ public class GracefulExcelReader {
     private WorkBookMetaInfo workBookMetaInfo;
 
     @Getter
+    @SuppressWarnings("rawtypes")
     private final WorkBookReaderConfig workBookReaderConfig;
 
     public GracefulExcelReader(File excelFile) {
@@ -44,10 +46,14 @@ public class GracefulExcelReader {
      */
     public GracefulExcelReader(File excelFile,boolean withDefaultConfig) {
         this.initWorkbook(excelFile);
-        workBookReaderConfig = new WorkBookReaderConfig(withDefaultConfig);
+        workBookReaderConfig = new WorkBookReaderConfig<>(withDefaultConfig);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> List<T> readSheetData(int sheetIndex,Class<T> clazz) {
+        if (clazz == null || clazz == Object.class){
+            throw new IllegalArgumentException("读取的类型对象不能为空");
+        }
         if (sheetIndex < 0){
             boolean ignoreEmptySheetError = workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.IGNORE_EMPTY_SHEET_ERROR);
             if (ignoreEmptySheetError){
@@ -58,8 +64,10 @@ public class GracefulExcelReader {
                 throw new IllegalArgumentException(msg);
             }
         }
+        workBookReaderConfig.setCastClass(clazz);
         workBookReaderConfig.setSheetIndex(sheetIndex);
-        return null;
+        int lastRowNum = workBookMetaInfo.getWorkbook().getSheetAt(sheetIndex).getLastRowNum();
+        return (List<T>) loadData(0,lastRowNum);
     }
 
     public <T> List<T> readSheetData(String sheetName, Class<T> clazz) {
@@ -99,9 +107,59 @@ public class GracefulExcelReader {
         }
     }
 
-    private void loadData(){
+    /**
+     * 加载数据
+     * @param start 开始行
+     * @param end 结束行
+     */
+    private List<Object> loadData(int start,int end){
+        // 读取指定sheet
         Sheet sheet = workBookMetaInfo.getWorkbook().getSheetAt(workBookReaderConfig.getSheetIndex());
+//        FormulaEvaluator evaluator = null;
+        List<Object> dataList = new ArrayList<>();
+        for (int idx = start; idx < end; idx++) {
+            Object castClassInstance = workBookReaderConfig.getCastClassInstance();
+            Row row = sheet.getRow(idx);
+            row.cellIterator().forEachRemaining(cell -> putCellToInstance(castClassInstance,cell));
+            dataList.add(castClassInstance);
+        }
+        return dataList;
+    }
 
+    @SuppressWarnings({"unchecked","rawtypes"})
+    private void putCellToInstance(Object instance, Cell cell){
+        if (instance instanceof Map){
+            String key = "CELL_#" + (cell.getColumnIndex()+1);
+            ((Map)instance).put(key,getCellValue(cell));
+        }else{
+            //TODO 一般POJO类型填充
+        }
+    }
+
+    private Object getCellValue(Cell cell){
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case NUMERIC -> cell.getNumericCellValue();
+            case BOOLEAN -> cell.getBooleanCellValue();
+            case FORMULA -> getFormulaCellValue(cell);
+            default -> {
+                LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(),cell);
+                yield null;
+            }
+        };
+    }
+
+    private Object getFormulaCellValue(Cell cell){
+        CellValue evaluated = workBookMetaInfo.getFormulaEvaluator().evaluate(cell);
+        return switch (evaluated.getCellType()) {
+            case STRING -> evaluated.getStringValue();
+            case NUMERIC -> evaluated.getNumberValue();
+            case BOOLEAN -> evaluated.getBooleanValue();
+            default -> {
+                LOGGER.error("未知的单元格类型:{},{}",evaluated.getCellType(), evaluated);
+                yield null;
+            }
+        };
     }
 
     private void castAnyToString(Sheet sheet){
@@ -132,5 +190,9 @@ public class GracefulExcelReader {
 ////                    LOGGER.info("row:{},cell:{},cellType:{}",row.getRowNum()+1,cell.getColumnIndex()+1,cell.getCellType(),cell.getCellType());
 //            });
 //        });
+    }
+
+    public void reuse(){
+        // TODO 用新的配置复用该文件对象
     }
 }

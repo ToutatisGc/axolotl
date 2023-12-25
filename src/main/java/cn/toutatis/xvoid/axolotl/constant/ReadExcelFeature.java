@@ -13,6 +13,12 @@ public enum ReadExcelFeature {
      */
     IGNORE_EMPTY_SHEET_ERROR,
 
+    /**
+     * 读取的sheet数据按顺序排列
+     * 在使用Map接收时，使用LinkedHashMap
+     */
+    SORTED_READ_SHEET_DATA,
+
 
 
     /*行数据配置*/
