@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @MustBeDocumented
 @Target(ElementType.TYPE)
-public @interface WorkBook {
+public @interface WorkSheet {
 
     String sheetName() default "";
 
