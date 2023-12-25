@@ -46,8 +46,19 @@ public class GracefulExcelReader {
      * @param withDefaultConfig 是否使用默认配置
      */
     public GracefulExcelReader(File excelFile,boolean withDefaultConfig) {
+        this(excelFile,withDefaultConfig,0);
+    }
+
+    /**
+     * 构造文件读取器
+     * @param excelFile Excel工作簿文件
+     * @param withDefaultConfig 是否使用默认配置
+     * @param initialRowPositionOffset 初始行偏移量
+     */
+    public GracefulExcelReader(File excelFile,boolean withDefaultConfig,int initialRowPositionOffset) {
         this.initWorkbook(excelFile);
         workBookReaderConfig = new WorkBookReaderConfig<>(withDefaultConfig);
+        workBookReaderConfig.setInitialRowPositionOffset(initialRowPositionOffset);
     }
 
     @SuppressWarnings("unchecked")
@@ -215,36 +226,6 @@ public class GracefulExcelReader {
                 yield null;
             }
         };
-    }
-
-    private void castAnyToString(Sheet sheet){
-//        Sheet sheetAt = workbook.getSheetAt(0);
-//        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-//        sheetAt.rowIterator().forEachRemaining(row -> {
-//            row.cellIterator().forEachRemaining(cell -> {
-//                switch (cell.getCellType()){
-//                    case STRING:
-//                        LOGGER.info("row:{},cell:{},type:{},value:{}",row.getRowNum()+1,cell.getColumnIndex()+1,cell.getCellType(),cell.getStringCellValue());
-//                        break;
-//                    case BOOLEAN:
-//                        LOGGER.info("row:{},cell:{},type:{},value:{}",row.getRowNum()+1,cell.getColumnIndex()+1,cell.getCellType(),cell.getBooleanCellValue());
-//                        break;
-//                    case NUMERIC:
-//                        LOGGER.info("row:{},cell:{},type:{},value:{}",row.getRowNum()+1,cell.getColumnIndex()+1,cell.getCellType(),cell.getNumericCellValue());
-//                        break;
-//                    case FORMULA:
-////                            LOGGER.info(cell.getCellFormula());
-//                        CellValue evaluate = evaluator.evaluate(cell);
-//                        System.err.println(evaluate.getNumberValue());
-//                        break;
-//                    default:
-//                        LOGGER.info("row:{},cell:{},type:{},value:{}",row.getRowNum()+1,cell.getColumnIndex()+1,cell.getCellType(),cell.toString());
-////                        case FORMULA:
-////                            LOGGER.info("row:{},cell:{},type:{},value:{}",row.getRowNum()+1,cell.getColumnIndex()+1,cell.getCellType(),cell.getCellFormula());
-//                }
-////                    LOGGER.info("row:{},cell:{},cellType:{}",row.getRowNum()+1,cell.getColumnIndex()+1,cell.getCellType(),cell.getCellType());
-//            });
-//        });
     }
 
     public void reuse(){
