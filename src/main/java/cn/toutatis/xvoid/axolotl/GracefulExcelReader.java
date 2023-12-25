@@ -5,6 +5,7 @@ import cn.toutatis.xvoid.axolotl.support.DetectResult;
 import cn.toutatis.xvoid.axolotl.support.TikaShell;
 import cn.toutatis.xvoid.axolotl.support.WorkBookMetaInfo;
 import cn.toutatis.xvoid.axolotl.support.WorkBookReaderConfig;
+import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Getter;
@@ -151,18 +152,44 @@ public class GracefulExcelReader {
 
     @SuppressWarnings({"unchecked","rawtypes"})
     private void putCellToInstance(Object instance, Cell cell){
-        if (instance instanceof Map){
-            String key = "CELL_" + (cell.getColumnIndex()+1);
-            ((Map)instance).put(key,getCellValue(cell));
+        if (instance instanceof Map info){
+            int idx = cell.getColumnIndex() + 1;
+            String key = "CELL_" + idx;
+            info.put(key,getCellValue(cell));
+            if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
+                info.put("CELL_TYPE_"+idx,cell.getCellType());
+                if (cell.getCellType() == CellType.NUMERIC){
+                    if (DateUtil.isCellDateFormatted(cell)){
+                        info.put("CELL_TYPE_"+idx,"DATE");
+                        info.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
+                    }else{
+                        info.put("CELL_TYPE_"+idx,cell.getCellType());
+                    }
+                }else {
+                    info.put("CELL_TYPE_"+idx,cell.getCellType());
+                }
+            }
         }else{
             //TODO 一般POJO类型填充
+
         }
     }
 
+    /**
+     * 获取单元格值
+     * @param cell 单元格
+     * @return 单元格值
+     */
     private Object getCellValue(Cell cell){
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue();
-            case NUMERIC -> cell.getNumericCellValue();
+            case NUMERIC -> {
+                if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.CAST_NUMBER_TO_DATE) && DateUtil.isCellDateFormatted(cell)){
+                    yield cell.getDateCellValue();
+                }else{
+                    yield cell.getNumericCellValue();
+                }
+            }
             case BOOLEAN -> cell.getBooleanCellValue();
             case FORMULA -> getFormulaCellValue(cell);
             default -> {
@@ -172,6 +199,11 @@ public class GracefulExcelReader {
         };
     }
 
+    /**
+     * 计算公式
+     * @param cell 单元格
+     * @return 计算结果
+     */
     private Object getFormulaCellValue(Cell cell){
         CellValue evaluated = workBookMetaInfo.getFormulaEvaluator().evaluate(cell);
         return switch (evaluated.getCellType()) {

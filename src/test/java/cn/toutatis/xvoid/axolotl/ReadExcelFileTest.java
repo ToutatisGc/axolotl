@@ -16,8 +16,6 @@ public class ReadExcelFileTest {
     public void testReadExcelFile() {
         File xlsFile = FileToolkit.getResourceFileAsFile("workbook/1.xls");
         GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsFile);
-
-//        gracefulExcelReader.readData();
         gracefulExcelReader.readSheetData("Sheet1", JSONObject.class);
     }
 

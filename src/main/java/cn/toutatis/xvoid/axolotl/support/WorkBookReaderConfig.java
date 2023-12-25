@@ -26,9 +26,15 @@ public class WorkBookReaderConfig<T> {
     private String sheetName;
 
     /**
+     * 初始行偏移量
+     */
+    private int initialRowPositionOffset = 0;
+
+    /**
      * 读取的Java类型
      */
     private Class<T> castClass;
+
 
     /**
      * 读取的特性
@@ -49,6 +55,9 @@ public class WorkBookReaderConfig<T> {
         defaultReadFeature.put(ReadExcelFeature.IGNORE_EMPTY_SHEET_ERROR,true);
         defaultReadFeature.put(ReadExcelFeature.SORTED_READ_SHEET_DATA,true);
         defaultReadFeature.put(ReadExcelFeature.INCLUDE_EMPTY_ROW,true);
+        defaultReadFeature.put(ReadExcelFeature.USE_MAP_DEBUG,true);
+        defaultReadFeature.put(ReadExcelFeature.DATA_BIND_PRECISE_LOCALIZATION,true);
+        defaultReadFeature.put(ReadExcelFeature.CAST_NUMBER_TO_DATE,true);
         return defaultReadFeature;
     }
 
