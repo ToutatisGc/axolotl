@@ -66,7 +66,9 @@ public class GracefulExcelReader {
         }
         workBookReaderConfig.setCastClass(clazz);
         workBookReaderConfig.setSheetIndex(sheetIndex);
-        int lastRowNum = workBookMetaInfo.getWorkbook().getSheetAt(sheetIndex).getLastRowNum();
+        Sheet sheetAt = workBookMetaInfo.getWorkbook().getSheetAt(sheetIndex);
+        int physicalNumberOfRows = sheetAt.getPhysicalNumberOfRows();
+        int lastRowNum = sheetAt.getLastRowNum();
         return (List<T>) loadData(0,lastRowNum);
     }
 
@@ -115,11 +117,32 @@ public class GracefulExcelReader {
     private List<Object> loadData(int start,int end){
         // 读取指定sheet
         Sheet sheet = workBookMetaInfo.getWorkbook().getSheetAt(workBookReaderConfig.getSheetIndex());
-//        FormulaEvaluator evaluator = null;
+        int sheetIndex = workBookReaderConfig.getSheetIndex();
+        List<Row> rowList;
+        if (workBookMetaInfo.isSheetDataEmpty(sheetIndex)){
+            ArrayList<Row> tmp = new ArrayList<>();
+            if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.INCLUDE_EMPTY_ROW)){
+                for (int i = 0; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    LOGGER.debug(i+":"+row);
+                    tmp.add(row);
+                }
+            }else{
+                sheet.rowIterator().forEachRemaining(tmp::add);
+            }
+            workBookMetaInfo.setSheetData(sheetIndex,tmp);
+            rowList = tmp;
+        }else {
+            rowList = workBookMetaInfo.getSheetData(sheetIndex);
+        }
         List<Object> dataList = new ArrayList<>();
-        for (int idx = start; idx < end; idx++) {
+        for (int idx = start; idx < end+1; idx++) {
             Object castClassInstance = workBookReaderConfig.getCastClassInstance();
-            Row row = sheet.getRow(idx);
+            Row row = rowList.get(idx);
+            if (row == null){
+                dataList.add(castClassInstance);
+                continue;
+            }
             row.cellIterator().forEachRemaining(cell -> putCellToInstance(castClassInstance,cell));
             dataList.add(castClassInstance);
         }
@@ -129,7 +152,7 @@ public class GracefulExcelReader {
     @SuppressWarnings({"unchecked","rawtypes"})
     private void putCellToInstance(Object instance, Cell cell){
         if (instance instanceof Map){
-            String key = "CELL_#" + (cell.getColumnIndex()+1);
+            String key = "CELL_" + (cell.getColumnIndex()+1);
             ((Map)instance).put(key,getCellValue(cell));
         }else{
             //TODO 一般POJO类型填充

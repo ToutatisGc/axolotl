@@ -48,6 +48,7 @@ public class WorkBookReaderConfig<T> {
         Map<ReadExcelFeature, Object> defaultReadFeature = new HashMap<>();
         defaultReadFeature.put(ReadExcelFeature.IGNORE_EMPTY_SHEET_ERROR,true);
         defaultReadFeature.put(ReadExcelFeature.SORTED_READ_SHEET_DATA,true);
+        defaultReadFeature.put(ReadExcelFeature.INCLUDE_EMPTY_ROW,true);
         return defaultReadFeature;
     }
 

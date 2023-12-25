@@ -3,6 +3,7 @@ package cn.toutatis.xvoid.axolotl;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.junit.Test;
 
 import java.io.File;
@@ -23,9 +24,9 @@ public class ReadExcelFileTest {
     @Test
     public void testReadExcelFileWithConfig() {
         File xlsFile = FileToolkit.getResourceFileAsFile("workbook/1.xls");
-        GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsFile,false);
+        GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsFile,true);
         List<Map> mapList = gracefulExcelReader.readSheetData("Sheet1", Map.class);
-        System.err.println(JSON.toJSONString(mapList));
+        System.err.println(JSON.toJSONString(mapList, SerializerFeature.SortField));
     }
 
 }

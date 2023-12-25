@@ -19,7 +19,10 @@ public enum ReadExcelFeature {
      */
     SORTED_READ_SHEET_DATA,
 
-
+    /**
+     * 使用Map接收数据时，打印调试信息
+     */
+    USE_MAP_DEBUG,
 
     /*行数据配置*/
 
