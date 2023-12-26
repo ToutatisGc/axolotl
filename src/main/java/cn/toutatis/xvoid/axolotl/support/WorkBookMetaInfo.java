@@ -23,6 +23,8 @@ public class WorkBookMetaInfo extends AbstractMetaInfo{
 
     private final Map<Integer, List<Row>> sheetData = new HashMap<>();
 
+    private int currentReadRowIndex = -1;
+
     public WorkBookMetaInfo(File file, DetectResult detectResult) {
         this.setFile(file);
         this.setMimeType(detectResult.getCatchMimeType());

@@ -1,5 +1,7 @@
 package cn.toutatis.xvoid.axolotl.annotations;
 
+import cn.toutatis.xvoid.axolotl.constant.ReadExcelFeature;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
@@ -8,4 +10,10 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.FIELD)
 public @interface KeepIntact {
+
+    /**
+     * 排除的读取特性
+     * @return 排除的读取特性
+     */
+    ReadExcelFeature[] excludeFeatures();
 }

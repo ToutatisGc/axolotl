@@ -91,6 +91,11 @@ public class GracefulExcelReader {
         return readSheetData(sheetIndex,clazz);
     }
 
+    public void readClass(){
+        //TODO 直接根据class获取信息
+//        IndexWorkSheet declaredAnnotation = this.castClass.getDeclaredAnnotation(IndexWorkSheet.class);
+    }
+
     /**
      * 读取Excel文件
      * @param excelFile Excel工作簿文件
@@ -148,7 +153,7 @@ public class GracefulExcelReader {
             rowList = workBookMetaInfo.getSheetData(sheetIndex);
         }
         List<Object> dataList = new ArrayList<>();
-        for (int idx = start; idx < end+1; idx++) {
+        for (int idx = start; idx <= end; idx++) {
             Object castClassInstance = workBookReaderConfig.getCastClassInstance();
             Row row = rowList.get(idx);
             if (row == null){
@@ -182,7 +187,6 @@ public class GracefulExcelReader {
             }
         }else{
             //TODO 一般POJO类型填充
-
         }
     }
 

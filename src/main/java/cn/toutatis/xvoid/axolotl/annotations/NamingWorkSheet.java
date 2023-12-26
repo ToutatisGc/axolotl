@@ -3,6 +3,8 @@ package cn.toutatis.xvoid.axolotl.annotations;
 import kotlin.annotation.MustBeDocumented;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
@@ -11,6 +13,7 @@ import java.lang.annotation.Target;
 @WorkSheet
 @MustBeDocumented
 @Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface NamingWorkSheet {
 
     /**
