@@ -13,6 +13,7 @@ public enum ReadExcelFeature {
 
     /**
      * 忽略空sheet的错误
+     * 空sheet将返回null
      */
     IGNORE_EMPTY_SHEET_ERROR(Type.BOOLEAN, true),
 
@@ -21,6 +22,7 @@ public enum ReadExcelFeature {
 
     /**
      * 空行也视为有效数据
+     * 读取时将转换为一个空对象
      */
     INCLUDE_EMPTY_ROW(Type.BOOLEAN, true),
 
@@ -31,18 +33,19 @@ public enum ReadExcelFeature {
     SORTED_READ_SHEET_DATA(Type.BOOLEAN, true),
 
     /**
-     * 判断数字为日期类型转换为日期格式
+     * 判断数字为日期类型将转换为日期格式
      */
     CAST_NUMBER_TO_DATE(Type.BOOLEAN, true),
 
     /**
-     * 若未指定此特性,在按行读取时,若没有指定列名,将不会绑定对象属性
+     * 精确绑定属性
+     * 指定此特性,在按行读取时,若没有指定列名,将不会绑定对象属性
+     * 否则将按照实体字段顺序自动按照索引绑定数据
      */
     DATA_BIND_PRECISE_LOCALIZATION(Type.BOOLEAN, true),
 
     /**
-     * 修整单元格去掉单元格左右的空格
-     * 和换行符
+     * 修整单元格去掉单元格所有的空格和换行符
      */
     TRIM_CELL_VALUE(Type.BOOLEAN, true),
 

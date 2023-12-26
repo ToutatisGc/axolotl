@@ -27,8 +27,9 @@ public class CommonMimeType {
 
     static {
         try {
-            MS_EXCEL = MimeTypes.getDefaultMimeTypes().forName("application/vnd.ms-excel");
-            OOXML_EXCEL = MimeTypes.getDefaultMimeTypes().forName("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            MimeTypes defaultMimeTypes = MimeTypes.getDefaultMimeTypes();
+            MS_EXCEL = defaultMimeTypes.forName("application/vnd.ms-excel");
+            OOXML_EXCEL = defaultMimeTypes.forName("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         } catch (MimeTypeException e) {
             throw new RuntimeException(e);
         }
