@@ -41,7 +41,7 @@ public class WorkBookReaderConfig<T> {
      */
     private Class<T> castClass;
 
-    private List<EntityCellMappingInfo> entityCellMappingInfoList = new ArrayList<>();
+    private List<EntityCellMappingInfo> entityCellMappingInfoList;
 
 
     /**

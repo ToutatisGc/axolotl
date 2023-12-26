@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl;
 
+import cn.toutatis.xvoid.axolotl.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.constant.ReadExcelFeature;
 import cn.toutatis.xvoid.axolotl.support.DetectResult;
 import cn.toutatis.xvoid.axolotl.support.TikaShell;
@@ -9,6 +10,7 @@ import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -17,6 +19,7 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +169,7 @@ public class GracefulExcelReader {
         return dataList;
     }
 
+    @SneakyThrows
     @SuppressWarnings({"unchecked","rawtypes"})
     private void putCellToInstance(Object instance, Cell cell){
         if (instance instanceof Map info){
@@ -176,7 +180,7 @@ public class GracefulExcelReader {
                 info.put("CELL_TYPE_"+idx,cell.getCellType());
                 if (cell.getCellType() == CellType.NUMERIC){
                     if (DateUtil.isCellDateFormatted(cell)){
-                        info.put("CELL_TYPE_"+idx,"DATE");
+                        info.put("CELL_TYPE_"+idx,cell.getCellType());
                         info.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
                     }else{
                         info.put("CELL_TYPE_"+idx,cell.getCellType());
@@ -186,7 +190,23 @@ public class GracefulExcelReader {
                 }
             }
         }else{
-
+            Class castClass = workBookReaderConfig.getCastClass();
+            List<EntityCellMappingInfo> mappingInfos = workBookReaderConfig.getEntityCellMappingInfoList();
+            for (EntityCellMappingInfo mappingInfo : mappingInfos) {
+                switch (mappingInfo.getMappingType()) {
+                    case INDEX -> {
+                        Field field = castClass.getDeclaredField(mappingInfo.getFieldName());
+                        field.setAccessible(true);
+                        // TODO 完善映射
+                        field.set(instance,getCellValue(cell));
+                    }
+                    case POSITION -> {
+                    }
+                    case UNKNOWN -> {
+                    }
+                }
+            }
+            System.err.println(instance);
         }
     }
 
