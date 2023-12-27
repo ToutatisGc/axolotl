@@ -162,9 +162,8 @@ public class GracefulExcelReader {
                 dataList.add(castClassInstance);
                 continue;
             }
-
             // 填充对象数据
-            row.cellIterator().forEachRemaining(cell -> putCellToInstance(castClassInstance,cell));
+            putRowToInstance(castClassInstance,row);
             dataList.add(castClassInstance);
         }
         return dataList;
@@ -173,29 +172,14 @@ public class GracefulExcelReader {
     /**
      * 填充单元格数据到对象
      * @param instance 实例对象
-     * @param cell 单元格
+     * @param row 当前行
      */
     @SneakyThrows
     @SuppressWarnings({"unchecked","rawtypes"})
-    private void putCellToInstance(Object instance, Cell cell){
+    private void putRowToInstance(Object instance, Row row){
         // 填充到map
         if (instance instanceof Map info){
-            int idx = cell.getColumnIndex() + 1;
-            String key = "CELL_" + idx;
-            info.put(key,getCellValue(cell, null));
-            if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
-                info.put("CELL_TYPE_"+idx,cell.getCellType());
-                if (cell.getCellType() == CellType.NUMERIC){
-                    if (DateUtil.isCellDateFormatted(cell)){
-                        info.put("CELL_TYPE_"+idx,cell.getCellType());
-                        info.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
-                    }else{
-                        info.put("CELL_TYPE_"+idx,cell.getCellType());
-                    }
-                }else {
-                    info.put("CELL_TYPE_"+idx,cell.getCellType());
-                }
-            }
+            this.putRowToMapInstance(info,row);
         }else{
             Class castClass = workBookReaderConfig.getCastClass();
             List<EntityCellMappingInfo> mappingInfos = workBookReaderConfig.getIndexMappingInfos();
@@ -203,13 +187,35 @@ public class GracefulExcelReader {
                 Field field = castClass.getDeclaredField(mappingInfo.getFieldName());
                 field.setAccessible(true);
                 // 1. 获取单元格值
-                CellGetInfo cellValue = getCellValue(cell, mappingInfo);
+                CellGetInfo cellValue = getCellValue(row.getCell(mappingInfo.getColumnPosition()), mappingInfo);
                 System.err.println(cellValue);
+//                System.err.println(cellValue);
                 // 2. 转换单元格值
                 // 3. 设置单元格值到实体
             }
-//            System.err.println(instance);
+
         }
+    }
+
+    private void putRowToMapInstance(Map<String,Object> instance, Row row){
+        row.cellIterator().forEachRemaining(cell -> {
+            int idx = cell.getColumnIndex() + 1;
+            String key = "CELL_" + idx;
+            instance.put(key,getCellValue(cell, null));
+            if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
+                instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                if (cell.getCellType() == CellType.NUMERIC){
+                    if (DateUtil.isCellDateFormatted(cell)){
+                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                        instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
+                    }else{
+                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                    }
+                }else {
+                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                }
+            }
+        });
     }
 
     /**
@@ -238,6 +244,7 @@ public class GracefulExcelReader {
      * @return 单元格值
      */
     private CellGetInfo getIndexCellValue(Cell cell, EntityCellMappingInfo mappingInfo){
+        //TODO 正确读取单元格值
         // 未设置列位置返回空值
         if (mappingInfo.getColumnPosition() == -1){
             // 字段是否为基本类型,基本类型返回默认值
@@ -247,9 +254,16 @@ public class GracefulExcelReader {
                 cellGetInfo.setCellValue(mappingInfo.fillDefaultPrimitiveValue(null));
                 return cellGetInfo;
             }
-            return null;
+            return new CellGetInfo();
         }
-        if (cell.getColumnIndex() == mappingInfo.getColumnPosition()){
+        if (cell == null){
+            if (mappingInfo.fieldIsPrimitive()){
+                CellGetInfo cellGetInfo = new CellGetInfo();
+                cellGetInfo.setUseCellValue(true);
+                cellGetInfo.setCellValue(mappingInfo.fillDefaultPrimitiveValue(null));
+                return cellGetInfo;
+            }else return new CellGetInfo();
+        }else {
             Object value = null;
             switch (cell.getCellType()) {
                 case STRING -> value = cell.getStringCellValue();
@@ -261,8 +275,6 @@ public class GracefulExcelReader {
                 }
             };
             return new CellGetInfo(true,value);
-        }else {
-            return new CellGetInfo();
         }
     }
 
