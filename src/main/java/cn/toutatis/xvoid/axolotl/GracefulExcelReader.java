@@ -251,7 +251,12 @@ public class GracefulExcelReader {
                 throw new RuntimeException(e);
             }
         }else {
-            AbstractDataCastAdapter abstractDataCastAdapter = (AbstractDataCastAdapter) DefaultAdapters.getAdapter(mappingInfo.getFieldType());
+            DataCastAdapter<?> tmpAdapter = DefaultAdapters.getAdapter(mappingInfo.getFieldType());
+            LOGGER.debug("查找默认的适配器类型：{},Class:{}",mappingInfo.getFieldType(),tmpAdapter == null ? "无" : tmpAdapter.getClass().getName());
+            if (tmpAdapter == null){
+                throw new RuntimeException("不支持转换的类型:["+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
+            }
+            AbstractDataCastAdapter abstractDataCastAdapter = (AbstractDataCastAdapter) tmpAdapter;
             abstractDataCastAdapter.setWorkBookReaderConfig(workBookReaderConfig);
             adapter = abstractDataCastAdapter;
         }
@@ -270,7 +275,7 @@ public class GracefulExcelReader {
         row.cellIterator().forEachRemaining(cell -> {
             int idx = cell.getColumnIndex() + 1;
             String key = "CELL_" + idx;
-            instance.put(key,getCellValue(cell, null));
+            instance.put(key,getCellValue(cell, null).getCellValue());
             if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
                 instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 if (cell.getCellType() == CellType.NUMERIC){
