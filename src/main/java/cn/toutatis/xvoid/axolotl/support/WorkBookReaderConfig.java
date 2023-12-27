@@ -41,8 +41,18 @@ public class WorkBookReaderConfig<T> {
      */
     private Class<T> castClass;
 
-    private List<EntityCellMappingInfo> entityCellMappingInfoList;
+    /**
+     * 索引映射信息
+     * key: 索引
+     * value: 映射信息
+     */
+    private List<EntityCellMappingInfo> indexMappingInfos;
 
+    /**
+     * 位置映射信息
+     * key: 位置[A5=0,4,B2=1,1]
+     */
+    private Map<String,EntityCellMappingInfo> positionMappingInfos;
 
     /**
      * 读取的特性
@@ -112,6 +122,7 @@ public class WorkBookReaderConfig<T> {
     private void processEntityFieldMappingToCell() {
         Field[] declaredFields = castClass.getDeclaredFields();
         List<EntityCellMappingInfo> entityCellMappingInfos = new ArrayList<>(declaredFields.length);
+        HashMap<String, EntityCellMappingInfo> positionMappingInfos = new HashMap<>();
         boolean preciseLocalization = getReadFeatureAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
         AtomicInteger idx = new AtomicInteger(-1);
         for (Field declaredField : declaredFields) {
@@ -120,13 +131,15 @@ public class WorkBookReaderConfig<T> {
             entityCellMappingInfo.setFieldIndex(idx.get());
             entityCellMappingInfo.setFieldName(declaredField.getName());
             entityCellMappingInfo.setFieldType(declaredField.getType());
+            // 指定单元格索引
             CellBindProperty cellBindProperty = declaredField.getAnnotation(CellBindProperty.class);
-            boolean alreadyBind = false;
             if (cellBindProperty != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
                 entityCellMappingInfo.setColumnPosition(cellBindProperty.cellIndex());
-                alreadyBind = true;
+                entityCellMappingInfos.add(entityCellMappingInfo);
+                continue;
             }
+            // 指定单元格具体位置
             SpecifyCellPosition specifyCellPosition = declaredField.getAnnotation(SpecifyCellPosition.class);
             if (specifyCellPosition != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.POSITION);
@@ -143,19 +156,20 @@ public class WorkBookReaderConfig<T> {
                         columnIndex = simpleIdx;
                     }
                     entityCellMappingInfo.setColumnPosition(columnIndex);
-                    entityCellMappingInfo.setRowPosition(Integer.parseInt(alphaNumeric[1]));
+                    entityCellMappingInfo.setRowPosition(Integer.parseInt(alphaNumeric[1])-1);
+                    positionMappingInfos.put(columnIndex+","+entityCellMappingInfo.getRowPosition(),entityCellMappingInfo);
                 }else {
                     throw new IllegalArgumentException("指定单元格位置格式错误");
                 }
-                alreadyBind = true;
+                continue;
             }
-            if (!alreadyBind){
-                entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.UNKNOWN);
-                entityCellMappingInfo.setColumnPosition(preciseLocalization ? -1 : idx.get());
-            }
+            // 未指定单元格位置默认情况
+            entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.UNKNOWN);
+            entityCellMappingInfo.setColumnPosition(preciseLocalization ? -1 : idx.get());
             entityCellMappingInfos.add(entityCellMappingInfo);
         }
-        entityCellMappingInfoList = entityCellMappingInfos;
+        this.positionMappingInfos = positionMappingInfos;
+        indexMappingInfos = entityCellMappingInfos;
     }
 
     /**

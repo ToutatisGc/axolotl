@@ -1,7 +1,5 @@
 package cn.toutatis.xvoid.axolotl.constant;
 
-import cn.toutatis.xvoid.axolotl.annotations.CellBindProperty;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 /**
@@ -40,13 +38,6 @@ public class EntityCellMappingInfo {
      * 字段类型
      */
     private Class<?> fieldType;
-
-    /**
-     * 单元格绑定属性
-     */
-    @JsonIgnore
-    private CellBindProperty cellBindProperty;
-
 
     /**
      * 单元格映射类型

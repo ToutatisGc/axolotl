@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl;
 
 import cn.toutatis.xvoid.axolotl.entities.IndexPropertyEntity;
+import cn.toutatis.xvoid.axolotl.entities.IndexTest;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -9,7 +10,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 public class ReadExcelFileTest {
 
@@ -24,13 +24,10 @@ public class ReadExcelFileTest {
     public void testOneLineExcelFile() {
         File xlsxFile = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
         GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsxFile,true);
-        List<Map> mapList = gracefulExcelReader.readSheetData(0, Map.class);
-        for (Map map : mapList) {
+        List<IndexTest> mapList = gracefulExcelReader.readSheetData(0, IndexTest.class);
+        for (IndexTest map : mapList) {
             System.err.println(map);
         }
-//        for (IndexPropertyEntity indexPropertyEntity : mapList) {
-//            System.err.println(indexPropertyEntity);
-//        }
     }
 
     @Test
