@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.constant;
 
+import cn.toutatis.xvoid.axolotl.support.DataCastAdapter;
 import lombok.Data;
 
 /**
@@ -7,7 +8,7 @@ import lombok.Data;
  * @author Toutatis_Gc
  */
 @Data
-public class EntityCellMappingInfo {
+public class EntityCellMappingInfo<T> {
 
     /**
      * 字段索引
@@ -37,7 +38,17 @@ public class EntityCellMappingInfo {
     /**
      * 字段类型
      */
-    private Class<?> fieldType;
+    private Class<T> fieldType;
+
+    /**
+     * 数据转换适配器
+     */
+    private Class<? extends DataCastAdapter<?>> dataCastAdapter;
+
+    /**
+     * 格式转换
+     */
+    private String format;
 
     /**
      * 单元格映射类型

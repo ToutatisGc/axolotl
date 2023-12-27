@@ -20,7 +20,7 @@ public class IndexPropertyEntity extends BaseEntity {
     @SpecifyCellPosition("A5")
     private String title;
 
-    @CellBindProperty(cellIndex = 0,dateFormat = Time.HMS_COLON_FORMAT_REGEX)
+    @CellBindProperty(cellIndex = 0,format = Time.HMS_COLON_FORMAT_REGEX)
     private String name;
 
     @CellBindProperty(cellIndex = 1)

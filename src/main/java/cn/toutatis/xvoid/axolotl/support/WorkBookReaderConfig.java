@@ -136,6 +136,8 @@ public class WorkBookReaderConfig<T> {
             if (cellBindProperty != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
                 entityCellMappingInfo.setColumnPosition(cellBindProperty.cellIndex());
+                entityCellMappingInfo.setDataCastAdapter(cellBindProperty.adapter());
+                entityCellMappingInfo.setFormat(cellBindProperty.format());
                 entityCellMappingInfos.add(entityCellMappingInfo);
                 continue;
             }
@@ -143,6 +145,8 @@ public class WorkBookReaderConfig<T> {
             SpecifyCellPosition specifyCellPosition = declaredField.getAnnotation(SpecifyCellPosition.class);
             if (specifyCellPosition != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.POSITION);
+                entityCellMappingInfo.setFormat(specifyCellPosition.format());
+                entityCellMappingInfo.setDataCastAdapter(specifyCellPosition.adapter());
                 String position = specifyCellPosition.value().toUpperCase();
                 String[] alphaNumeric = Regex.splitAlphaNumeric(position);
                 if (alphaNumeric.length == 2) {

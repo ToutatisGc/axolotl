@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class CastConfig<T> {
+public class CastContext<T> {
 
     private Class<T> castType;
 

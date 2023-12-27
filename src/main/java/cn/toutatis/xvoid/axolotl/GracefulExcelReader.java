@@ -3,6 +3,8 @@ package cn.toutatis.xvoid.axolotl;
 import cn.toutatis.xvoid.axolotl.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.constant.ReadExcelFeature;
 import cn.toutatis.xvoid.axolotl.support.*;
+import cn.toutatis.xvoid.axolotl.support.adapters.AbstractDataCastAdapter;
+import cn.toutatis.xvoid.axolotl.support.adapters.DefaultAdapters;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -15,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,21 +28,34 @@ import java.util.Map;
  */
 public class GracefulExcelReader {
 
+    /**
+     *
+     */
     private final Logger LOGGER  = LoggerToolkit.getLogger(GracefulExcelReader.class);
 
+    /**
+     *
+     */
     @Getter
     private WorkBookMetaInfo workBookMetaInfo;
 
+    /**
+     *
+     */
     @Getter
     @SuppressWarnings("rawtypes")
     private final WorkBookReaderConfig workBookReaderConfig;
 
+    /**
+     *
+     */
     public GracefulExcelReader(File excelFile) {
         this(excelFile,true);
     }
 
     /**
      * 构造文件读取器
+     *
      * @param excelFile Excel工作簿文件
      * @param withDefaultConfig 是否使用默认配置
      */
@@ -49,6 +65,7 @@ public class GracefulExcelReader {
 
     /**
      * 构造文件读取器
+     *
      * @param excelFile Excel工作簿文件
      * @param withDefaultConfig 是否使用默认配置
      * @param initialRowPositionOffset 初始行偏移量
@@ -59,6 +76,9 @@ public class GracefulExcelReader {
         workBookReaderConfig.setInitialRowPositionOffset(initialRowPositionOffset);
     }
 
+    /**
+     * @param sheetIndex 表索引
+     */
     @SuppressWarnings("unchecked")
     public <T> List<T> readSheetData(int sheetIndex,Class<T> clazz) {
         if (clazz == null || clazz == Object.class){
@@ -82,6 +102,9 @@ public class GracefulExcelReader {
         return (List<T>) loadData(0,lastRowNum);
     }
 
+    /**
+     * @param sheetName 表名
+     */
     public <T> List<T> readSheetData(String sheetName, Class<T> clazz) {
         if (Validator.strIsBlank(sheetName)){throw new IllegalArgumentException("表名不能为空");}
         workBookReaderConfig.setSheetName(sheetName);
@@ -89,6 +112,9 @@ public class GracefulExcelReader {
         return readSheetData(sheetIndex,clazz);
     }
 
+    /**
+     *
+     */
     public void readClass(){
         //TODO 直接根据class获取信息
 //        IndexWorkSheet declaredAnnotation = this.castClass.getDeclaredAnnotation(IndexWorkSheet.class);
@@ -96,6 +122,7 @@ public class GracefulExcelReader {
 
     /**
      * 读取Excel文件
+     *
      * @param excelFile Excel工作簿文件
      */
     private void initWorkbook(File excelFile) {
@@ -127,6 +154,7 @@ public class GracefulExcelReader {
 
     /**
      * 加载数据
+     *
      * @param start 开始行
      * @param end 结束行
      */
@@ -171,6 +199,7 @@ public class GracefulExcelReader {
 
     /**
      * 填充单元格数据到对象
+     *
      * @param instance 实例对象
      * @param row 当前行
      */
@@ -187,16 +216,56 @@ public class GracefulExcelReader {
                 Field field = castClass.getDeclaredField(mappingInfo.getFieldName());
                 field.setAccessible(true);
                 // 1. 获取单元格值
-                CellGetInfo cellValue = getCellValue(row.getCell(mappingInfo.getColumnPosition()), mappingInfo);
-                System.err.println(cellValue);
-//                System.err.println(cellValue);
+                int columnPosition = mappingInfo.getColumnPosition();
+                CellGetInfo cellValue;
+                if (columnPosition == -1){
+                    cellValue = new CellGetInfo(false,mappingInfo.fillDefaultPrimitiveValue(null));
+                }else{
+                    cellValue = getCellValue(row.getCell(columnPosition), mappingInfo);
+                }
+                LOGGER.debug(mappingInfo.getFieldName() + ":" + cellValue);
                 // 2. 转换单元格值
+                System.err.println(this.adaptiveEntityClass(cellValue,mappingInfo));
                 // 3. 设置单元格值到实体
             }
 
         }
     }
 
+    /**
+     * 适配实体类的字段
+     *
+     * @param info 单元格值
+     * @param mappingInfo 映射信息
+     * @param <T>  实体类
+     * @return 适配实体类的字段值
+     */
+    private <T> Object adaptiveEntityClass(CellGetInfo info, EntityCellMappingInfo<T> mappingInfo){
+        Class<? extends DataCastAdapter<?>> dataCastAdapter = mappingInfo.getDataCastAdapter();
+        DataCastAdapter<?> adapter;
+        if (dataCastAdapter != null && !dataCastAdapter.isInterface()){
+            try {
+                adapter = dataCastAdapter.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException |
+                     InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }else {
+            AbstractDataCastAdapter abstractDataCastAdapter = (AbstractDataCastAdapter) DefaultAdapters.getAdapter(mappingInfo.getFieldType());
+            abstractDataCastAdapter.setWorkBookReaderConfig(workBookReaderConfig);
+            adapter = abstractDataCastAdapter;
+        }
+        CastContext<?> castContext =  new CastContext<>(mappingInfo.getFieldType(),mappingInfo.getFormat());
+        if (adapter.support(info.getCellType(),mappingInfo.getFieldType())){
+            return adapter.cast(info, castContext);
+        }else {
+            throw new RuntimeException("不支持转换的类型:["+info.getCellType() +"->"+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
+        }
+    }
+
+    /**
+     *
+     */
     private void putRowToMapInstance(Map<String,Object> instance, Row row){
         row.cellIterator().forEachRemaining(cell -> {
             int idx = cell.getColumnIndex() + 1;
@@ -220,6 +289,7 @@ public class GracefulExcelReader {
 
     /**
      * 获取单元格值
+     *
      * @param cell 单元格
      * @param mappingInfo 映射信息
      * @return 单元格值
@@ -239,6 +309,7 @@ public class GracefulExcelReader {
 
     /**
      * 获取索引映射单元格值
+     *
      * @param cell 单元格
      * @param mappingInfo 映射信息
      * @return 单元格值
@@ -280,6 +351,7 @@ public class GracefulExcelReader {
 
     /**
      * 计算公式
+     *
      * @param cell 单元格
      * @return 计算结果
      */
@@ -296,6 +368,9 @@ public class GracefulExcelReader {
         };
     }
 
+    /**
+     *
+     */
     public void reuse(){
         // TODO 用新的配置复用该文件对象
     }

@@ -1,12 +1,11 @@
 package cn.toutatis.xvoid.axolotl.support;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.poi.ss.usermodel.CellType;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class CellGetInfo {
 
     /**
@@ -15,7 +14,17 @@ public class CellGetInfo {
     private boolean useCellValue = false;
 
     /**
+     * 单元格类型
+     */
+    private CellType cellType;
+
+    /**
      * 单元格值
      */
     private Object cellValue = null;
+
+    public CellGetInfo(boolean useCellValue, Object cellValue) {
+        this.useCellValue = useCellValue;
+        this.cellValue = cellValue;
+    }
 }

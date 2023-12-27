@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.annotations;
 
+import cn.toutatis.xvoid.axolotl.support.DataCastAdapter;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 
 import java.lang.annotation.ElementType;
@@ -23,5 +24,12 @@ public @interface CellBindProperty {
      * 日期格式化
      * 默认使用LocalDateTime格式
      */
-    String dateFormat() default Time.SIMPLE_DATE_FORMAT_REGEX;
+    String format() default Time.SIMPLE_DATE_FORMAT_REGEX;
+
+    /**
+     * 自定义适配器
+     * @see cn.toutatis.xvoid.axolotl.support.DataCastAdapter
+     */
+    Class<? extends DataCastAdapter> adapter() default DataCastAdapter.class;
+
 }

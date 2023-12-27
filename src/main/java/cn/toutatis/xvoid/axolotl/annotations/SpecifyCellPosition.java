@@ -1,5 +1,8 @@
 package cn.toutatis.xvoid.axolotl.annotations;
 
+import cn.toutatis.xvoid.axolotl.support.DataCastAdapter;
+import cn.toutatis.xvoid.toolkit.constant.Time;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -16,4 +19,11 @@ public @interface SpecifyCellPosition {
      * 指定单元格位置，如A1,B2等
      */
     String value();
+
+    String format() default Time.SIMPLE_DATE_FORMAT_REGEX;
+
+    /**
+     * 指定单元格位置的适配器，默认使用默认适配器
+     */
+    Class<? extends DataCastAdapter> adapter() default DataCastAdapter.class;
 }

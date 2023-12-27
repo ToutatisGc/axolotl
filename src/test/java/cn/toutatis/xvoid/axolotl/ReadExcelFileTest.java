@@ -25,6 +25,7 @@ public class ReadExcelFileTest {
         File xlsxFile = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
         GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsxFile,true);
         List<IndexTest> mapList = gracefulExcelReader.readSheetData(0, IndexTest.class);
+        System.err.println(new IndexTest());
         for (IndexTest map : mapList) {
             System.err.println(map);
         }

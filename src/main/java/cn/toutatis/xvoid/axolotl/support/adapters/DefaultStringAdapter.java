@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.support.adapters;
 
-import cn.toutatis.xvoid.axolotl.support.CastConfig;
+import cn.toutatis.xvoid.axolotl.support.CastContext;
+import cn.toutatis.xvoid.axolotl.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.support.DataCastAdapter;
 import org.apache.poi.ss.usermodel.CellType;
 
@@ -10,24 +11,12 @@ import org.apache.poi.ss.usermodel.CellType;
  */
 public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implements DataCastAdapter<String> {
     @Override
-    public String cast(CellType cellType,Object value, CastConfig<String> config) {
-//        Object o = this.fillDefaultPrimitiveValue(value, config.getCastType());
-//        return switch (cellType) {
-//            case NUMERIC -> {
-//                {
-//                    getWorkBookReaderConfig().getReadFeatureAsBoolean(ReadExcelFeature.CAST_NUMBER_TO_DATE);
-//                }
-//                yield value.toString();
-//            }
-//            case BLANK -> null;
-//            case BOOLEAN -> value.toString();
-//            default -> value.toString();
-//        };
+    public String cast(CellGetInfo cellGetInfo, CastContext<?> config) {
         return null;
     }
 
     @Override
-    public boolean support(CellType cellType, Class<String> clazz) {
+    public boolean support(CellType cellType, Class<?> clazz) {
         return true;
     }
 }

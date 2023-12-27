@@ -34,7 +34,9 @@ public class IndexTest extends BaseEntity {
     @CellBindProperty(cellIndex = 9)
     private String column9;
 //    @CellBindProperty(cellIndex = 10)
-    private String column10;
+    private int column10;
+    
+    private boolean column11;
 
     
 }
