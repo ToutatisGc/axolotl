@@ -108,7 +108,11 @@ public class GracefulExcelReader {
         TikaShell.preCheckFileNormalThrowException(excelFile);
         DetectResult detectResult = TikaShell.detect(excelFile, TikaShell.OOXML_EXCEL,true);
         if (!detectResult.isDetect()){
-            detectResult = TikaShell.detect(excelFile, TikaShell.MS_EXCEL,true);
+            if (detectResult.getCurrentFileStatus() == DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM){
+                detectResult = TikaShell.detect(excelFile, TikaShell.MS_EXCEL,true);
+            }else {
+                detectResult.throwException();
+            }
         }
         if (detectResult.isDetect() && detectResult.isWantedMimeType()){
             workBookMetaInfo = new WorkBookMetaInfo(excelFile,detectResult);
@@ -175,7 +179,7 @@ public class GracefulExcelReader {
         if (instance instanceof Map info){
             int idx = cell.getColumnIndex() + 1;
             String key = "CELL_" + idx;
-            info.put(key,getCellValue(cell));
+            info.put(key,getCellValue(cell, null));
             if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
                 info.put("CELL_TYPE_"+idx,cell.getCellType());
                 if (cell.getCellType() == CellType.NUMERIC){
@@ -193,18 +197,13 @@ public class GracefulExcelReader {
             Class castClass = workBookReaderConfig.getCastClass();
             List<EntityCellMappingInfo> mappingInfos = workBookReaderConfig.getEntityCellMappingInfoList();
             for (EntityCellMappingInfo mappingInfo : mappingInfos) {
-                switch (mappingInfo.getMappingType()) {
-                    case INDEX -> {
-                        Field field = castClass.getDeclaredField(mappingInfo.getFieldName());
-                        field.setAccessible(true);
-                        // TODO 完善映射
-                        field.set(instance,getCellValue(cell));
-                    }
-                    case POSITION -> {
-                    }
-                    case UNKNOWN -> {
-                    }
-                }
+                Field field = castClass.getDeclaredField(mappingInfo.getFieldName());
+                field.setAccessible(true);
+                // 1. 获取单元格值
+                Object cellValue = getCellValue(cell, mappingInfo);
+                System.err.println(cellValue);
+                // 2. 处理单元格值
+                // 3. 设置单元格值到实体
             }
             System.err.println(instance);
         }
@@ -212,26 +211,55 @@ public class GracefulExcelReader {
 
     /**
      * 获取单元格值
-     * @param cell 单元格
+     *
+     * @param cell        单元格
+     * @param mappingInfo
      * @return 单元格值
      */
-    private Object getCellValue(Cell cell){
-        return switch (cell.getCellType()) {
-            case STRING -> cell.getStringCellValue();
-            case NUMERIC -> {
-                if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.CAST_NUMBER_TO_DATE) && DateUtil.isCellDateFormatted(cell)){
-                    yield cell.getDateCellValue();
-                }else{
-                    yield cell.getNumericCellValue();
-                }
-            }
-            case BOOLEAN -> cell.getBooleanCellValue();
-            case FORMULA -> getFormulaCellValue(cell);
-            default -> {
-                LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(),cell);
-                yield null;
-            }
+    private Object getCellValue(Cell cell, EntityCellMappingInfo mappingInfo){
+        if (mappingInfo == null){
+            mappingInfo = new EntityCellMappingInfo();
+            mappingInfo.setColumnPosition(cell.getColumnIndex());
+        }
+        return switch (mappingInfo.getMappingType()) {
+            case INDEX,UNKNOWN -> this.getIndexCellValue(cell, mappingInfo);
+            case POSITION -> null;
         };
+    }
+
+    /**
+     * 获取索引映射单元格值
+     * @param cell 单元格
+     * @param mappingInfo 映射信息
+     * @return 单元格值
+     */
+    private Object getIndexCellValue(Cell cell, EntityCellMappingInfo mappingInfo){
+        if (mappingInfo.getColumnPosition() == -1){
+            return null;
+        }
+        if (cell.getColumnIndex() == mappingInfo.getColumnPosition()){
+            return switch (cell.getCellType()) {
+                case STRING -> cell.getStringCellValue();
+                case NUMERIC -> {
+                    if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.CAST_NUMBER_TO_DATE)){
+                        if (DateUtil.isCellDateFormatted(cell)){
+                            yield cell.getDateCellValue();
+                        }else{
+                            yield cell.getNumericCellValue();
+                        }
+                    }else{
+                        yield cell.getNumericCellValue();
+                    }
+                }
+                case BOOLEAN -> cell.getBooleanCellValue();
+                case FORMULA -> getFormulaCellValue(cell);
+                default -> {
+                    LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(),cell);
+                    yield null;
+                }
+            };
+        }
+        return null;
     }
 
     /**

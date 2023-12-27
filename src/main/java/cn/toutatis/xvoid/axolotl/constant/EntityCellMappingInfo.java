@@ -29,7 +29,7 @@ public class EntityCellMappingInfo {
     /**
      * 映射类型
      */
-    private MappingType mappingType;
+    private MappingType mappingType = MappingType.UNKNOWN;
 
     /**
      * 字段名

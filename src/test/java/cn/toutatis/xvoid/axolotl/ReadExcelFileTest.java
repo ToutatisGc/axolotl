@@ -20,6 +20,16 @@ public class ReadExcelFileTest {
     }
 
     @Test
+    public void testOneLineExcelFile() {
+        File xlsxFile = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
+        GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsxFile,true);
+        List<IndexPropertyEntity> mapList = gracefulExcelReader.readSheetData(0, IndexPropertyEntity.class);
+        for (IndexPropertyEntity indexPropertyEntity : mapList) {
+            System.err.println(indexPropertyEntity);
+        }
+    }
+
+    @Test
     public void testReadExcelFileWithConfig() {
         File xlsFile = FileToolkit.getResourceFileAsFile("workbook/1.xls");
         GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsFile,true);

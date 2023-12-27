@@ -44,12 +44,10 @@ public class DetectResult {
 
     /**
      * 返回文件状态信息
-     * @param fileStatus 文件状态
      * @param msg 状态信息
      * @return 检测对象
      */
-    public DetectResult returnInfo(FileStatus fileStatus, String msg) {
-        this.currentFileStatus = fileStatus;
+    public DetectResult returnInfo(String msg) {
         this.message = msg;
         return this;
     }
@@ -66,9 +64,13 @@ public class DetectResult {
          */
         FILE_SELF_PROBLEM(1,"文件自身问题"),
         /**
-         * 文件内容问题识别不通过
+         * 文件内容格式识别不通过
          */
-        FILE_MIME_TYPE_PROBLEM(2,"文件媒体类型问题");
+        FILE_MIME_TYPE_PROBLEM(2,"文件媒体类型问题"),
+        /**
+         * 文件后缀识别不通过
+         */
+        FILE_SUFFIX_PROBLEM(3,"文件后缀问题");
 
         /**
          * 状态码

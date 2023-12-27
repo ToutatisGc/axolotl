@@ -87,7 +87,6 @@ public class TikaShell {
                 String fileSuffix = '.'+FileToolkit.getFileSuffix(file).toLowerCase();
                 List<String> extensions = mimeType.getExtensions();
                 int idx = -1;
-                LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + mimeType.getExtensions().toString() + ", 匹配的后缀索引：[" + idx + "]");
                 for (int i = 0; i < extensions.size(); i++) {
                     String extension = extensions.get(i);
                     if (extension.equalsIgnoreCase(fileSuffix)){
@@ -95,19 +94,23 @@ public class TikaShell {
                         break;
                     }
                 }
+                LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + mimeType.getExtensions().toString() + ", 匹配的后缀索引：[" + idx + "]");
                 if (idx == -1){
-                    String msg = file.getName()+"文件后缀不匹配";
+                    String msg ="["+file.getName()+"]文件后缀不匹配";
+                    detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_SUFFIX_PROBLEM);
                     if (throwException){throw new IOException(msg);}
-                    return detectResult.returnInfo(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM, msg);
+                    return detectResult.returnInfo(msg);
                 }
                 MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(tika.detect(file));
+                LOGGER.debug("文件媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType.toString());
                 if (detectMimeType.equals(mimeType)){
                     return new DetectResult(true,detectMimeType);
                 }else {
                     detectResult.setCatchMimeType(detectMimeType);
+                    detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM);
                     String msg = (file.getName()+"文件媒体类型不匹配，媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType.toString());
                     if (throwException){throw new IOException(msg);}
-                    return detectResult.returnInfo(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM, msg);
+                    return detectResult.returnInfo(msg);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
