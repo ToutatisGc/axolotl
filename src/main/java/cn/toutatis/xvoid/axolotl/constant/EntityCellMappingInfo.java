@@ -70,4 +70,37 @@ public class EntityCellMappingInfo {
 
     }
 
+    /**
+     * 默认值填充基本类型
+     * @param value 值
+     * @return 默认值填充后的值
+     */
+    public Object fillDefaultPrimitiveValue(Object value) {
+        if (value == null) {
+            if (fieldType.isPrimitive()) {
+                if (fieldType == int.class) {
+                    return 0;
+                } else if (fieldType == long.class) {
+                    return 0L;
+                } else if (fieldType == double.class) {
+                    return 0.0;
+                } else if (fieldType == float.class) {
+                    return 0.0F;
+                }else if (fieldType == boolean.class) {
+                    return false;
+                }else if (fieldType == char.class) {
+                    return '\u0000';
+                }else if (fieldType == short.class) {
+                    return 0;
+                }else if (fieldType == byte.class) {
+                    return 0;
+                }
+            }
+        }
+        return value;
+    }
+
+    public boolean fieldIsPrimitive(){
+        return fieldType.isPrimitive();
+    }
 }

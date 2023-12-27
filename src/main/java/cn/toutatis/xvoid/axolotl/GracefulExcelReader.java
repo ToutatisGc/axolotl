@@ -11,9 +11,7 @@ import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -121,12 +119,7 @@ public class GracefulExcelReader {
         }
         // 读取文件加载到元信息
         try(FileInputStream fis = new FileInputStream(workBookMetaInfo.getFile())){
-            Workbook workbook;
-            if (workBookMetaInfo.getMimeType().equals(TikaShell.OOXML_EXCEL)){
-                workbook = new XSSFWorkbook(fis);
-            }else{
-                workbook = new HSSFWorkbook(fis);
-            }
+            Workbook workbook = WorkbookFactory.create(fis);
             workBookMetaInfo.setWorkbook(workbook);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -143,8 +136,10 @@ public class GracefulExcelReader {
         Sheet sheet = workBookMetaInfo.getWorkbook().getSheetAt(workBookReaderConfig.getSheetIndex());
         int sheetIndex = workBookReaderConfig.getSheetIndex();
         List<Row> rowList;
+        // 缓存sheet数据
         if (workBookMetaInfo.isSheetDataEmpty(sheetIndex)){
             ArrayList<Row> tmp = new ArrayList<>();
+            // 是否读取所有行
             if (workBookReaderConfig.getReadFeatureAsBoolean(ReadExcelFeature.INCLUDE_EMPTY_ROW)){
                 for (int i = 0; i <= sheet.getLastRowNum(); i++) {
                     Row row = sheet.getRow(i);
@@ -159,6 +154,7 @@ public class GracefulExcelReader {
         }else {
             rowList = workBookMetaInfo.getSheetData(sheetIndex);
         }
+        // 读取分页数据
         List<Object> dataList = new ArrayList<>();
         for (int idx = start; idx <= end; idx++) {
             Object castClassInstance = workBookReaderConfig.getCastClassInstance();
@@ -167,15 +163,22 @@ public class GracefulExcelReader {
                 dataList.add(castClassInstance);
                 continue;
             }
+            // 填充对象数据
             row.cellIterator().forEachRemaining(cell -> putCellToInstance(castClassInstance,cell));
             dataList.add(castClassInstance);
         }
         return dataList;
     }
 
+    /**
+     * 填充单元格数据到对象
+     * @param instance 实例对象
+     * @param cell 单元格
+     */
     @SneakyThrows
     @SuppressWarnings({"unchecked","rawtypes"})
     private void putCellToInstance(Object instance, Cell cell){
+        // 填充到map
         if (instance instanceof Map info){
             int idx = cell.getColumnIndex() + 1;
             String key = "CELL_" + idx;
@@ -202,7 +205,8 @@ public class GracefulExcelReader {
                 // 1. 获取单元格值
                 Object cellValue = getCellValue(cell, mappingInfo);
                 System.err.println(cellValue);
-                // 2. 处理单元格值
+                // 2. 转换单元格值
+
                 // 3. 设置单元格值到实体
             }
             System.err.println(instance);
@@ -211,9 +215,8 @@ public class GracefulExcelReader {
 
     /**
      * 获取单元格值
-     *
-     * @param cell        单元格
-     * @param mappingInfo
+     * @param cell 单元格
+     * @param mappingInfo 映射信息
      * @return 单元格值
      */
     private Object getCellValue(Cell cell, EntityCellMappingInfo mappingInfo){
@@ -234,7 +237,12 @@ public class GracefulExcelReader {
      * @return 单元格值
      */
     private Object getIndexCellValue(Cell cell, EntityCellMappingInfo mappingInfo){
+        // 未设置列位置返回空值
         if (mappingInfo.getColumnPosition() == -1){
+            // 字段是否为基本类型,基本类型返回默认值
+            if (mappingInfo.fieldIsPrimitive()){
+                return mappingInfo.fillDefaultPrimitiveValue(null);
+            }
             return null;
         }
         if (cell.getColumnIndex() == mappingInfo.getColumnPosition()){

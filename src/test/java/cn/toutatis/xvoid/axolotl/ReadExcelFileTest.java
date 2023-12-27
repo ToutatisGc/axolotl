@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public class ReadExcelFileTest {
 
@@ -23,10 +24,13 @@ public class ReadExcelFileTest {
     public void testOneLineExcelFile() {
         File xlsxFile = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
         GracefulExcelReader gracefulExcelReader = new GracefulExcelReader(xlsxFile,true);
-        List<IndexPropertyEntity> mapList = gracefulExcelReader.readSheetData(0, IndexPropertyEntity.class);
-        for (IndexPropertyEntity indexPropertyEntity : mapList) {
-            System.err.println(indexPropertyEntity);
+        List<Map> mapList = gracefulExcelReader.readSheetData(0, Map.class);
+        for (Map map : mapList) {
+            System.err.println(map);
         }
+//        for (IndexPropertyEntity indexPropertyEntity : mapList) {
+//            System.err.println(indexPropertyEntity);
+//        }
     }
 
     @Test
