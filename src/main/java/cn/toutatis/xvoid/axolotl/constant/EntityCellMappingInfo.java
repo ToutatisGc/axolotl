@@ -8,7 +8,7 @@ import lombok.Data;
  * @author Toutatis_Gc
  */
 @Data
-public class EntityCellMappingInfo<T> {
+public class EntityCellMappingInfo<FT> {
 
     /**
      * 字段索引
@@ -38,7 +38,7 @@ public class EntityCellMappingInfo<T> {
     /**
      * 字段类型
      */
-    private Class<T> fieldType;
+    private Class<FT> fieldType;
 
     /**
      * 数据转换适配器
@@ -70,6 +70,10 @@ public class EntityCellMappingInfo<T> {
          */
         UNKNOWN
 
+    }
+
+    public EntityCellMappingInfo(Class<FT> fieldType) {
+        this.fieldType = fieldType;
     }
 
     /**

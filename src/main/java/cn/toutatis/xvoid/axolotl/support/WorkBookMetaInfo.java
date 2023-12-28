@@ -23,7 +23,13 @@ public class WorkBookMetaInfo extends AbstractMetaInfo{
 
     private final Map<Integer, List<Row>> sheetData = new HashMap<>();
 
+    /**
+     * 当前读取到的行和列号
+     * -1表示未读取到行号和列号
+     * 这两种属性用于在读取数据时，获取当前读取到的行和列号，以提示错误信息和定位读取位置
+     */
     private int currentReadRowIndex = -1;
+    private int currentReadColumnIndex = -1;
 
     public WorkBookMetaInfo(File file, DetectResult detectResult) {
         this.setFile(file);

@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.annotations;
 
 import cn.toutatis.xvoid.axolotl.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 
 import java.lang.annotation.ElementType;
@@ -30,6 +31,6 @@ public @interface CellBindProperty {
      * 自定义适配器
      * @see cn.toutatis.xvoid.axolotl.support.DataCastAdapter
      */
-    Class<? extends DataCastAdapter> adapter() default DataCastAdapter.class;
+    Class<? extends DataCastAdapter<?>> adapter() default AutoAdapter.class;
 
 }

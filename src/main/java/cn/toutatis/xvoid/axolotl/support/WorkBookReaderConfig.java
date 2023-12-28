@@ -46,13 +46,13 @@ public class WorkBookReaderConfig<T> {
      * key: 索引
      * value: 映射信息
      */
-    private List<EntityCellMappingInfo> indexMappingInfos;
+    private List<EntityCellMappingInfo<?>> indexMappingInfos;
 
     /**
      * 位置映射信息
      * key: 位置[A5=0,4,B2=1,1]
      */
-    private Map<String,EntityCellMappingInfo> positionMappingInfos;
+    private Map<String,EntityCellMappingInfo<?>> positionMappingInfos;
 
     /**
      * 读取的特性
@@ -121,16 +121,15 @@ public class WorkBookReaderConfig<T> {
      */
     private void processEntityFieldMappingToCell() {
         Field[] declaredFields = castClass.getDeclaredFields();
-        List<EntityCellMappingInfo> entityCellMappingInfos = new ArrayList<>(declaredFields.length);
-        HashMap<String, EntityCellMappingInfo> positionMappingInfos = new HashMap<>();
+        List<EntityCellMappingInfo<?>> entityCellMappingInfos = new ArrayList<>(declaredFields.length);
+        HashMap<String, EntityCellMappingInfo<?>> positionMappingInfos = new HashMap<>();
         boolean preciseLocalization = getReadFeatureAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
         AtomicInteger idx = new AtomicInteger(-1);
         for (Field declaredField : declaredFields) {
             idx.getAndIncrement();
-            EntityCellMappingInfo entityCellMappingInfo = new EntityCellMappingInfo();
+            EntityCellMappingInfo<?> entityCellMappingInfo = new EntityCellMappingInfo<>(declaredField.getType());
             entityCellMappingInfo.setFieldIndex(idx.get());
             entityCellMappingInfo.setFieldName(declaredField.getName());
-            entityCellMappingInfo.setFieldType(declaredField.getType());
             // 指定单元格索引
             CellBindProperty cellBindProperty = declaredField.getAnnotation(CellBindProperty.class);
             if (cellBindProperty != null) {

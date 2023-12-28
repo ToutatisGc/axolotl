@@ -52,7 +52,12 @@ public enum ReadExcelFeature {
     /**
      * 使用Map接收数据时，打印调试信息
      */
-    USE_MAP_DEBUG(Type.BOOLEAN, true,true);
+    USE_MAP_DEBUG(Type.BOOLEAN, true,true),
+
+    /**
+     * 如果字段存在值覆盖掉原值
+     */
+    FIELD_EXIST_OVERRIDE(Type.BOOLEAN, true,true);
 
     public enum Type{
         BOOLEAN,

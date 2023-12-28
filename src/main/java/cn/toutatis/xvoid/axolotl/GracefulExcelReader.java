@@ -225,10 +225,11 @@ public class GracefulExcelReader {
                 }
                 LOGGER.debug(mappingInfo.getFieldName() + ":" + cellValue);
                 // 2. 转换单元格值
-                System.err.println(this.adaptiveEntityClass(cellValue,mappingInfo));
+                Object adaptiveValue = this.adaptiveEntityClass(cellValue, mappingInfo);
+                LOGGER.debug("转换前："+cellValue.getCellValue()+" 转换后："+adaptiveValue);
                 // 3. 设置单元格值到实体
+//                field.set(instance,adaptiveValue);
             }
-
         }
     }
 
@@ -237,15 +238,16 @@ public class GracefulExcelReader {
      *
      * @param info 单元格值
      * @param mappingInfo 映射信息
-     * @param <T>  实体类
+     * @param <T>    实体类
      * @return 适配实体类的字段值
      */
+    @SuppressWarnings("unchecked")
     private <T> Object adaptiveEntityClass(CellGetInfo info, EntityCellMappingInfo<T> mappingInfo){
         Class<? extends DataCastAdapter<?>> dataCastAdapter = mappingInfo.getDataCastAdapter();
-        DataCastAdapter<?> adapter;
+        DataCastAdapter<T> adapter;
         if (dataCastAdapter != null && !dataCastAdapter.isInterface()){
             try {
-                adapter = dataCastAdapter.getDeclaredConstructor().newInstance();
+                adapter =(DataCastAdapter<T>) dataCastAdapter.getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
                 throw new RuntimeException(e);
@@ -254,14 +256,17 @@ public class GracefulExcelReader {
             DataCastAdapter<?> tmpAdapter = DefaultAdapters.getAdapter(mappingInfo.getFieldType());
             LOGGER.debug("查找默认的适配器类型：{},Class:{}",mappingInfo.getFieldType(),tmpAdapter == null ? "无" : tmpAdapter.getClass().getName());
             if (tmpAdapter == null){
-                throw new RuntimeException("不支持转换的类型:["+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
+                if(info.getCellType() == null){
+                    return info.getCellValue();
+                }
+                throw new RuntimeException("未找到转换的类型:["+info.getCellType() +"->"+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
             }
-            AbstractDataCastAdapter abstractDataCastAdapter = (AbstractDataCastAdapter) tmpAdapter;
+            AbstractDataCastAdapter<T> abstractDataCastAdapter = (AbstractDataCastAdapter<T>) tmpAdapter;
             abstractDataCastAdapter.setWorkBookReaderConfig(workBookReaderConfig);
             adapter = abstractDataCastAdapter;
         }
-        CastContext<?> castContext =  new CastContext<>(mappingInfo.getFieldType(),mappingInfo.getFormat());
-        if (adapter.support(info.getCellType(),mappingInfo.getFieldType())){
+        CastContext<T> castContext =  new CastContext<>(mappingInfo.getFieldType(),mappingInfo.getFormat());
+        if (adapter.support(info.getCellType(), mappingInfo.getFieldType())){
             return adapter.cast(info, castContext);
         }else {
             throw new RuntimeException("不支持转换的类型:["+info.getCellType() +"->"+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
@@ -299,10 +304,10 @@ public class GracefulExcelReader {
      * @param mappingInfo 映射信息
      * @return 单元格值
      */
-    private CellGetInfo getCellValue(Cell cell, EntityCellMappingInfo mappingInfo){
+    private CellGetInfo getCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
         // 一般不为null，又map类型传入时，默认使用索引映射
         if (mappingInfo == null){
-            mappingInfo = new EntityCellMappingInfo();
+            mappingInfo = new EntityCellMappingInfo<>(String.class);
             mappingInfo.setColumnPosition(cell.getColumnIndex());
         }
         return switch (mappingInfo.getMappingType()) {
@@ -341,7 +346,10 @@ public class GracefulExcelReader {
             }else return new CellGetInfo();
         }else {
             Object value = null;
-            switch (cell.getCellType()) {
+            CellGetInfo cellGetInfo = new CellGetInfo();
+            CellType cellType = cell.getCellType();
+            cellGetInfo.setCellType(cellType);
+            switch (cellType) {
                 case STRING -> value = cell.getStringCellValue();
                 case NUMERIC -> value = cell.getNumericCellValue();
                 case BOOLEAN -> value = cell.getBooleanCellValue();
@@ -350,7 +358,9 @@ public class GracefulExcelReader {
                     LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(), cell);
                 }
             };
-            return new CellGetInfo(true,value);
+            cellGetInfo.setUseCellValue(true);
+            cellGetInfo.setCellValue(value);
+            return cellGetInfo;
         }
     }
 
