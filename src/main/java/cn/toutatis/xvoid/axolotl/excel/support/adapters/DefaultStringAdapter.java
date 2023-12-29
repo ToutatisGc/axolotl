@@ -4,7 +4,7 @@ import cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature;
 import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.WorkBookReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import org.apache.poi.ss.usermodel.CellType;
@@ -18,7 +18,7 @@ import java.util.Date;
 public class DefaultStringAdapter extends AbstractDataCastAdapter<Object,String> implements DataCastAdapter<String> {
     @Override
     public String cast(CellGetInfo cellGetInfo, CastContext<String> context) {
-        WorkBookReaderConfig<Object> readerConfig =  getWorkBookReaderConfig();
+        ReaderConfig<Object> readerConfig =  getReaderConfig();
         Object cellValue = cellGetInfo.getCellValue();
         if (cellValue == null){return null;}
         switch (cellGetInfo.getCellType()){

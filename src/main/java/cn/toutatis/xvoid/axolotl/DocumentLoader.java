@@ -14,4 +14,8 @@ public class DocumentLoader {
         return new GracefulExcelReader<>(excelFile, clazz);
     }
 
+    public static GracefulExcelReader<Object> getExcelReader(File excelFile){
+        return getExcelReader(excelFile, Object.class);
+    }
+
 }

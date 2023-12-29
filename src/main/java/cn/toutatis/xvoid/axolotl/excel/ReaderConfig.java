@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.support;
+package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.annotations.CellBindProperty;
 import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyCellPosition;
@@ -19,7 +19,7 @@ import static cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature.*;
 @ToString
 @Getter
 @Setter
-public class WorkBookReaderConfig<T> {
+public class ReaderConfig<T> {
 
     /**
      * 表索引
@@ -62,14 +62,14 @@ public class WorkBookReaderConfig<T> {
     /**
      *
      */
-    public WorkBookReaderConfig() {
+    public ReaderConfig() {
         this(true);
     }
 
     /**
      * @param castClass 读取的Java类型
      */
-    public WorkBookReaderConfig(Class<T> castClass) {
+    public ReaderConfig(Class<T> castClass) {
         this(true);
         this.setCastClass(castClass);
     }
@@ -77,7 +77,7 @@ public class WorkBookReaderConfig<T> {
     /**
      *
      */
-    public WorkBookReaderConfig(boolean withDefaultConfig) {
+    public ReaderConfig(boolean withDefaultConfig) {
         if (withDefaultConfig) {
             readFeature.putAll(defaultReadFeature());
         }

@@ -1,5 +1,7 @@
-package cn.toutatis.xvoid.axolotl.excel.support;
+package cn.toutatis.xvoid.axolotl.excel;
 
+import cn.toutatis.xvoid.axolotl.excel.support.AbstractMetaInfo;
+import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
@@ -14,10 +16,15 @@ import java.util.Map;
  * 工作簿元信息
  * @author Toutatis_Gc
  */
-public class WorkBookMetaInfo extends AbstractMetaInfo{
+public class WorkBookMetaInfo extends AbstractMetaInfo {
 
     @Getter
     private Workbook workbook;
+
+    /**
+     * 是否使用默认的读取配置
+     */
+    private boolean useDefaultReaderConfig = false;
 
     private FormulaEvaluator formulaEvaluator;
 
@@ -30,6 +37,12 @@ public class WorkBookMetaInfo extends AbstractMetaInfo{
      */
     private int currentReadRowIndex = -1;
     private int currentReadColumnIndex = -1;
+
+    /**
+     * 直接指定读取的类
+     */
+
+    private Class<?> _directClass;
 
     public WorkBookMetaInfo(File file, DetectResult detectResult) {
         this.setFile(file);
@@ -71,5 +84,21 @@ public class WorkBookMetaInfo extends AbstractMetaInfo{
      */
     public boolean isSheetDataEmpty(int sheetIndex) {
         return !sheetData.containsKey(sheetIndex);
+    }
+
+    public boolean isUseDefaultReaderConfig() {
+        return useDefaultReaderConfig;
+    }
+
+    public void setUseDefaultReaderConfig(boolean useDefaultReaderConfig) {
+        this.useDefaultReaderConfig = useDefaultReaderConfig;
+    }
+
+    public Class<?> getDirectClass() {
+        return _directClass;
+    }
+
+    void setDirectClass(Class<?> _directClass) {
+        this._directClass = _directClass;
     }
 }

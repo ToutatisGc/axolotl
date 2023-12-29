@@ -1,8 +1,8 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
 import cn.toutatis.xvoid.axolotl.excel.constant.CommonMimeType;
-import cn.toutatis.xvoid.axolotl.excel.support.DetectResult;
-import cn.toutatis.xvoid.axolotl.excel.support.TikaShell;
+import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
+import cn.toutatis.xvoid.axolotl.excel.support.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.mime.MimeType;

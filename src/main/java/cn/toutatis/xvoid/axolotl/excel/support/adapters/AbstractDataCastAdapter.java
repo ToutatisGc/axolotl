@@ -1,16 +1,16 @@
 package cn.toutatis.xvoid.axolotl.excel.support.adapters;
 
 import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.WorkBookReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
 import lombok.Getter;
 
 @Getter
 public abstract class AbstractDataCastAdapter<T,FT> implements DataCastAdapter<FT> {
 
-    private WorkBookReaderConfig<T> workBookReaderConfig;
+    private ReaderConfig<T> readerConfig;
 
-    public void setWorkBookReaderConfig(WorkBookReaderConfig<T> workBookReaderConfig) {
-        this.workBookReaderConfig = workBookReaderConfig;
+    public void setReaderConfig(ReaderConfig<T> readerConfig) {
+        this.readerConfig = readerConfig;
     }
 
 }

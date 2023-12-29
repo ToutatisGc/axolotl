@@ -14,9 +14,12 @@ public class SimpleTest {
      */
     @Test
     public void testSimple(){
+        // 1.读取Excel文件
         File file = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
+        // 2.获取文档读取器
         GracefulExcelReader<IndexTest> excelReader = DocumentLoader.getExcelReader(file, IndexTest.class);
-
+        // 3.读取数据
+        excelReader.readSheetData(0, 0,10 );
     }
 
 }
