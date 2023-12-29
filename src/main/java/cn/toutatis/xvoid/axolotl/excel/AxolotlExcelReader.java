@@ -6,6 +6,7 @@ import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.util.RecordFormatException;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -91,7 +92,8 @@ public class AxolotlExcelReader<T extends Object> {
         try(FileInputStream fis = new FileInputStream(workBookContext.getFile())){
             Workbook workbook = WorkbookFactory.create(fis);
             workBookContext.setWorkbook(workbook);
-        } catch (IOException e) {
+        } catch (IOException | RecordFormatException e) {
+            LOGGER.error("加载文件失败",e);
             throw new RuntimeException(e);
         }
     }
