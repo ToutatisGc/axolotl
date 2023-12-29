@@ -1,8 +1,8 @@
 package cn.toutatis.xvoid.axolotl.entities;
 
-import cn.toutatis.xvoid.axolotl.annotations.CellBindProperty;
-import cn.toutatis.xvoid.axolotl.annotations.IndexWorkSheet;
-import cn.toutatis.xvoid.axolotl.annotations.SpecifyCellPosition;
+import cn.toutatis.xvoid.axolotl.excel.annotations.CellBindProperty;
+import cn.toutatis.xvoid.axolotl.excel.annotations.IndexWorkSheet;
+import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyCellPosition;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
