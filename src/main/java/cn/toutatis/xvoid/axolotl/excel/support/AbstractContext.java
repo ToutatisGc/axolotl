@@ -9,7 +9,7 @@ import java.io.File;
  * 文件元信息抽象类
  */
 @Data
-public abstract class AbstractMetaInfo {
+public abstract class AbstractContext {
 
     private File file;
 
@@ -18,6 +18,9 @@ public abstract class AbstractMetaInfo {
     private MimeType mimeType;
 
     public void setFile(File file) {
+        if (file == null){
+            throw new IllegalArgumentException("文件不得为空");
+        }
         this.file = file;
         this.originFileName = file.getName();
     }

@@ -1,8 +1,9 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
-import cn.toutatis.xvoid.axolotl.excel.support.AbstractMetaInfo;
+import cn.toutatis.xvoid.axolotl.excel.support.AbstractContext;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -16,18 +17,28 @@ import java.util.Map;
  * 工作簿元信息
  * @author Toutatis_Gc
  */
-public class WorkBookMetaInfo extends AbstractMetaInfo {
+public class WorkBookContext extends AbstractContext {
 
+    /**
+     * 由文件加载而来的工作簿文件信息
+     */
     @Getter
     private Workbook workbook;
 
     /**
      * 是否使用默认的读取配置
      */
+    @Setter @Getter
     private boolean useDefaultReaderConfig = false;
 
+    /**
+     * 公式计算器
+     */
     private FormulaEvaluator formulaEvaluator;
 
+    /**
+     * 表内容缓存
+     */
     private final Map<Integer, List<Row>> sheetData = new HashMap<>();
 
     /**
@@ -39,12 +50,13 @@ public class WorkBookMetaInfo extends AbstractMetaInfo {
     private int currentReadColumnIndex = -1;
 
     /**
+     * [内部属性]
      * 直接指定读取的类
+     * 在读取数据时使用不指定读取类型的读取方法时，使用该类读取数据
      */
+    private Class<?> _directReadClass;
 
-    private Class<?> _directClass;
-
-    public WorkBookMetaInfo(File file, DetectResult detectResult) {
+    public WorkBookContext(File file, DetectResult detectResult) {
         this.setFile(file);
         this.setMimeType(detectResult.getCatchMimeType());
     }
@@ -86,19 +98,11 @@ public class WorkBookMetaInfo extends AbstractMetaInfo {
         return !sheetData.containsKey(sheetIndex);
     }
 
-    public boolean isUseDefaultReaderConfig() {
-        return useDefaultReaderConfig;
+    protected Class<?> getDirectReadClass() {
+        return _directReadClass;
     }
 
-    public void setUseDefaultReaderConfig(boolean useDefaultReaderConfig) {
-        this.useDefaultReaderConfig = useDefaultReaderConfig;
-    }
-
-    public Class<?> getDirectClass() {
-        return _directClass;
-    }
-
-    void setDirectClass(Class<?> _directClass) {
-        this._directClass = _directClass;
+    protected void setDirectReadClass(Class<?> _directClass) {
+        this._directReadClass = _directClass;
     }
 }
