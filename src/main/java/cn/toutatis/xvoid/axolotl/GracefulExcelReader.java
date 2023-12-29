@@ -26,10 +26,10 @@ import java.util.Map;
  * Excel读取器
  * @author Toutatis_Gc
  */
-public class GracefulExcelReader {
+public class GracefulExcelReader<T> {
 
     /**
-     *
+     * 日志工具
      */
     private final Logger LOGGER  = LoggerToolkit.getLogger(GracefulExcelReader.class);
 
@@ -43,8 +43,7 @@ public class GracefulExcelReader {
      *
      */
     @Getter
-    @SuppressWarnings("rawtypes")
-    private final WorkBookReaderConfig workBookReaderConfig;
+    private final WorkBookReaderConfig<T> workBookReaderConfig;
 
     /**
      *
@@ -80,7 +79,7 @@ public class GracefulExcelReader {
      * @param sheetIndex 表索引
      */
     @SuppressWarnings("unchecked")
-    public <T> List<T> readSheetData(int sheetIndex,Class<T> clazz) {
+    public List<T> readSheetData(int sheetIndex,Class<T> clazz) {
         if (clazz == null || clazz == Object.class){
             throw new IllegalArgumentException("读取的类型对象不能为空");
         }
@@ -97,6 +96,7 @@ public class GracefulExcelReader {
         workBookReaderConfig.setCastClass(clazz);
         workBookReaderConfig.setSheetIndex(sheetIndex);
         Sheet sheetAt = workBookMetaInfo.getWorkbook().getSheetAt(sheetIndex);
+        // TODO 分页加载数据
         int physicalNumberOfRows = sheetAt.getPhysicalNumberOfRows();
         int lastRowNum = sheetAt.getLastRowNum();
         return (List<T>) loadData(0,lastRowNum);
@@ -105,7 +105,7 @@ public class GracefulExcelReader {
     /**
      * @param sheetName 表名
      */
-    public <T> List<T> readSheetData(String sheetName, Class<T> clazz) {
+    public List<T> readSheetData(String sheetName, Class<T> clazz) {
         if (Validator.strIsBlank(sheetName)){throw new IllegalArgumentException("表名不能为空");}
         workBookReaderConfig.setSheetName(sheetName);
         int sheetIndex = this.workBookMetaInfo.getWorkbook().getSheetIndex(sheetName);
@@ -115,14 +115,15 @@ public class GracefulExcelReader {
     /**
      *
      */
-    public void readClass(){
+    public void readClassAsList(){
         //TODO 直接根据class获取信息
 //        IndexWorkSheet declaredAnnotation = this.castClass.getDeclaredAnnotation(IndexWorkSheet.class);
     }
 
     /**
-     * 读取Excel文件
-     *
+     * 初始化读取Excel文件
+     * 1.初始化加载文件先判断文件是否正常并且是需要的格式
+     * 2.将文件加载到POI工作簿中
      * @param excelFile Excel工作簿文件
      */
     private void initWorkbook(File excelFile) {
@@ -130,14 +131,17 @@ public class GracefulExcelReader {
         TikaShell.preCheckFileNormalThrowException(excelFile);
         DetectResult detectResult = TikaShell.detect(excelFile, TikaShell.OOXML_EXCEL,true);
         if (!detectResult.isDetect()){
-            if (detectResult.getCurrentFileStatus() == DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM ||
-                    detectResult.getCurrentFileStatus() == DetectResult.FileStatus.FILE_SUFFIX_PROBLEM
+            // 没有识别到XLSX格式再尝试识别XLS格式
+            DetectResult.FileStatus currentFileStatus = detectResult.getCurrentFileStatus();
+            if (currentFileStatus == DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM ||
+                    currentFileStatus == DetectResult.FileStatus.FILE_SUFFIX_PROBLEM
             ){
                 detectResult = TikaShell.detect(excelFile, TikaShell.MS_EXCEL,true);
             }else {
                 detectResult.throwException();
             }
         }
+        // 检查文件是否正常并且是需要的类型，否则抛出异常
         if (detectResult.isDetect() && detectResult.isWantedMimeType()){
             workBookMetaInfo = new WorkBookMetaInfo(excelFile,detectResult);
         }else{
@@ -204,15 +208,16 @@ public class GracefulExcelReader {
      * @param row 当前行
      */
     @SneakyThrows
-    @SuppressWarnings({"unchecked","rawtypes"})
+    @SuppressWarnings({"unchecked"})
     private void putRowToInstance(Object instance, Row row){
         // 填充到map
-        if (instance instanceof Map info){
-            this.putRowToMapInstance(info,row);
+        if (instance instanceof Map<?,?> info){
+            this.putRowToMapInstance((Map<String, Object>) info,row);
         }else{
-            Class castClass = workBookReaderConfig.getCastClass();
-            List<EntityCellMappingInfo> mappingInfos = workBookReaderConfig.getIndexMappingInfos();
-            for (EntityCellMappingInfo mappingInfo : mappingInfos) {
+            Class<?> castClass = workBookReaderConfig.getCastClass();
+            Map<String, EntityCellMappingInfo<?>> positionMappingInfos = workBookReaderConfig.getPositionMappingInfos();
+            List<EntityCellMappingInfo<?>> indexMappingInfos = workBookReaderConfig.getIndexMappingInfos();
+            for (EntityCellMappingInfo<?> mappingInfo : indexMappingInfos) {
                 Field field = castClass.getDeclaredField(mappingInfo.getFieldName());
                 field.setAccessible(true);
                 // 1. 获取单元格值
@@ -238,16 +243,16 @@ public class GracefulExcelReader {
      *
      * @param info 单元格值
      * @param mappingInfo 映射信息
-     * @param <T>    实体类
+     * @param <FT>    实体类
      * @return 适配实体类的字段值
      */
     @SuppressWarnings("unchecked")
-    private <T> Object adaptiveEntityClass(CellGetInfo info, EntityCellMappingInfo<T> mappingInfo){
+    private <FT> Object adaptiveEntityClass(CellGetInfo info, EntityCellMappingInfo<FT> mappingInfo){
         Class<? extends DataCastAdapter<?>> dataCastAdapter = mappingInfo.getDataCastAdapter();
-        DataCastAdapter<T> adapter;
+        DataCastAdapter<FT> adapter;
         if (dataCastAdapter != null && !dataCastAdapter.isInterface()){
             try {
-                adapter =(DataCastAdapter<T>) dataCastAdapter.getDeclaredConstructor().newInstance();
+                adapter =(DataCastAdapter<FT>) dataCastAdapter.getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
                 throw new RuntimeException(e);
@@ -261,11 +266,11 @@ public class GracefulExcelReader {
                 }
                 throw new RuntimeException("未找到转换的类型:["+info.getCellType() +"->"+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
             }
-            AbstractDataCastAdapter<T> abstractDataCastAdapter = (AbstractDataCastAdapter<T>) tmpAdapter;
+            AbstractDataCastAdapter<T,FT> abstractDataCastAdapter = (AbstractDataCastAdapter<T,FT>) tmpAdapter;
             abstractDataCastAdapter.setWorkBookReaderConfig(workBookReaderConfig);
             adapter = abstractDataCastAdapter;
         }
-        CastContext<T> castContext =  new CastContext<>(mappingInfo.getFieldType(),mappingInfo.getFormat());
+        CastContext<FT> castContext =  new CastContext<>(mappingInfo.getFieldType(),mappingInfo.getFormat());
         if (adapter.support(info.getCellType(), mappingInfo.getFieldType())){
             return adapter.cast(info, castContext);
         }else {
@@ -274,7 +279,7 @@ public class GracefulExcelReader {
     }
 
     /**
-     *
+     * 填充单元格数据到map
      */
     private void putRowToMapInstance(Map<String,Object> instance, Row row){
         row.cellIterator().forEachRemaining(cell -> {
@@ -317,6 +322,19 @@ public class GracefulExcelReader {
         };
     }
 
+    private CellGetInfo getPositionCellValue(EntityCellMappingInfo<?> mappingInfo){
+        Sheet sheet = workBookMetaInfo.getWorkbook().getSheetAt(workBookReaderConfig.getSheetIndex());
+        int rowPosition = mappingInfo.getRowPosition();
+        if (rowPosition == -1){
+            throw new RuntimeException("未设置行位置");
+        }
+        Row row = sheet.getRow(rowPosition);
+        if(row == null){
+            // TODO 读取行位置
+        }
+        return new CellGetInfo();
+    }
+
     /**
      * 获取索引映射单元格值
      *
@@ -324,7 +342,7 @@ public class GracefulExcelReader {
      * @param mappingInfo 映射信息
      * @return 单元格值
      */
-    private CellGetInfo getIndexCellValue(Cell cell, EntityCellMappingInfo mappingInfo){
+    private CellGetInfo getIndexCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
         //TODO 正确读取单元格值
         // 未设置列位置返回空值
         if (mappingInfo.getColumnPosition() == -1){

@@ -5,7 +5,7 @@ import cn.toutatis.xvoid.axolotl.support.WorkBookReaderConfig;
 import lombok.Getter;
 
 @Getter
-public abstract class AbstractDataCastAdapter<T> implements DataCastAdapter<T> {
+public abstract class AbstractDataCastAdapter<T,FT> implements DataCastAdapter<FT> {
 
     private WorkBookReaderConfig<T> workBookReaderConfig;
 

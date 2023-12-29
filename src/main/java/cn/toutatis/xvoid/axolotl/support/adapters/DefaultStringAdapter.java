@@ -6,16 +6,19 @@ import cn.toutatis.xvoid.axolotl.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.support.DataCastAdapter;
 import cn.toutatis.xvoid.axolotl.support.WorkBookReaderConfig;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
+import cn.toutatis.xvoid.toolkit.constant.Time;
 import org.apache.poi.ss.usermodel.CellType;
+
+import java.util.Date;
 
 /**
  * 默认的String类型适配器
  * @author Toutatis_Gc
  */
-public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implements DataCastAdapter<String> {
+public class DefaultStringAdapter extends AbstractDataCastAdapter<Object,String> implements DataCastAdapter<String> {
     @Override
-    public String cast(CellGetInfo cellGetInfo, CastContext<String> config) {
-        WorkBookReaderConfig<String> readerConfig =  getWorkBookReaderConfig();
+    public String cast(CellGetInfo cellGetInfo, CastContext<String> context) {
+        WorkBookReaderConfig<Object> readerConfig =  getWorkBookReaderConfig();
         Object cellValue = cellGetInfo.getCellValue();
         if (cellValue == null){return null;}
         switch (cellGetInfo.getCellType()){
@@ -25,7 +28,13 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 }
                 return cellValue.toString();
             }
-            case BOOLEAN, NUMERIC, FORMULA:
+            case NUMERIC:{
+                if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.CAST_NUMBER_TO_DATE)){
+//                    if (DateUtil.isCellDateFormatted())
+                    cellValue = Time.regexTime(context.getDataFormat(),new Date());
+                }
+            }
+            case BOOLEAN, FORMULA:
                 return cellGetInfo.getCellValue().toString();
             case BLANK:
             default:
