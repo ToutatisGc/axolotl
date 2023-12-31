@@ -68,22 +68,22 @@ public class AxolotlExcelReader<T extends Object> {
      * @param excelFile Excel工作簿文件
      */
     private void detectFileAndInitWorkbook(File excelFile) {
-        // 检查文件是否正常
-        TikaShell.preCheckFileNormalThrowException(excelFile);
-        DetectResult detectResult = TikaShell.detect(excelFile, TikaShell.OOXML_EXCEL,true);
+        // 检查文件格式是否为XLSX
+        DetectResult detectResult = TikaShell.detect(excelFile, TikaShell.OOXML_EXCEL,false);
         if (!detectResult.isDetect()){
-            // 没有识别到XLSX格式再尝试识别XLS格式
             DetectResult.FileStatus currentFileStatus = detectResult.getCurrentFileStatus();
             if (currentFileStatus == DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM ||
                     currentFileStatus == DetectResult.FileStatus.FILE_SUFFIX_PROBLEM
             ){
-                detectResult = TikaShell.detect(excelFile, TikaShell.MS_EXCEL,true);
+                //如果是因为后缀不匹配或媒体类型不匹配导致识别不通过 换XLS格式再次识别
+                detectResult = TikaShell.detect(excelFile, TikaShell.MS_EXCEL,false);
             }else {
+                //如果是预检查不通过  抛出异常
                 detectResult.throwException();
             }
         }
         // 检查文件是否正常并且是需要的类型，否则抛出异常
-        if (detectResult.isDetect() && detectResult.isWantedMimeType()){
+        if (detectResult.isDetect()){
             workBookContext = new WorkBookContext(excelFile,detectResult);
         }else{
             detectResult.throwException();
