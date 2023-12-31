@@ -24,7 +24,7 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<Object,String>
         switch (cellGetInfo.getCellType()){
             case STRING:{
                 if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.TRIM_CELL_VALUE)){
-                    cellValue = Regex.convertSingleLine(cellValue.toString());
+//                    cellValue = Regex.convertSingleLine(cellValue.toString());
                 }
                 return cellValue.toString();
             }

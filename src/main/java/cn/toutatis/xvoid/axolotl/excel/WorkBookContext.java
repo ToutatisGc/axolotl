@@ -55,6 +55,8 @@ public class WorkBookContext extends AbstractContext {
      * 在读取数据时使用不指定读取类型的读取方法时，使用该类读取数据
      */
     private Class<?> _directReadClass;
+    //TODO 计划开发事件驱动
+    private boolean _eventDriven = false;
 
     public WorkBookContext(File file, DetectResult detectResult) {
         this.setFile(file);
@@ -104,5 +106,13 @@ public class WorkBookContext extends AbstractContext {
 
     protected void setDirectReadClass(Class<?> _directClass) {
         this._directReadClass = _directClass;
+    }
+
+    public boolean getEventDriven() {
+        return _eventDriven;
+    }
+
+    public void setEventDriven(boolean _eventDriven) {
+        this._eventDriven = _eventDriven;
     }
 }

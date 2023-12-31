@@ -285,23 +285,7 @@
         }
     }
 
-    /**
-     * 计算公式
-     * @param cell 单元格
-     * @return 计算结果
-     */
-    private Object getFormulaCellValue(Cell cell){
-        CellValue evaluated = workBookContext.getFormulaEvaluator().evaluate(cell);
-        return switch (evaluated.getCellType()) {
-            case STRING -> evaluated.getStringValue();
-            case NUMERIC -> evaluated.getNumberValue();
-            case BOOLEAN -> evaluated.getBooleanValue();
-            default -> {
-                LOGGER.error("未知的单元格类型:{},{}",evaluated.getCellType(), evaluated);
-                yield null;
-            }
-        };
-    }
+
 
     public List<T> readSheetData(int sheetIndex, int start, int end) {
         // TODO 读取指定sheet的数据

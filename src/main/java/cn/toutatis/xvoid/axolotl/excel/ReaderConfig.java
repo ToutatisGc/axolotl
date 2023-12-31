@@ -42,6 +42,18 @@ public class ReaderConfig<T> {
     private Class<T> castClass;
 
     /**
+     * 读取的起始行
+     * 注意：startIndex = 0时将读取initialRowPositionOffset偏移量之后的行
+     */
+    private int startIndex = 0;
+
+    /**
+     * 读取的结束行
+     * endIndex = -1时将读取表尾
+     */
+    private int endIndex = -1;
+
+    /**
      * 索引映射信息
      * key: 索引
      * value: 映射信息

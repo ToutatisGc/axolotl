@@ -15,7 +15,7 @@ public class AxolotlDocumentReaders {
     }
 
     public static AxolotlExcelReader<Object> getExcelReader(File excelFile){
-        return getExcelReader(excelFile, Object.class);
+        return new AxolotlExcelReader<>(excelFile);
     }
 
 }
