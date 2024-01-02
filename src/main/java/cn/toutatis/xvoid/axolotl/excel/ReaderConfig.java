@@ -98,6 +98,14 @@ public class ReaderConfig<T> {
         }
     }
 
+    public ReaderConfig(Class<T> castClass, boolean withDefaultConfig) {
+        if (withDefaultConfig) {
+            readFeature.putAll(defaultReadFeature());
+        }
+        this.setCastClass(castClass);
+
+    }
+
     /**
      *
      */
@@ -198,9 +206,11 @@ public class ReaderConfig<T> {
                 continue;
             }
             // 未指定单元格位置默认情况
-            entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.UNKNOWN);
-            entityCellMappingInfo.setColumnPosition(preciseLocalization ? -1 : idx.get());
-            entityCellMappingInfos.add(entityCellMappingInfo);
+            if (!preciseLocalization){
+                entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.UNKNOWN);
+                entityCellMappingInfo.setColumnPosition(idx.get());
+                entityCellMappingInfos.add(entityCellMappingInfo);
+            }
         }
         this.positionMappingInfos = positionMappingInfos;
         indexMappingInfos = entityCellMappingInfos;

@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl;
 
 import cn.toutatis.xvoid.axolotl.entities.IndexTest;
 import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -13,6 +14,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class SimpleTest {
 
@@ -22,11 +24,15 @@ public class SimpleTest {
     @Test
     public void testSimple(){
         // 1.读取Excel文件
-        File file = FileToolkit.getResourceFileAsFile("workbook/大数据量文件.xlsx");
+        File file = FileToolkit.getResourceFileAsFile("workbook/2.xlsx");
         // 2.获取文档读取器
         AxolotlExcelReader<IndexTest> excelReader = AxolotlDocumentReaders.getExcelReader(file, IndexTest.class);
         // 3.读取数据
-//        excelReader.readSheetData(0, 0,10 );
+        ReaderConfig<IndexTest> indexTestReaderConfig = new ReaderConfig<>(IndexTest.class,true);
+        indexTestReaderConfig.setSheetIndex(0);
+        indexTestReaderConfig.setEndIndex(5);
+        List<IndexTest> indexTests = excelReader.readSheetData(indexTestReaderConfig);
+        System.err.println(indexTests);
     }
 
     @Test

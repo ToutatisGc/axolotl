@@ -14,15 +14,12 @@ public class DefaultAdapters {
 
     static {
         defaultAdapters = Map.of(
-                String.class, new DefaultStringAdapter()
-//                Integer.class, new DefaultIntegerAdapter(),
-//                Long.class, new DefaultLongAdapter(),
-//                Double.class, new DefaultDoubleAdapter(),
-//                Float.class, new DefaultFloatAdapter(),
-//                Boolean.class, new DefaultBooleanAdapter(),
-//                Short.class, new DefaultShortAdapter(),
-//                Byte.class, new DefaultByteAdapter(),
-//                Character.class, new DefaultCharacterAdapter(),
+                String.class, new DefaultStringAdapter(),
+                Integer.class, new DefaultNumericAdapter<>(Integer.class),
+                Long.class, new DefaultNumericAdapter<>(Long.class),
+                Double.class, new DefaultNumericAdapter<>(Double.class),
+                Float.class, new DefaultNumericAdapter<>(Float.class)
+//                Boolean.class, new DefaultBooleanAdapter()
         );
     }
 

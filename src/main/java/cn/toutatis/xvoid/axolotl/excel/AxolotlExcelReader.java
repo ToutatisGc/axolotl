@@ -3,7 +3,11 @@ package cn.toutatis.xvoid.axolotl.excel;
 import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature;
+import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
+import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.support.adapters.AbstractDataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.TikaShell;
@@ -23,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -206,44 +211,136 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
      */
     @SneakyThrows
     private <RT> void row2SimplePOJO(RT instance, Row row, ReaderConfig<RT> readerConfig){
-        workBookContext.setCurrentReadRowIndex(row.getRowNum());
+        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
+        for (Map.Entry<String, EntityCellMappingInfo<?>> positionMappingInfoEntry : positionMappingInfos.entrySet()) {
+            EntityCellMappingInfo<?> positionMappingInfo = positionMappingInfoEntry.getValue();
+            workBookContext.setCurrentReadRowIndex(positionMappingInfo.getRowPosition());
+            workBookContext.setCurrentReadColumnIndex(positionMappingInfo.getColumnPosition());
+            CellGetInfo cellValue = this.getPositionCellOriginalValue(row.getSheet(), positionMappingInfo);
+            Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, positionMappingInfo, readerConfig);
+            Field field = instance.getClass().getDeclaredField(positionMappingInfo.getFieldName());
+            field.setAccessible(true);
+            field.set(instance, adaptiveValue);
+        }
         List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
         for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
-            Field field = instance.getClass().getField(indexMappingInfo.getFieldName());
+            workBookContext.setCurrentReadRowIndex(row.getRowNum());
+            workBookContext.setCurrentReadColumnIndex(indexMappingInfo.getColumnPosition());
+            CellGetInfo cellValue = this.getCellOriginalValue(row,indexMappingInfo.getColumnPosition(), indexMappingInfo);
+            Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, indexMappingInfo, readerConfig);
+            Field field = instance.getClass().getDeclaredField(indexMappingInfo.getFieldName());
             field.setAccessible(true);
-            field.set(instance, this.getCellValue(row.getCell(indexMappingInfo.getColumnPosition()), indexMappingInfo));
+            Object o = field.get(instance);
+            if (o!= null){
+                if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.FIELD_EXIST_OVERRIDE)){
+                    field.set(instance, adaptiveValue);
+                }
+            }else {
+                field.set(instance, adaptiveValue);
+            }
         }
-        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
     }
 
     /**
-     * 获取单元格值
+     * 适配实体类的字段
      *
-     * @param cell 单元格
+     * @param info 单元格值
+     * @param mappingInfo 映射信息
+     * @return 适配实体类的字段值
+     */
+    @SuppressWarnings({"unchecked","rawtypes"})
+    private Object adaptiveCellValue2EntityClass(CellGetInfo info, EntityCellMappingInfo<?> mappingInfo, ReaderConfig<?> readerConfig){
+        if (mappingInfo.getDataCastAdapter() == AutoAdapter.class){
+            DataCastAdapter<Object> autoAdapter = AutoAdapter.instance();
+            return this.adaptiveValue(autoAdapter,info, (EntityCellMappingInfo<Object>) mappingInfo, (ReaderConfig<Object>) readerConfig);
+        }
+        Class<? extends DataCastAdapter<?>> dataCastAdapterClass = mappingInfo.getDataCastAdapter();
+        if (dataCastAdapterClass != null && !dataCastAdapterClass.isInterface()){
+            DataCastAdapter adapter;
+            try {
+                adapter = dataCastAdapterClass.getDeclaredConstructor().newInstance();
+                return this.adaptiveValue(adapter,info, (EntityCellMappingInfo<Object>) mappingInfo, (ReaderConfig<Object>) readerConfig);
+            } catch (InstantiationException | IllegalAccessException |
+                     InvocationTargetException | NoSuchMethodException e) {
+                throw new AxolotlReadException(e);
+            }
+        }else {
+            throw new AxolotlReadException("[%s]字段请配置适配器,字段类型:[%s]".formatted(mappingInfo.getFieldName(), mappingInfo.getFieldType()));
+        }
+    }
+
+    private Object adaptiveValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo, ReaderConfig<Object> readerConfig) {
+        if (adapter == null){
+            throw new AxolotlReadException("未找到转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+        }
+        if (adapter instanceof AbstractDataCastAdapter<Object> abstractDataCastAdapter){
+            abstractDataCastAdapter.setReaderConfig(readerConfig);
+            abstractDataCastAdapter.setEntityCellMappingInfo(mappingInfo);
+            return castValue(abstractDataCastAdapter, info, mappingInfo);
+        }
+        return castValue(adapter, info, mappingInfo);
+    }
+
+    private Object castValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo) {
+        if (!adapter.support(info.getCellType(), mappingInfo.getFieldType())){
+            throw new AxolotlReadException("不支持转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+        }
+        CastContext<Object> castContext = new CastContext<>(mappingInfo.getFieldType(), mappingInfo.getFormat());
+        return adapter.cast(info, castContext);
+    }
+
+
+    /**
+     * 获取位置映射单元格原始值
+     * @param sheet 表
      * @param mappingInfo 映射信息
      * @return 单元格值
      */
-    private CellGetInfo getCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
+    private CellGetInfo getPositionCellOriginalValue(Sheet sheet, EntityCellMappingInfo<?> mappingInfo){
+        Row row = sheet.getRow(mappingInfo.getRowPosition());
+        if (row == null){
+            return this.getBlankCellValue(mappingInfo);
+        }
+        Cell cell = row.getCell(mappingInfo.getColumnPosition());
+        if (cell == null){
+            return this.getBlankCellValue(mappingInfo);
+        }
+        return this.getCellOriginalValue(row,mappingInfo.getColumnPosition(), mappingInfo);
+    }
+
+    /**
+     * 获取单元格原始值
+     * @param row 行次
+     * @param mappingInfo 映射信息
+     * @return 单元格值
+     * @see #getIndexCellValue(Row, int, EntityCellMappingInfo)
+     */
+    private CellGetInfo getCellOriginalValue(Row row,int index, EntityCellMappingInfo<?> mappingInfo){
         // 一般不为null，由map类型传入时，默认使用索引映射
         if (mappingInfo == null){
             mappingInfo = new EntityCellMappingInfo<>(String.class);
-            mappingInfo.setColumnPosition(cell.getColumnIndex());
+            mappingInfo.setColumnPosition(index);
         }
-        return switch (mappingInfo.getMappingType()) {
-            case INDEX,UNKNOWN -> this.getIndexCellValue(cell, mappingInfo);
-            case POSITION -> null;
-            // TODO 位置读取
-        };
+        if (mappingInfo.getMappingType() == EntityCellMappingInfo.MappingType.POSITION){
+            throw new AxolotlReadException("位置映射请使用getPositionCellValue方法");
+        }
+        return this.getIndexCellValue(row,index, mappingInfo);
     }
 
     /**
      * 获取索引映射单元格值
      *
-     * @param cell 单元格
+     * @param row 行次
      * @param mappingInfo 映射信息
      * @return 单元格值
+     * @see #getBlankCellValue(EntityCellMappingInfo)
+     * @see #getFormulaCellValue(Cell)
      */
-    private CellGetInfo getIndexCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
+    private CellGetInfo getIndexCellValue(Row row,int index, EntityCellMappingInfo<?> mappingInfo){
+        if (index < 0){
+            return this.getBlankCellValue(mappingInfo);
+        }
+        Cell cell = row.getCell(index);
         if (mappingInfo.getColumnPosition() == -1 || cell == null){
             return this.getBlankCellValue(mappingInfo);
         }
@@ -256,15 +353,18 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
             case NUMERIC -> value = cell.getNumericCellValue();
             case BOOLEAN -> value = cell.getBooleanCellValue();
             case FORMULA -> value = getFormulaCellValue(cell);
-            default -> {
-                LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(), cell);
-            }
-        };
+            default -> LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(), cell);
+        }
         cellGetInfo.setUseCellValue(true);
         cellGetInfo.setCellValue(value);
         return cellGetInfo;
     }
 
+    /**
+     * 获取空单元格值
+     * @param mappingInfo 映射信息
+     * @return 默认填充值
+     */
     private CellGetInfo getBlankCellValue(EntityCellMappingInfo<?> mappingInfo){
         CellGetInfo cellGetInfo = new CellGetInfo();
         if (mappingInfo.fieldIsPrimitive()){
@@ -283,8 +383,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
             workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
             int idx = cell.getColumnIndex() + 1;
             String key = "CELL_" + idx;
-            //FIXME
-            instance.put(key,getCellValue(cell, null).getCellValue());
+            instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null).getCellValue());
             if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
                 instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 if (cell.getCellType() == CellType.NUMERIC){

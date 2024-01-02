@@ -117,6 +117,7 @@ public class EntityCellMappingInfo<FT> {
     }
 
     public boolean fieldIsPrimitive(){
+        if (fieldType == null){return false;}
         return fieldType.isPrimitive();
     }
 }

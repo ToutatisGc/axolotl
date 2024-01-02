@@ -58,52 +58,6 @@
 //        IndexWorkSheet declaredAnnotation = this.castClass.getDeclaredAnnotation(IndexWorkSheet.class);
     }
 
-
-    /**
-     * 加载数据
-     *
-     * @param start 开始行
-     * @param end 结束行
-     */
-    private List<Object> loadData(int start,int end){
-        // 读取指定sheet
-        Sheet sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
-        int sheetIndex = readerConfig.getSheetIndex();
-        List<Row> rowList;
-        // 缓存sheet数据
-        if (workBookContext.isSheetDataEmpty(sheetIndex)){
-            ArrayList<Row> tmp = new ArrayList<>();
-            // 是否读取所有行
-            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.INCLUDE_EMPTY_ROW)){
-                for (int i = 0; i <= sheet.getLastRowNum(); i++) {
-                    Row row = sheet.getRow(i);
-                    LOGGER.debug(i+":"+row);
-                    tmp.add(row);
-                }
-            }else{
-                sheet.rowIterator().forEachRemaining(tmp::add);
-            }
-            workBookContext.setSheetData(sheetIndex,tmp);
-            rowList = tmp;
-        }else {
-            rowList = workBookContext.getSheetData(sheetIndex);
-        }
-        // 读取分页数据
-        List<Object> dataList = new ArrayList<>();
-        for (int idx = start; idx <= end; idx++) {
-            Object castClassInstance = readerConfig.getCastClassInstance();
-            Row row = rowList.get(idx);
-            if (row == null){
-                dataList.add(castClassInstance);
-                continue;
-            }
-            // 填充对象数据
-            putRowToInstance(castClassInstance,row);
-            dataList.add(castClassInstance);
-        }
-        return dataList;
-    }
-
     /**
      * 填充单元格数据到对象
      *
@@ -141,60 +95,5 @@
         }
     }
 
-    /**
-     * 适配实体类的字段
-     *
-     * @param info 单元格值
-     * @param mappingInfo 映射信息
-     * @param <FT>    实体类
-     * @return 适配实体类的字段值
-     */
-    @SuppressWarnings("unchecked")
-    private <FT> Object adaptiveEntityClass(CellGetInfo info, EntityCellMappingInfo<FT> mappingInfo){
-        Class<? extends DataCastAdapter<?>> dataCastAdapter = mappingInfo.getDataCastAdapter();
-        DataCastAdapter<FT> adapter;
-        if (dataCastAdapter != null && !dataCastAdapter.isInterface()){
-            try {
-                adapter =(DataCastAdapter<FT>) dataCastAdapter.getDeclaredConstructor().newInstance();
-            } catch (InstantiationException | IllegalAccessException |
-                     InvocationTargetException | NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }else {
-            DataCastAdapter<?> tmpAdapter = DefaultAdapters.getAdapter(mappingInfo.getFieldType());
-            LOGGER.debug("查找默认的适配器类型：{},Class:{}",mappingInfo.getFieldType(),tmpAdapter == null ? "无" : tmpAdapter.getClass().getName());
-            if (tmpAdapter == null){
-                if(info.getCellType() == null){
-                    return info.getCellValue();
-                }
-                throw new RuntimeException("未找到转换的类型:["+info.getCellType() +"->"+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
-            }
-            AbstractDataCastAdapter<T,FT> abstractDataCastAdapter = (AbstractDataCastAdapter<T,FT>) tmpAdapter;
-            abstractDataCastAdapter.setReaderConfig(readerConfig);
-            adapter = abstractDataCastAdapter;
-        }
-        CastContext<FT> castContext =  new CastContext<>(mappingInfo.getFieldType(),mappingInfo.getFormat());
-        if (adapter.support(info.getCellType(), mappingInfo.getFieldType())){
-            return adapter.cast(info, castContext);
-        }else {
-            throw new RuntimeException("不支持转换的类型:["+info.getCellType() +"->"+mappingInfo.getFieldType() +" 字段:["+ mappingInfo.getFieldName() +"]");
-        }
-    }
 
-
-
-
-
-    private CellGetInfo getPositionCellValue(EntityCellMappingInfo<?> mappingInfo){
-        Sheet sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
-        int rowPosition = mappingInfo.getRowPosition();
-        if (rowPosition == -1){
-            throw new RuntimeException("未设置行位置");
-        }
-        Row row = sheet.getRow(rowPosition);
-        if(row == null){
-            // TODO 读取行位置
-        }
-        return new CellGetInfo();
-    }
 

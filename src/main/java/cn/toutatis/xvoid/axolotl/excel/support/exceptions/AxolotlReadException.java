@@ -5,6 +5,10 @@ package cn.toutatis.xvoid.axolotl.excel.support.exceptions;
  */
 public class AxolotlReadException extends RuntimeException{
 
+    public AxolotlReadException(Throwable cause) {
+        super(cause);
+    }
+
     public AxolotlReadException(String message) {
         super(message);
     }

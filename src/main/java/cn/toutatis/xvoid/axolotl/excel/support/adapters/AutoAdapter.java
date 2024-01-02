@@ -1,18 +1,40 @@
 package cn.toutatis.xvoid.axolotl.excel.support.adapters;
 
+import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
+import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
 import org.apache.poi.ss.usermodel.CellType;
 
-public class AutoAdapter extends AbstractDataCastAdapter<Object,Object>{
+/**
+ * 自动适配器
+ */
+public class AutoAdapter extends AbstractDataCastAdapter<Object> {
+
+    public static AutoAdapter instance() {
+        return new AutoAdapter();
+    }
     @Override
-    public Object cast(CellGetInfo cellGetInfo, CastContext<Object> context) {
-        //TODO 将默认转换器放到该位置
-        return null;
+    @SuppressWarnings({"unchecked","rawtypes"})
+    public Object cast(CellGetInfo cellGetInfo, CastContext context) {
+        DataCastAdapter<?> adapter = DefaultAdapters.getAdapter(context.getCastType());
+        return adapter.cast(cellGetInfo,context);
     }
 
     @Override
-    public boolean support(CellType cellType, Class<Object> clazz) {
-        return false;
+    @SuppressWarnings({"unchecked","rawtypes"})
+    public boolean support(CellType cellType, Class clazz) {
+        DataCastAdapter<?> adapter = DefaultAdapters.getAdapter(clazz);
+        EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
+        if (adapter == null){
+            throw new AxolotlReadException("未找到可转换的字段:[%s],请配置适配器".formatted(entityCellMappingInfo.getFieldName()));
+        }
+        if (adapter instanceof AbstractDataCastAdapter abstractDataCastAdapter){
+            abstractDataCastAdapter.setReaderConfig(getReaderConfig());
+            abstractDataCastAdapter.setEntityCellMappingInfo(entityCellMappingInfo);
+            return abstractDataCastAdapter.support(cellType,clazz);
+        }
+        return adapter.support(cellType,clazz);
     }
 }
