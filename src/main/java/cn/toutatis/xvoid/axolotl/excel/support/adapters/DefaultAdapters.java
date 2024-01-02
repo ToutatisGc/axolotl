@@ -16,6 +16,7 @@ public class DefaultAdapters {
         defaultAdapters = Map.of(
                 String.class, new DefaultStringAdapter(),
                 Integer.class, new DefaultNumericAdapter<>(Integer.class),
+                int.class, new DefaultNumericAdapter<>(Integer.class),
                 Long.class, new DefaultNumericAdapter<>(Long.class),
                 Double.class, new DefaultNumericAdapter<>(Double.class),
                 Float.class, new DefaultNumericAdapter<>(Float.class)

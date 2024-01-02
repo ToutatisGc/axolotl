@@ -76,7 +76,7 @@ public class TikaShell {
      * @param mimeType 想要匹配的MIME类型
      * @param throwException 是否抛出异常
      * @param alreadyPreCheck 文件是否已通过预检查
-     * @return
+     * @return 检测结果
      */
     @SneakyThrows
     public static DetectResult detect(File file, MimeType mimeType, boolean throwException,boolean alreadyPreCheck) {

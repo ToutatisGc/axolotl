@@ -24,7 +24,9 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
     @Override
     public NT cast(CellGetInfo cellGetInfo, CastContext<NT> context) {
         Object cellValue = cellGetInfo.getCellValue();
-        if (cellValue == null){return null;}
+        if (!cellGetInfo.isUseCellValue()){
+            return numberClass.cast(cellValue);
+        }
         switch (cellGetInfo.getCellType()){
             case NUMERIC:
                 return numberClass.cast(cellGetInfo.getCellValue());

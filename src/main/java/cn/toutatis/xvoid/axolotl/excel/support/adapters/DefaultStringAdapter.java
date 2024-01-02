@@ -22,7 +22,9 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
     public String cast(CellGetInfo cellGetInfo, CastContext<String> context) {
         ReaderConfig<?> readerConfig = getReaderConfig();
         Object cellValue = cellGetInfo.getCellValue();
-        if (cellValue == null){return null;}
+        if (!cellGetInfo.isUseCellValue()){
+            return context.getCastType().cast(cellValue);
+        }
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
         Map<ReadExcelFeature, Object> excelFeatures = entityCellMappingInfo.getExcelFeatures();
         return switch (cellGetInfo.getCellType()) {
