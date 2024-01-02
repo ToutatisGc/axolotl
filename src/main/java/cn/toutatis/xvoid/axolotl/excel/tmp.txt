@@ -183,25 +183,7 @@
 
 
 
-    /**
-     * 获取单元格值
-     *
-     * @param cell 单元格
-     * @param mappingInfo 映射信息
-     * @return 单元格值
-     */
-    private CellGetInfo getCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
-        // 一般不为null，又map类型传入时，默认使用索引映射
-        if (mappingInfo == null){
-            mappingInfo = new EntityCellMappingInfo<>(String.class);
-            mappingInfo.setColumnPosition(cell.getColumnIndex());
-        }
-        return switch (mappingInfo.getMappingType()) {
-            case INDEX,UNKNOWN -> this.getIndexCellValue(cell, mappingInfo);
-            case POSITION -> null;
-            // TODO 位置读取
-        };
-    }
+
 
     private CellGetInfo getPositionCellValue(EntityCellMappingInfo<?> mappingInfo){
         Sheet sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
@@ -216,56 +198,3 @@
         return new CellGetInfo();
     }
 
-    /**
-     * 获取索引映射单元格值
-     *
-     * @param cell 单元格
-     * @param mappingInfo 映射信息
-     * @return 单元格值
-     */
-    private CellGetInfo getIndexCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
-        //TODO 正确读取单元格值
-        // 未设置列位置返回空值
-        if (mappingInfo.getColumnPosition() == -1){
-            // 字段是否为基本类型,基本类型返回默认值
-            if (mappingInfo.fieldIsPrimitive()){
-                CellGetInfo cellGetInfo = new CellGetInfo();
-                cellGetInfo.setUseCellValue(true);
-                cellGetInfo.setCellValue(mappingInfo.fillDefaultPrimitiveValue(null));
-                return cellGetInfo;
-            }
-            return new CellGetInfo();
-        }
-        if (cell == null){
-            if (mappingInfo.fieldIsPrimitive()){
-                CellGetInfo cellGetInfo = new CellGetInfo();
-                cellGetInfo.setUseCellValue(true);
-                cellGetInfo.setCellValue(mappingInfo.fillDefaultPrimitiveValue(null));
-                return cellGetInfo;
-            }else return new CellGetInfo();
-        }else {
-            Object value = null;
-            CellGetInfo cellGetInfo = new CellGetInfo();
-            CellType cellType = cell.getCellType();
-            cellGetInfo.setCellType(cellType);
-            switch (cellType) {
-                case STRING -> value = cell.getStringCellValue();
-                case NUMERIC -> value = cell.getNumericCellValue();
-                case BOOLEAN -> value = cell.getBooleanCellValue();
-                case FORMULA -> value = getFormulaCellValue(cell);
-                default -> {
-                    LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(), cell);
-                }
-            };
-            cellGetInfo.setUseCellValue(true);
-            cellGetInfo.setCellValue(value);
-            return cellGetInfo;
-        }
-    }
-
-
-
-    public List<T> readSheetData(int sheetIndex, int start, int end) {
-        // TODO 读取指定sheet的数据
-        return new ArrayList<>();
-    }

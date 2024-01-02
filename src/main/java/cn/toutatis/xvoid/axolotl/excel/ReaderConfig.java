@@ -1,7 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
-import cn.toutatis.xvoid.axolotl.excel.annotations.CellBindProperty;
-import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyCellPosition;
+import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
+import cn.toutatis.xvoid.axolotl.excel.annotations.KeepIntact;
+import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyPositionBind;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
@@ -14,6 +15,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature.*;
 
@@ -73,7 +75,7 @@ public class ReaderConfig<T> {
     private Map<ReadExcelFeature, Object> readFeature = new HashMap<>();
 
     /**
-     *
+     * 默认构造
      */
     public ReaderConfig() {
         this(true);
@@ -101,15 +103,17 @@ public class ReaderConfig<T> {
      */
     private Map<ReadExcelFeature, Object> defaultReadFeature() {
         Map<ReadExcelFeature, Object> defaultReadFeature = new HashMap<>();
-        defaultReadFeature.put(IGNORE_EMPTY_SHEET_ERROR,IGNORE_EMPTY_SHEET_ERROR.getValue());
-        defaultReadFeature.put(SORTED_READ_SHEET_DATA,SORTED_READ_SHEET_DATA.getValue());
-        defaultReadFeature.put(INCLUDE_EMPTY_ROW,INCLUDE_EMPTY_ROW.getValue());
-        defaultReadFeature.put(USE_MAP_DEBUG,USE_MAP_DEBUG.getValue());
-        defaultReadFeature.put(DATA_BIND_PRECISE_LOCALIZATION,DATA_BIND_PRECISE_LOCALIZATION.getValue());
-        defaultReadFeature.put(CAST_NUMBER_TO_DATE,CAST_NUMBER_TO_DATE.getValue());
+        for (ReadExcelFeature feature : values()) {
+            if (feature.isDefaultFeature()){
+                defaultReadFeature.put(feature,feature.getValue());
+            }
+        }
         return defaultReadFeature;
     }
 
+    /**
+     * @param castClass 读取的Java类型
+     */
     public void setCastClass(Class<T> castClass) {
         this.setCastClass(castClass,false);
     }
@@ -125,12 +129,17 @@ public class ReaderConfig<T> {
         this.processEntityFieldMappingToCell();
     }
 
+    /**
+     *
+     */
     private void processClassAnnotation() {
         // TODO 读取WorkSheet注解
     }
 
     /**
      * 处理实体字段映射到单元格
+     * 单元格处理注有具有优先级
+     * 指定位置注解优先级>数据绑定注解优先级
      */
     private void processEntityFieldMappingToCell() {
         Field[] declaredFields = castClass.getDeclaredFields();
@@ -143,23 +152,22 @@ public class ReaderConfig<T> {
             EntityCellMappingInfo<?> entityCellMappingInfo = new EntityCellMappingInfo<>(declaredField.getType());
             entityCellMappingInfo.setFieldIndex(idx.get());
             entityCellMappingInfo.setFieldName(declaredField.getName());
-            // 指定单元格索引
-            CellBindProperty cellBindProperty = declaredField.getAnnotation(CellBindProperty.class);
-            if (cellBindProperty != null) {
-                entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
-                entityCellMappingInfo.setColumnPosition(cellBindProperty.cellIndex());
-                entityCellMappingInfo.setDataCastAdapter(cellBindProperty.adapter());
-                entityCellMappingInfo.setFormat(cellBindProperty.format());
-                entityCellMappingInfos.add(entityCellMappingInfo);
-                continue;
+            // 排除特性
+            KeepIntact keepIntact = declaredField.getAnnotation(KeepIntact.class);
+            if (keepIntact!= null){
+                ReadExcelFeature[] excludeFeatures = keepIntact.excludeFeatures();
+                entityCellMappingInfo.setExcelFeatures(
+                        Arrays.stream(excludeFeatures)
+                                .collect(Collectors.toMap(feature -> feature, feature -> true))
+                );
             }
             // 指定单元格具体位置
-            SpecifyCellPosition specifyCellPosition = declaredField.getAnnotation(SpecifyCellPosition.class);
-            if (specifyCellPosition != null) {
+            SpecifyPositionBind specifyPositionBind = declaredField.getAnnotation(SpecifyPositionBind.class);
+            if (specifyPositionBind != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.POSITION);
-                entityCellMappingInfo.setFormat(specifyCellPosition.format());
-                entityCellMappingInfo.setDataCastAdapter(specifyCellPosition.adapter());
-                String position = specifyCellPosition.value().toUpperCase();
+                entityCellMappingInfo.setFormat(specifyPositionBind.format());
+                entityCellMappingInfo.setDataCastAdapter(specifyPositionBind.adapter());
+                String position = specifyPositionBind.value().toUpperCase();
                 String[] alphaNumeric = Regex.splitAlphaNumeric(position);
                 if (alphaNumeric.length == 2) {
                     String columnString = alphaNumeric[0];
@@ -177,6 +185,16 @@ public class ReaderConfig<T> {
                 }else {
                     throw new IllegalArgumentException("指定单元格位置格式错误");
                 }
+                continue;
+            }
+            // 指定单元格索引
+            ColumnBind columnBind = declaredField.getAnnotation(ColumnBind.class);
+            if (columnBind != null) {
+                entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
+                entityCellMappingInfo.setColumnPosition(columnBind.cellIndex());
+                entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
+                entityCellMappingInfo.setFormat(columnBind.format());
+                entityCellMappingInfos.add(entityCellMappingInfo);
                 continue;
             }
             // 未指定单元格位置默认情况

@@ -10,25 +10,27 @@ import cn.toutatis.xvoid.axolotl.excel.support.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.util.RecordFormatException;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Excel读取器
  * @author Toutatis_Gc
  */
-public class AxolotlExcelReader<T> {
+public class AxolotlExcelReader<T> implements Iterable<List<T>>{
 
     /**
      * 日志
@@ -202,16 +204,73 @@ public class AxolotlExcelReader<T> {
      * @param readerConfig 读取配置
      * @param <RT> 读取类型
      */
-    private <RT> void row2SimplePOJO(RT instance,Row row,ReaderConfig<RT> readerConfig){
+    @SneakyThrows
+    private <RT> void row2SimplePOJO(RT instance, Row row, ReaderConfig<RT> readerConfig){
         workBookContext.setCurrentReadRowIndex(row.getRowNum());
         List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
-        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
         for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
-
+            Field field = instance.getClass().getField(indexMappingInfo.getFieldName());
+            field.setAccessible(true);
+            field.set(instance, this.getCellValue(row.getCell(indexMappingInfo.getColumnPosition()), indexMappingInfo));
         }
-        row.cellIterator().forEachRemaining(cell -> {
-            workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
-        });
+        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
+    }
+
+    /**
+     * 获取单元格值
+     *
+     * @param cell 单元格
+     * @param mappingInfo 映射信息
+     * @return 单元格值
+     */
+    private CellGetInfo getCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
+        // 一般不为null，由map类型传入时，默认使用索引映射
+        if (mappingInfo == null){
+            mappingInfo = new EntityCellMappingInfo<>(String.class);
+            mappingInfo.setColumnPosition(cell.getColumnIndex());
+        }
+        return switch (mappingInfo.getMappingType()) {
+            case INDEX,UNKNOWN -> this.getIndexCellValue(cell, mappingInfo);
+            case POSITION -> null;
+            // TODO 位置读取
+        };
+    }
+
+    /**
+     * 获取索引映射单元格值
+     *
+     * @param cell 单元格
+     * @param mappingInfo 映射信息
+     * @return 单元格值
+     */
+    private CellGetInfo getIndexCellValue(Cell cell, EntityCellMappingInfo<?> mappingInfo){
+        if (mappingInfo.getColumnPosition() == -1 || cell == null){
+            return this.getBlankCellValue(mappingInfo);
+        }
+        Object value = null;
+        CellGetInfo cellGetInfo = new CellGetInfo();
+        CellType cellType = cell.getCellType();
+        cellGetInfo.setCellType(cellType);
+        switch (cellType) {
+            case STRING -> value = cell.getStringCellValue();
+            case NUMERIC -> value = cell.getNumericCellValue();
+            case BOOLEAN -> value = cell.getBooleanCellValue();
+            case FORMULA -> value = getFormulaCellValue(cell);
+            default -> {
+                LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(), cell);
+            }
+        };
+        cellGetInfo.setUseCellValue(true);
+        cellGetInfo.setCellValue(value);
+        return cellGetInfo;
+    }
+
+    private CellGetInfo getBlankCellValue(EntityCellMappingInfo<?> mappingInfo){
+        CellGetInfo cellGetInfo = new CellGetInfo();
+        if (mappingInfo.fieldIsPrimitive()){
+            cellGetInfo.setCellValue(mappingInfo.fillDefaultPrimitiveValue(null));
+        }
+        return cellGetInfo;
     }
 
     /**
@@ -225,7 +284,7 @@ public class AxolotlExcelReader<T> {
             int idx = cell.getColumnIndex() + 1;
             String key = "CELL_" + idx;
             //FIXME
-//            instance.put(key,getCellValue(cell, null).getCellValue());
+            instance.put(key,getCellValue(cell, null).getCellValue());
             if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
                 instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 if (cell.getCellType() == CellType.NUMERIC){
@@ -279,7 +338,6 @@ public class AxolotlExcelReader<T> {
 
     }
 
-
     /**
      * [ROOT]
      * 计算单元格公式为结果
@@ -306,4 +364,20 @@ public class AxolotlExcelReader<T> {
         return cellGetInfo;
     }
 
+    @NotNull
+    @Override
+    public Iterator<List<T>> iterator() {
+        // TODO 迭代器
+        return null;
+    }
+
+    @Override
+    public void forEach(Consumer<? super List<T>> action) {
+        Iterable.super.forEach(action);
+    }
+
+    @Override
+    public Spliterator<List<T>> spliterator() {
+        return Iterable.super.spliterator();
+    }
 }

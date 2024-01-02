@@ -77,4 +77,8 @@ public enum ReadExcelFeature {
         this.value = value;
     }
 
+    public boolean getFeatureAsBoolean(){
+        return (boolean)value;
+    }
+
 }

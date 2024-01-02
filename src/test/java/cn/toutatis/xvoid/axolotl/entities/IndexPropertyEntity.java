@@ -1,8 +1,8 @@
 package cn.toutatis.xvoid.axolotl.entities;
 
-import cn.toutatis.xvoid.axolotl.excel.annotations.CellBindProperty;
+import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
 import cn.toutatis.xvoid.axolotl.excel.annotations.IndexWorkSheet;
-import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyCellPosition;
+import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyPositionBind;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,13 +17,13 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 public class IndexPropertyEntity extends BaseEntity {
 
-    @SpecifyCellPosition("A5")
+    @SpecifyPositionBind("A5")
     private String title;
 
-    @CellBindProperty(cellIndex = 0,format = Time.HMS_COLON_FORMAT_REGEX)
+    @ColumnBind(cellIndex = 0,format = Time.HMS_COLON_FORMAT_REGEX)
     private String name;
 
-    @CellBindProperty(cellIndex = 1)
+    @ColumnBind(cellIndex = 1)
     private String age;
 
     private LocalDateTime date1;

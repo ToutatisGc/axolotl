@@ -3,6 +3,9 @@ package cn.toutatis.xvoid.axolotl.excel.constant;
 import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
 import lombok.Data;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 实体映射单元格读取信息
  * @author Toutatis_Gc
@@ -49,6 +52,13 @@ public class EntityCellMappingInfo<FT> {
      * 格式转换
      */
     private String format;
+
+    /**
+     * 排除的读取特性
+     * @see cn.toutatis.xvoid.axolotl.excel.annotations.KeepIntact
+     * @see ReadExcelFeature 读取特性
+     */
+    private Map<ReadExcelFeature,Object> excelFeatures = new HashMap<>();
 
     /**
      * 单元格映射类型

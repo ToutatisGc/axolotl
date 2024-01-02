@@ -10,21 +10,27 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 标注在字段上，指定该字段在excel中的位置
+ * 绑定Excel单元格的属性
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SpecifyCellPosition {
+public @interface ColumnBind {
 
     /**
-     * 指定单元格位置，如A1,B2等
+     * 单元格序号
      */
-    String value();
+    int cellIndex();
 
+    /**
+     * 日期格式化
+     * 默认使用LocalDateTime格式
+     */
     String format() default Time.SIMPLE_DATE_FORMAT_REGEX;
 
     /**
-     * 指定单元格位置的适配器，默认使用默认适配器
+     * 自定义适配器
+     * @see cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter
      */
     Class<? extends DataCastAdapter<?>> adapter() default AutoAdapter.class;
+
 }
