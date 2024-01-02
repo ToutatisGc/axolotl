@@ -4,6 +4,7 @@ import cn.toutatis.xvoid.axolotl.excel.annotations.CellBindProperty;
 import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyCellPosition;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature;
+import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import lombok.Getter;
 import lombok.Setter;
@@ -221,7 +222,7 @@ public class ReaderConfig<T> {
                 return castClass.getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
-                throw new RuntimeException(e);
+                throw new AxolotlReadException("类型实例化失败:"+e.getMessage());
             }
         }else{
             throw new IllegalArgumentException("转换类型为空");

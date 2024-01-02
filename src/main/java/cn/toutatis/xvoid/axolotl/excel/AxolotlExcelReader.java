@@ -1,10 +1,13 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
+import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
+import cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature;
 import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.TikaShell;
+import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import lombok.Getter;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -17,9 +20,9 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Excel读取器
@@ -117,24 +120,129 @@ public class AxolotlExcelReader<T> {
 
     /**
      * [ROOT]
+     * 读取Excel数据
      * @param readerConfig 读取配置
      * @return 读取数据
      * @param <RT> 读取的类型泛型
      */
     public <RT> List<RT> readSheetData(ReaderConfig<RT> readerConfig) {
+        // 检查并修正配置文件
         this.preCheckAndFixReadConfig(readerConfig);
+        List<RT> readResult = new ArrayList<>();
         Sheet sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
-        Class<RT> castClass = readerConfig.getCastClass();
-        List<RT> result = new ArrayList<>();
-        try {
-            RT instance = castClass.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException |
-                 InvocationTargetException | NoSuchMethodException e) {
-            throw new AxolotlReadException(e.getMessage());
+        if (sheet == null){
+            String msg = "读取的sheet不存在[%s]".formatted(readerConfig.getSheetIndex());
+            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.IGNORE_EMPTY_SHEET_ERROR)){
+                LOGGER.warn(msg+"将返回空数据");
+                return readResult;
+            }else{
+                LOGGER.error(msg);
+                throw new AxolotlReadException(msg);
+            }
         }
-        // TODO 补全读取
-        return null;
+        this.readSheetData(sheet,readerConfig,readResult);
+        return readResult;
     }
+
+    /**
+     * 读取表中每一行的数据
+     */
+    private <RT> void readSheetData(Sheet sheet,ReaderConfig<RT> readerConfig,List<RT> list){
+        int startIndex = readerConfig.getStartIndex();
+        int endIndex = readerConfig.getEndIndex();
+        if (startIndex == 0){
+            int initialRowPositionOffset = readerConfig.getInitialRowPositionOffset();
+            if (initialRowPositionOffset > 0){
+                LOGGER.debug("跳过前{}行",initialRowPositionOffset);
+                startIndex = startIndex + initialRowPositionOffset;
+                endIndex = endIndex + initialRowPositionOffset;
+            }
+        }
+        for (int i = startIndex; i < endIndex; i++) {
+            RT instance = this.readRow(sheet, i, readerConfig);
+            if (instance!= null){list.add(instance);}
+        }
+    }
+
+    /**
+     * [ROOT]
+     * 读取行信息到对象
+     * @param sheet 表
+     * @param rowNumber 行号
+     * @param readerConfig 读取配置
+     * @param <RT> 转换类型
+     */
+    private <RT> RT readRow(Sheet sheet,int rowNumber,ReaderConfig<RT> readerConfig){
+        RT instance = readerConfig.getCastClassInstance();
+        Row row = sheet.getRow(rowNumber);
+        if (row == null){
+            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.INCLUDE_EMPTY_ROW)){
+                return instance;
+            }else{
+                return null;
+            }
+        }
+        this.convertCellToInstance(row,instance,readerConfig);
+        return instance;
+    }
+
+    @SuppressWarnings({"unchecked","rawtypes"})
+    private <RT> void convertCellToInstance(Row row,RT instance,ReaderConfig<RT> readerConfig){
+        if (instance instanceof Map mapInstance){
+            this.row2MapInstance(mapInstance, row,readerConfig);
+        }else{
+            this.row2SimplePOJO(instance,row,readerConfig);
+        }
+    }
+
+    /**
+     * 填充单元格数据到Java对象
+     * @param instance 对象实例
+     * @param row 行
+     * @param readerConfig 读取配置
+     * @param <RT> 读取类型
+     */
+    private <RT> void row2SimplePOJO(RT instance,Row row,ReaderConfig<RT> readerConfig){
+        workBookContext.setCurrentReadRowIndex(row.getRowNum());
+        List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
+        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
+        for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
+
+        }
+        row.cellIterator().forEachRemaining(cell -> {
+            workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
+        });
+    }
+
+    /**
+     * [ROOT]
+     * 填充单元格数据到map
+     */
+    private <RT> void row2MapInstance(Map<String,Object> instance, Row row,ReaderConfig<RT> readerConfig){
+        workBookContext.setCurrentReadRowIndex(row.getRowNum());
+        row.cellIterator().forEachRemaining(cell -> {
+            workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
+            int idx = cell.getColumnIndex() + 1;
+            String key = "CELL_" + idx;
+            //FIXME
+//            instance.put(key,getCellValue(cell, null).getCellValue());
+            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
+                instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                if (cell.getCellType() == CellType.NUMERIC){
+                    if (DateUtil.isCellDateFormatted(cell)){
+                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                        instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
+                    }else{
+                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                    }
+                }else {
+                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                }
+            }
+        });
+    }
+
+
 
     /**
      * [ROOT]
@@ -147,21 +255,28 @@ public class AxolotlExcelReader<T> {
         if (readerConfig == null){
             String msg = "读取配置不能为空";
             LOGGER.error(msg);
-            throw new IllegalArgumentException(msg);
+            throw new AxolotlReadException(msg);
         }
         int sheetIndex = readerConfig.getSheetIndex();
         if (sheetIndex < 0){
-            throw new IllegalArgumentException("读取的sheetIndex不能小于0");
+            throw new AxolotlReadException("读取的sheetIndex不能小于0");
         }
         Class<?> castClass = readerConfig.getCastClass();
         if (castClass == null){
-            throw new IllegalArgumentException("读取的类型对象不能为空");
+            throw new AxolotlReadException("读取的类型对象不能为空");
+        }
+        if (readerConfig.getStartIndex() < 0){
+            throw new AxolotlReadException("读取起始行不得小于0");
+        }
+        if (readerConfig.getEndIndex() < 0){
+            throw new AxolotlReadException("读取结束行不得小于0");
         }
         //修正部分
         if (readerConfig.getInitialRowPositionOffset() < 0){
             LOGGER.warn("读取的初始行偏移量不能小于0，将被修正为0");
             readerConfig.setInitialRowPositionOffset(0);
         }
+
     }
 
 

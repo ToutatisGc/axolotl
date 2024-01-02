@@ -181,29 +181,7 @@
         }
     }
 
-    /**
-     * 填充单元格数据到map
-     */
-    private void putRowToMapInstance(Map<String,Object> instance, Row row){
-        row.cellIterator().forEachRemaining(cell -> {
-            int idx = cell.getColumnIndex() + 1;
-            String key = "CELL_" + idx;
-            instance.put(key,getCellValue(cell, null).getCellValue());
-            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
-                instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                if (cell.getCellType() == CellType.NUMERIC){
-                    if (DateUtil.isCellDateFormatted(cell)){
-                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                        instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
-                    }else{
-                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                    }
-                }else {
-                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                }
-            }
-        });
-    }
+
 
     /**
      * 获取单元格值
