@@ -214,8 +214,7 @@ public class AxolotlExcelReader<T>{
             int firstColumn = mergedRegion.getFirstColumn();
             int lastColumn = mergedRegion.getLastColumn();
             Cell leftTopCell = sheet.getRow(firstRow).getCell(firstColumn);
-            System.err.println(mergedRegion);
-            System.err.println(leftTopCell.getStringCellValue());
+            LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "处理合并单元格[%s]".formatted(mergedRegion.formatAsString()));
             for (int r = firstRow; r <= lastRow; r++) {
                 for (int c = firstColumn; c <= lastColumn; c++) {
                     Cell cell = sheet.getRow(r).getCell(c);
@@ -444,7 +443,12 @@ public class AxolotlExcelReader<T>{
             }
             case BOOLEAN -> value = cell.getBooleanCellValue();
             case FORMULA -> value = getFormulaCellValue(cell);
-            default -> LOGGER.debug(
+            case BLANK -> {
+                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,
+                        "空白单元格位置:[%s]".formatted(workBookContext.getCurrentHumanReadablePosition())
+                );
+            }
+            default -> LOGGER.error(
                     "未知的单元格类型:{},单元格位置:[{}]",cell.getCellType(),
                     workBookContext.getCurrentHumanReadablePosition()
             );
