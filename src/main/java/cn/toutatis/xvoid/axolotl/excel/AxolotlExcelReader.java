@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
+import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
@@ -13,11 +14,13 @@ import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.util.RecordFormatException;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.slf4j.Logger;
@@ -196,8 +199,42 @@ public class AxolotlExcelReader<T>{
         if (sheet == null){
             return readResult;
         }
+        // 处理合并单元格
+        this.processMergedCells(sheet);
         this.readSheetData(sheet,readerConfig,readResult);
         return readResult;
+    }
+
+    private void processMergedCells(Sheet sheet) {
+        List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
+        LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "开始处理工作表合并单元格");
+        for (CellRangeAddress mergedRegion : mergedRegions) {
+            int firstRow = mergedRegion.getFirstRow();
+            int lastRow = mergedRegion.getLastRow();
+            int firstColumn = mergedRegion.getFirstColumn();
+            int lastColumn = mergedRegion.getLastColumn();
+            Cell leftTopCell = sheet.getRow(firstRow).getCell(firstColumn);
+            System.err.println(mergedRegion);
+            System.err.println(leftTopCell.getStringCellValue());
+            for (int r = firstRow; r <= lastRow; r++) {
+                for (int c = firstColumn; c <= lastColumn; c++) {
+                    Cell cell = sheet.getRow(r).getCell(c);
+                    switch (leftTopCell.getCellType()){
+                        case STRING:
+                            cell.setCellValue(leftTopCell.getStringCellValue());
+                            break;
+                        case NUMERIC:
+                            cell.setCellValue(leftTopCell.getNumericCellValue());
+                            break;
+                        case BOOLEAN:
+                            cell.setCellValue(leftTopCell.getBooleanCellValue());
+                            break;
+                        case FORMULA:
+                            cell.setCellValue(leftTopCell.getCellFormula());
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -407,7 +444,7 @@ public class AxolotlExcelReader<T>{
             }
             case BOOLEAN -> value = cell.getBooleanCellValue();
             case FORMULA -> value = getFormulaCellValue(cell);
-            default -> LOGGER.error(
+            default -> LOGGER.debug(
                     "未知的单元格类型:{},单元格位置:[{}]",cell.getCellType(),
                     workBookContext.getCurrentHumanReadablePosition()
             );
