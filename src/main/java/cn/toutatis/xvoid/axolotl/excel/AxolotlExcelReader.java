@@ -114,7 +114,7 @@ public class AxolotlExcelReader<T>{
             // 校验文件大小
             Workbook workbook;
             if (detectResult.getCatchMimeType() == TikaShell.OOXML_EXCEL && excelFile.length() > AxolotlDefaultConfig.XVOID_DEFAULT_MAX_FILE_SIZE){
-                this.workBookContext.setEventDriven(true);
+                this.workBookContext.setEventDriven();
                 OPCPackage opcPackage = OPCPackage.open(fis);
                 workbook = XSSFWorkbookFactory.createWorkbook(opcPackage);
                 opcPackage.close();

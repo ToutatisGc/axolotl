@@ -82,18 +82,22 @@ public class WorkBookContext extends AbstractContext {
         return _eventDriven;
     }
 
-    public void setEventDriven(boolean _eventDriven) {
-        this._eventDriven = _eventDriven;
+    protected void setEventDriven() {
+        this._eventDriven = true;
     }
 
-    public void setCurrentReadRowIndex(int currentReadRowIndex) {
+    protected void setCurrentReadRowIndex(int currentReadRowIndex) {
         this.currentReadRowIndex = currentReadRowIndex;
     }
 
-    public void setCurrentReadColumnIndex(int currentReadColumnIndex) {
+    protected void setCurrentReadColumnIndex(int currentReadColumnIndex) {
         this.currentReadColumnIndex = currentReadColumnIndex;
     }
 
+    /**
+     * 获取当前读取到的行和列号的可读字符串
+     * @return 当前读取到的行和列号的可读字符串
+     */
     public String getCurrentHumanReadablePosition() {
         char i = (char) ( 'A' + currentReadColumnIndex);
         return String.format("%s", i+("%d".formatted(currentReadRowIndex + 1)));
