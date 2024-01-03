@@ -51,4 +51,12 @@ public class SimpleTest {
         System.err.println(oneFieldStringKeepIntactEntities);
     }
 
+    @Test
+    public void testCellMergeSheet(){
+        File file = FileToolkit.getResourceFileAsFile("workbook/单元格合并测试.xlsx");
+        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData(OneFieldStringEntity.class, 0);
+        System.err.println(oneFieldStringEntities);
+    }
+
 }

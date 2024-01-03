@@ -5,13 +5,9 @@ import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 工作簿元信息
@@ -35,11 +31,6 @@ public class WorkBookContext extends AbstractContext {
      * 公式计算器
      */
     private FormulaEvaluator formulaEvaluator;
-
-    /**
-     * 表内容缓存
-     */
-    private final Map<Integer, List<Row>> sheetData = new HashMap<>();
 
     /**
      * 当前读取到的行和列号
@@ -79,28 +70,6 @@ public class WorkBookContext extends AbstractContext {
         return formulaEvaluator;
     }
 
-    public void setSheetData(int sheetIndex,List<Row> sheetData) {
-        this.sheetData.put(sheetIndex, sheetData);
-    }
-
-    /**
-     * 获取工作簿指定sheet的数据
-     * @param sheetIndex sheet序号
-     * @return sheet数据
-     */
-    public List<Row> getSheetData(int sheetIndex) {
-        return sheetData.getOrDefault(sheetIndex, null);
-    }
-
-    /**
-     * 判断指定sheet的数据是否为空
-     * @param sheetIndex sheet序号
-     * @return sheet数据是否为空
-     */
-    public boolean isSheetDataEmpty(int sheetIndex) {
-        return !sheetData.containsKey(sheetIndex);
-    }
-
     protected Class<?> getDirectReadClass() {
         return _directReadClass;
     }
@@ -123,5 +92,10 @@ public class WorkBookContext extends AbstractContext {
 
     public void setCurrentReadColumnIndex(int currentReadColumnIndex) {
         this.currentReadColumnIndex = currentReadColumnIndex;
+    }
+
+    public String getCurrentHumanReadablePosition() {
+        char i = (char) ( 'A' + currentReadColumnIndex);
+        return String.format("%s", i+("%d".formatted(currentReadRowIndex + 1)));
     }
 }

@@ -407,7 +407,10 @@ public class AxolotlExcelReader<T>{
             }
             case BOOLEAN -> value = cell.getBooleanCellValue();
             case FORMULA -> value = getFormulaCellValue(cell);
-            default -> LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(), cell);
+            default -> LOGGER.error(
+                    "未知的单元格类型:{},单元格位置:[{}]",cell.getCellType(),
+                    workBookContext.getCurrentHumanReadablePosition()
+            );
         }
         cellGetInfo.setAlreadyFillValue(true);
         cellGetInfo.setCellValue(value);
