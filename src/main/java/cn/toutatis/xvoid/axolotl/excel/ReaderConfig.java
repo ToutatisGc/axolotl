@@ -4,8 +4,8 @@ import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
 import cn.toutatis.xvoid.axolotl.excel.annotations.KeepIntact;
 import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyPositionBind;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature;
-import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
+import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature.*;
+import static cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy.*;
 
 @ToString
 @Getter
@@ -72,7 +72,7 @@ public class ReaderConfig<T> {
     /**
      * 读取的特性
      */
-    private Map<ReadExcelFeature, Object> readFeature = new HashMap<>();
+    private Map<RowLevelReadPolicy, Object> rowReadPolicyMap = new HashMap<>();
 
     /**
      * 默认构造
@@ -94,13 +94,13 @@ public class ReaderConfig<T> {
      */
     public ReaderConfig(boolean withDefaultConfig) {
         if (withDefaultConfig) {
-            readFeature.putAll(defaultReadFeature());
+            rowReadPolicyMap.putAll(defaultReadPolicy());
         }
     }
 
     public ReaderConfig(Class<T> castClass, boolean withDefaultConfig) {
         if (withDefaultConfig) {
-            readFeature.putAll(defaultReadFeature());
+            rowReadPolicyMap.putAll(defaultReadPolicy());
         }
         this.setCastClass(castClass);
 
@@ -109,14 +109,14 @@ public class ReaderConfig<T> {
     /**
      *
      */
-    private Map<ReadExcelFeature, Object> defaultReadFeature() {
-        Map<ReadExcelFeature, Object> defaultReadFeature = new HashMap<>();
-        for (ReadExcelFeature feature : values()) {
-            if (feature.isDefaultFeature()){
-                defaultReadFeature.put(feature,feature.getValue());
+    private Map<RowLevelReadPolicy, Object> defaultReadPolicy() {
+        Map<RowLevelReadPolicy, Object> defaultReadPolicies = new HashMap<>();
+        for (RowLevelReadPolicy policy : values()) {
+            if (policy.isDefaultPolicy()){
+                defaultReadPolicies.put(policy,policy.getValue());
             }
         }
-        return defaultReadFeature;
+        return defaultReadPolicies;
     }
 
     /**
@@ -153,7 +153,7 @@ public class ReaderConfig<T> {
         Field[] declaredFields = castClass.getDeclaredFields();
         List<EntityCellMappingInfo<?>> entityCellMappingInfos = new ArrayList<>(declaredFields.length);
         HashMap<String, EntityCellMappingInfo<?>> positionMappingInfos = new HashMap<>();
-        boolean preciseLocalization = getReadFeatureAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
+        boolean preciseLocalization = getReadPolicyAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
         AtomicInteger idx = new AtomicInteger(-1);
         for (Field declaredField : declaredFields) {
             idx.getAndIncrement();
@@ -163,10 +163,10 @@ public class ReaderConfig<T> {
             // 排除特性
             KeepIntact keepIntact = declaredField.getAnnotation(KeepIntact.class);
             if (keepIntact!= null){
-                ReadExcelFeature[] excludeFeatures = keepIntact.excludeFeatures();
-                entityCellMappingInfo.setExcelFeatures(
-                        Arrays.stream(excludeFeatures)
-                                .collect(Collectors.toMap(feature -> feature, feature -> true))
+                RowLevelReadPolicy[] excludePolicies = keepIntact.excludePolicies();
+                entityCellMappingInfo.setExcelPolicies(
+                        Arrays.stream(excludePolicies)
+                                .collect(Collectors.toMap(policy -> policy, policy -> true))
                 );
             }
             // 指定单元格具体位置
@@ -219,18 +219,18 @@ public class ReaderConfig<T> {
     /**
      *
      */
-    public boolean getReadFeatureAsBoolean(ReadExcelFeature feature) {
-        if (feature.getType() != ReadExcelFeature.Type.BOOLEAN){
+    public boolean getReadPolicyAsBoolean(RowLevelReadPolicy policy) {
+        if (policy.getType() != RowLevelReadPolicy.Type.BOOLEAN){
             throw new IllegalArgumentException("读取特性不是一个布尔类型");
         }
-        return readFeature.containsKey(feature) && (boolean) readFeature.get(feature);
+        return rowReadPolicyMap.containsKey(policy) && (boolean) rowReadPolicyMap.get(policy);
     }
 
     /**
      *
      */
-    public void addReadFeature(ReadExcelFeature feature, Object value) {
-        readFeature.put(feature, value);
+    public void addReadFeature(RowLevelReadPolicy policy, Object value) {
+        rowReadPolicyMap.put(policy, value);
     }
 
     /**
@@ -241,7 +241,7 @@ public class ReaderConfig<T> {
         if(castClass!=null){
             try {
                 if (castClass == Map.class){
-                    if (getReadFeatureAsBoolean(SORTED_READ_SHEET_DATA)){
+                    if (getReadPolicyAsBoolean(SORTED_READ_SHEET_DATA)){
                         return (T) new LinkedHashMap<String,Object>();
                     }else{
                         return (T) new HashMap<String, Object>();
@@ -250,7 +250,7 @@ public class ReaderConfig<T> {
                 return castClass.getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
-                throw new AxolotlReadException("类型实例化失败:"+e.getMessage());
+                throw new AxolotlExcelReadException("类型实例化失败:"+e.getMessage());
             }
         }else{
             throw new IllegalArgumentException("转换类型为空");

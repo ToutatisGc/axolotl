@@ -4,7 +4,7 @@ import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
+import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
 import org.apache.poi.ss.usermodel.CellType;
 
 /**
@@ -28,7 +28,7 @@ public class AutoAdapter extends AbstractDataCastAdapter<Object> {
         DataCastAdapter<?> adapter = DefaultAdapters.getAdapter(clazz);
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
         if (adapter == null){
-            throw new AxolotlReadException("未找到可转换的字段:[%s],请配置适配器".formatted(entityCellMappingInfo.getFieldName()));
+            throw new AxolotlExcelReadException("未找到可转换的字段:[%s],请配置适配器".formatted(entityCellMappingInfo.getFieldName()));
         }
         if (adapter instanceof AbstractDataCastAdapter abstractDataCastAdapter){
             abstractDataCastAdapter.setReaderConfig(getReaderConfig());

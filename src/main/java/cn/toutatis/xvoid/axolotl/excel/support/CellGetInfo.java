@@ -11,7 +11,7 @@ public class CellGetInfo {
     /**
      * 对象是否使用了单元格值
      */
-    private boolean useCellValue = false;
+    private boolean alreadyFillValue = false;
 
     /**
      * 单元格类型
@@ -23,8 +23,8 @@ public class CellGetInfo {
      */
     private Object cellValue = null;
 
-    public CellGetInfo(boolean useCellValue, Object cellValue) {
-        this.useCellValue = useCellValue;
+    public CellGetInfo(boolean alreadyFillValue, Object cellValue) {
+        this.alreadyFillValue = alreadyFillValue;
         this.cellValue = cellValue;
     }
 }

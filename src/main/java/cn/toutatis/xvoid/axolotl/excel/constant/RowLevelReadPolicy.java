@@ -6,7 +6,7 @@ import lombok.Getter;
  * 读取Excel的功能可配置特性
  */
 @Getter
-public enum ReadExcelFeature {
+public enum RowLevelReadPolicy {
 
 
     /*表相关配置*/
@@ -66,18 +66,18 @@ public enum ReadExcelFeature {
 
     private final Type type;
 
-    private final boolean defaultFeature;
+    private final boolean defaultPolicy;
 
     private final Object value;
 
 
-    ReadExcelFeature(Type type, boolean defaultFeature ,Object value) {
+    RowLevelReadPolicy(Type type, boolean defaultPolicy, Object value) {
         this.type = type;
-        this.defaultFeature = defaultFeature;
+        this.defaultPolicy = defaultPolicy;
         this.value = value;
     }
 
-    public boolean getFeatureAsBoolean(){
+    public boolean getPolicyAsBoolean(){
         return (boolean)value;
     }
 

@@ -2,13 +2,13 @@ package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.constant.ReadExcelFeature;
+import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.support.adapters.AbstractDataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.support.adapters.AutoAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlReadException;
+import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
@@ -121,8 +121,52 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
             workBookContext.setWorkbook(workbook);
         } catch (IOException | RecordFormatException | InvalidFormatException e) {
             LOGGER.error("加载文件失败",e);
-            throw new AxolotlReadException(e.getMessage());
+            throw new AxolotlExcelReadException(e.getMessage());
         }
+    }
+
+    public <RT> List<RT> readSheetData(Class<RT> castClass,String sheetName){
+        ReadConfigBuilder<RT> configBuilder = new ReadConfigBuilder<>(castClass, true);
+        configBuilder.setSheetName(sheetName);
+        return this.readSheetData(configBuilder);
+    }
+
+    public <RT> List<RT> readSheetData(Class<RT> castClass,int sheetIndex){
+        ReadConfigBuilder<RT> configBuilder = new ReadConfigBuilder<>(castClass, true);
+        configBuilder.setSheetIndex(sheetIndex);
+        return this.readSheetData(configBuilder);
+    }
+
+    /**
+     * 读取指定sheet的数据
+     * @param castClass 读取的类型
+     * @param sheetIndex sheet索引
+     * @param withDefaultConfig 是否使用默认配置
+     * @param startIndex 起始行
+     * @param endIndex 结束行
+     * @param initialRowPositionOffset 起始行偏移量
+     * @return 读取的数据
+     * @param <RT> 类型泛型
+     */
+    public <RT> List<RT> readSheetData(Class<RT> castClass,int sheetIndex,boolean withDefaultConfig,
+                                       int startIndex,int endIndex,int initialRowPositionOffset) {
+        ReadConfigBuilder<RT> configBuilder = new ReadConfigBuilder<>(castClass, withDefaultConfig);
+        configBuilder
+                .setSheetIndex(sheetIndex)
+                .setStartIndex(startIndex)
+                .setEndIndex(endIndex)
+                .setInitialRowPositionOffset(initialRowPositionOffset);
+        return this.readSheetData(configBuilder);
+    }
+
+    /**
+     * 使用读取配置构建读取配置
+     * @param configBuilder 读取配置构建器
+     * @return 读取数据
+     * @param <RT> 读取的类型泛型
+     */
+    public <RT> List<RT> readSheetData(ReadConfigBuilder<RT> configBuilder) {
+        return this.readSheetData(configBuilder.build());
     }
 
     /**
@@ -134,17 +178,27 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
      */
     public <RT> List<RT> readSheetData(ReaderConfig<RT> readerConfig) {
         // 检查并修正配置文件
-        this.preCheckAndFixReadConfig(readerConfig);
         List<RT> readResult = new ArrayList<>();
-        Sheet sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
+        Sheet sheet;
+        if (readerConfig.getSheetName() != null){
+            sheet = workBookContext.getWorkbook().getSheet(readerConfig.getSheetName());
+            if (sheet != null){
+                readerConfig.setSheetIndex(sheet.getWorkbook().getSheetIndex(sheet));
+            }else {
+                readerConfig.setSheetIndex(-1);
+            }
+        }else {
+            sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
+        }
+        this.preCheckAndFixReadConfig(readerConfig);
         if (sheet == null){
-            String msg = "读取的sheet不存在[%s]".formatted(readerConfig.getSheetIndex());
-            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.IGNORE_EMPTY_SHEET_ERROR)){
+            String msg = "读取的sheet不存在[%s]".formatted(readerConfig.getSheetName() != null? readerConfig.getSheetName() : readerConfig.getSheetIndex());
+            if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.IGNORE_EMPTY_SHEET_ERROR)){
                 LOGGER.warn(msg+"将返回空数据");
                 return readResult;
             }else{
                 LOGGER.error(msg);
-                throw new AxolotlReadException(msg);
+                throw new AxolotlExcelReadException(msg);
             }
         }
         this.readSheetData(sheet,readerConfig,readResult);
@@ -183,7 +237,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
         RT instance = readerConfig.getCastClassInstance();
         Row row = sheet.getRow(rowNumber);
         if (row == null){
-            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.INCLUDE_EMPTY_ROW)){
+            if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.INCLUDE_EMPTY_ROW)){
                 return instance;
             }else{
                 return null;
@@ -232,7 +286,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
             field.setAccessible(true);
             Object o = field.get(instance);
             if (o!= null){
-                if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.FIELD_EXIST_OVERRIDE)){
+                if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.FIELD_EXIST_OVERRIDE)){
                     field.set(instance, adaptiveValue);
                 }
             }else {
@@ -262,16 +316,16 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
                 return this.adaptiveValue(adapter,info, (EntityCellMappingInfo<Object>) mappingInfo, (ReaderConfig<Object>) readerConfig);
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
-                throw new AxolotlReadException(e);
+                throw new AxolotlExcelReadException(e);
             }
         }else {
-            throw new AxolotlReadException("[%s]字段请配置适配器,字段类型:[%s]".formatted(mappingInfo.getFieldName(), mappingInfo.getFieldType()));
+            throw new AxolotlExcelReadException("[%s]字段请配置适配器,字段类型:[%s]".formatted(mappingInfo.getFieldName(), mappingInfo.getFieldType()));
         }
     }
 
     private Object adaptiveValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo, ReaderConfig<Object> readerConfig) {
         if (adapter == null){
-            throw new AxolotlReadException("未找到转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+            throw new AxolotlExcelReadException("未找到转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
         if (adapter instanceof AbstractDataCastAdapter<Object> abstractDataCastAdapter){
             abstractDataCastAdapter.setReaderConfig(readerConfig);
@@ -283,7 +337,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
 
     private Object castValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo) {
         if (!adapter.support(info.getCellType(), mappingInfo.getFieldType())){
-            throw new AxolotlReadException("不支持转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+            throw new AxolotlExcelReadException("不支持转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
         CastContext<Object> castContext = new CastContext<>(mappingInfo.getFieldType(), mappingInfo.getFormat());
         return adapter.cast(info, castContext);
@@ -322,7 +376,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
             mappingInfo.setColumnPosition(index);
         }
         if (mappingInfo.getMappingType() == EntityCellMappingInfo.MappingType.POSITION){
-            throw new AxolotlReadException("位置映射请使用getPositionCellValue方法");
+            throw new AxolotlExcelReadException("位置映射请使用getPositionCellValue方法");
         }
         return this.getIndexCellValue(row,index, mappingInfo);
     }
@@ -355,7 +409,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
             case FORMULA -> value = getFormulaCellValue(cell);
             default -> LOGGER.error("未知的单元格类型:{},{}",cell.getCellType(), cell);
         }
-        cellGetInfo.setUseCellValue(true);
+        cellGetInfo.setAlreadyFillValue(true);
         cellGetInfo.setCellValue(value);
         return cellGetInfo;
     }
@@ -384,7 +438,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
             int idx = cell.getColumnIndex() + 1;
             String key = "CELL_" + idx;
             instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null).getCellValue());
-            if (readerConfig.getReadFeatureAsBoolean(ReadExcelFeature.USE_MAP_DEBUG)){
+            if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.USE_MAP_DEBUG)){
                 instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 if (cell.getCellType() == CellType.NUMERIC){
                     if (DateUtil.isCellDateFormatted(cell)){
@@ -413,28 +467,35 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
         if (readerConfig == null){
             String msg = "读取配置不能为空";
             LOGGER.error(msg);
-            throw new AxolotlReadException(msg);
+            throw new AxolotlExcelReadException(msg);
         }
         int sheetIndex = readerConfig.getSheetIndex();
         if (sheetIndex < 0){
-            throw new AxolotlReadException("读取的sheetIndex不能小于0");
+            if (readerConfig.getSheetName() == null){
+                throw new AxolotlExcelReadException("读取的sheet索引不能小于0");
+            }else{
+                throw new AxolotlExcelReadException("读取的sheet[%s]不存在".formatted(readerConfig.getSheetName()));
+            }
         }
         Class<?> castClass = readerConfig.getCastClass();
         if (castClass == null){
-            throw new AxolotlReadException("读取的类型对象不能为空");
+            throw new AxolotlExcelReadException("读取的类型对象不能为空");
         }
         if (readerConfig.getStartIndex() < 0){
-            throw new AxolotlReadException("读取起始行不得小于0");
-        }
-        if (readerConfig.getEndIndex() < 0){
-            throw new AxolotlReadException("读取结束行不得小于0");
+            throw new AxolotlExcelReadException("读取起始行不得小于0");
         }
         //修正部分
         if (readerConfig.getInitialRowPositionOffset() < 0){
             LOGGER.warn("读取的初始行偏移量不能小于0，将被修正为0");
             readerConfig.setInitialRowPositionOffset(0);
         }
-
+        if (readerConfig.getEndIndex() < 0){
+            if (readerConfig.getEndIndex() != -1){
+                throw new AxolotlExcelReadException("读取结束行不得小于0");
+            }
+            LOGGER.info("未设置读取的结束行,将被修正为最大行数");
+            readerConfig.setEndIndex(workBookContext.getWorkbook().getSheetAt(sheetIndex).getLastRowNum()+1);
+        }
     }
 
     /**
@@ -455,7 +516,7 @@ public class AxolotlExcelReader<T> implements Iterable<List<T>>{
                 String msg = String.format("未知的公式单元格类型位置:[%d,%d],单元格类型:[%s],单元格值:[%s]",
                         cell.getRowIndex(), cell.getColumnIndex(), evaluated.getCellType(), evaluated);
                 LOGGER.error(msg);
-                throw new AxolotlReadException(msg);
+                throw new AxolotlExcelReadException(msg);
             }
         };
         CellGetInfo cellGetInfo = new CellGetInfo(true, value);

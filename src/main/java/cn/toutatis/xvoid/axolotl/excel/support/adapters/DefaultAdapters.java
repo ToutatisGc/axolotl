@@ -2,6 +2,8 @@ package cn.toutatis.xvoid.axolotl.excel.support.adapters;
 
 import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -18,9 +20,11 @@ public class DefaultAdapters {
                 Integer.class, new DefaultNumericAdapter<>(Integer.class),
                 int.class, new DefaultNumericAdapter<>(Integer.class),
                 Long.class, new DefaultNumericAdapter<>(Long.class),
-                Double.class, new DefaultNumericAdapter<>(Double.class),
-                Float.class, new DefaultNumericAdapter<>(Float.class)
-//                Boolean.class, new DefaultBooleanAdapter()
+                long.class, new DefaultNumericAdapter<>(Long.class),
+                Boolean.class, new DefaultBooleanAdapter(),
+                boolean.class, new DefaultBooleanAdapter(),
+                Date.class, new DefaultDateTimeAdapter<>(Date.class),
+                LocalDateTime.class, new DefaultDateTimeAdapter<>(LocalDateTime.class)
         );
     }
 
