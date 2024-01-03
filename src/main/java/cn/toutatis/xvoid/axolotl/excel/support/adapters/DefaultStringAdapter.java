@@ -8,6 +8,7 @@ import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.constant.Time;
+import cn.toutatis.xvoid.toolkit.validator.Validator;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 
@@ -26,20 +27,29 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
             return context.getCastType().cast(cellValue);
         }
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
-        Map<RowLevelReadPolicy, Object> excelPolicies = entityCellMappingInfo.getExcelPolicies();
+        Map<RowLevelReadPolicy, Object> excludePolicies = entityCellMappingInfo.getExcludePolicies();
         return switch (cellGetInfo.getCellType()) {
             case STRING -> {
-                if (!excelPolicies.containsKey(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
+                if (!excludePolicies.containsKey(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                     if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                         cellValue = Regex.convertSingleLine(cellValue.toString());
+                    }
+                }
+                if (Validator.strIsNumber((String) cellValue)){
+                    if (!excludePolicies.containsKey(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
+                        if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
+                            if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
+                                cellValue = Time.regexTime(context.getDataFormat(), DateUtil.getJavaDate(Double.parseDouble((String) cellValue)));
+                            }
+                        }
                     }
                 }
                 yield cellValue.toString();
             }
             case NUMERIC -> {
-                if (!excelPolicies.containsKey(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
+                if (!excludePolicies.containsKey(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
                     if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
-                        if (DateUtil.isValidExcelDate((Double) cellValue)) {
+                        if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
                             cellValue = Time.regexTime(context.getDataFormat(), DateUtil.getJavaDate((Double) cellValue));
                         }
                     }

@@ -16,4 +16,8 @@ public class CastContext<FT> {
 
     private String dataFormat;
 
+    private int currentReadColumnIndex;
+
+    private int currentReadRowIndex;
+
 }

@@ -38,7 +38,7 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
         }
         ReaderConfig<?> readerConfig = getReaderConfig();
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
-        Map<RowLevelReadPolicy, Object> excelPolicies = entityCellMappingInfo.getExcelPolicies();
+        Map<RowLevelReadPolicy, Object> excelPolicies = entityCellMappingInfo.getExcludePolicies();
         switch (cellGetInfo.getCellType()){
             case STRING:
                 if (dateClass == LocalDateTime.class){

@@ -106,7 +106,7 @@ public class TikaShell {
                         break;
                     }
                 }
-                LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + mimeType.getExtensions().toString() + ", 匹配的后缀索引：[" + idx + "]");
+                LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + mimeType.getExtensions() + ", 匹配的后缀索引：[" + idx + "]");
                 if (idx == -1){
                     //文件后缀不匹配 返回错误信息
                     String msg ="["+file.getName()+"]文件后缀不匹配";
@@ -116,7 +116,7 @@ public class TikaShell {
                 }
                 //解析出文件的媒体类型
                 MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(tika.detect(file));
-                LOGGER.debug("文件媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType.toString());
+                LOGGER.debug("文件媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType);
                 if (detectMimeType.equals(mimeType)){
                     //文件媒体类型与期望媒体类型一致 返回检测结果
                     return new DetectResult(true,detectMimeType);
@@ -124,12 +124,11 @@ public class TikaShell {
                     //不一致  返回错误信息
                     detectResult.setCatchMimeType(detectMimeType);
                     detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM);
-                    String msg = (file.getName()+"文件媒体类型不匹配，媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType.toString());
+                    String msg = (file.getName()+"文件媒体类型不匹配，媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType);
                     if (throwException){throw new IOException(msg);}
                     return detectResult.returnInfo(msg);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
                 String msg = file.getName()+"文件读取失败";
                 if (throwException){throw new IOException(msg);}
                 LOGGER.error(msg, e);
@@ -157,7 +156,6 @@ public class TikaShell {
             try {
                 return MimeTypes.getDefaultMimeTypes().forName(tika.detect(file));
             } catch (IOException | MimeTypeException e) {
-                e.printStackTrace();
                 String msg = "文件读取失败";
                 LOGGER.error(file.getName()+msg, e);
                 throw new IOException(msg);

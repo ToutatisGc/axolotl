@@ -19,7 +19,7 @@ public @interface ColumnBind {
     /**
      * 单元格序号
      */
-    int cellIndex();
+    int columnIndex();
 
     /**
      * 日期格式化

@@ -164,7 +164,7 @@ public class ReaderConfig<T> {
             KeepIntact keepIntact = declaredField.getAnnotation(KeepIntact.class);
             if (keepIntact!= null){
                 RowLevelReadPolicy[] excludePolicies = keepIntact.excludePolicies();
-                entityCellMappingInfo.setExcelPolicies(
+                entityCellMappingInfo.setExcludePolicies(
                         Arrays.stream(excludePolicies)
                                 .collect(Collectors.toMap(policy -> policy, policy -> true))
                 );
@@ -199,7 +199,7 @@ public class ReaderConfig<T> {
             ColumnBind columnBind = declaredField.getAnnotation(ColumnBind.class);
             if (columnBind != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
-                entityCellMappingInfo.setColumnPosition(columnBind.cellIndex());
+                entityCellMappingInfo.setColumnPosition(columnBind.columnIndex());
                 entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
                 entityCellMappingInfo.setFormat(columnBind.format());
                 entityCellMappingInfos.add(entityCellMappingInfo);

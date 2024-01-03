@@ -1,6 +1,8 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
 import cn.toutatis.xvoid.axolotl.AxolotlDocumentReaders;
+import cn.toutatis.xvoid.axolotl.entities.OneFieldStringEntity;
+import cn.toutatis.xvoid.axolotl.entities.OneFieldStringKeepIntactEntity;
 import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
@@ -36,6 +38,17 @@ public class SimpleTest {
         }catch (AxolotlExcelReadException e){
             Assert.assertEquals("读取的sheet[NON_EXIST]不存在", e.getMessage());
         }
+    }
+
+    @Test
+    public void testSingleRowSheet(){
+        File file = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
+        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData(OneFieldStringEntity.class, 0);
+        System.err.println(oneFieldStringEntities);
+        List<OneFieldStringKeepIntactEntity> oneFieldStringKeepIntactEntities =
+                excelReader.readSheetData(OneFieldStringKeepIntactEntity.class, 0);
+        System.err.println(oneFieldStringKeepIntactEntities);
     }
 
 }

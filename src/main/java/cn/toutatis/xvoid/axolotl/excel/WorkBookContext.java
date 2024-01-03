@@ -46,7 +46,9 @@ public class WorkBookContext extends AbstractContext {
      * -1表示未读取到行号和列号
      * 这两种属性用于在读取数据时，获取当前读取到的行和列号，以提示错误信息和定位读取位置
      */
+    @Getter
     private int currentReadRowIndex = -1;
+    @Getter
     private int currentReadColumnIndex = -1;
 
     /**
@@ -115,16 +117,8 @@ public class WorkBookContext extends AbstractContext {
         this._eventDriven = _eventDriven;
     }
 
-    public int getCurrentReadRowIndex() {
-        return currentReadRowIndex;
-    }
-
     public void setCurrentReadRowIndex(int currentReadRowIndex) {
         this.currentReadRowIndex = currentReadRowIndex;
-    }
-
-    public int getCurrentReadColumnIndex() {
-        return currentReadColumnIndex;
     }
 
     public void setCurrentReadColumnIndex(int currentReadColumnIndex) {

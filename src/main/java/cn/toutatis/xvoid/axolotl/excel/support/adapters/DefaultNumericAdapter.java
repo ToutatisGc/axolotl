@@ -33,7 +33,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
             case STRING:
                 ReaderConfig<?> readerConfig = getReaderConfig();
                 EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
-                Map<RowLevelReadPolicy, Object> excelPolicies = entityCellMappingInfo.getExcelPolicies();
+                Map<RowLevelReadPolicy, Object> excelPolicies = entityCellMappingInfo.getExcludePolicies();
                 if (!excelPolicies.containsKey(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                     if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                         cellValue = Regex.convertSingleLine(cellValue.toString());

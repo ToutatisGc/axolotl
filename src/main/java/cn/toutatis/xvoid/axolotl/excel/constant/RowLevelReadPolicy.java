@@ -17,9 +17,7 @@ public enum RowLevelReadPolicy {
      */
     IGNORE_EMPTY_SHEET_ERROR(Type.BOOLEAN, true,true),
 
-
     /*行数据配置*/
-
     /**
      * 空行也视为有效数据
      * 读取时将转换为一个空对象
