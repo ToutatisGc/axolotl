@@ -32,8 +32,22 @@ public class DefaultAdapters {
         defaultAdapters.put(LocalDateTime.class, new DefaultDateTimeAdapter<>(LocalDateTime.class));
     }
 
+    /**
+     * 获取默认适配器
+     * @param clazz 需要转换的类型
+     * @return 数据转换适配器
+     */
     public static DataCastAdapter<?> getAdapter(Class<?> clazz) {
         return defaultAdapters.get(clazz);
     }
 
+    /**
+     * 注册默认适配器
+     * 注意：注册后，会覆盖已有的适配器
+     * @param clazz 需要转换的类型
+     * @param adapter 数据转换适配器
+     */
+    public static void registerDefaultAdapter(Class<?> clazz, DataCastAdapter<?> adapter) {
+        defaultAdapters.put(clazz, adapter);
+    }
 }
