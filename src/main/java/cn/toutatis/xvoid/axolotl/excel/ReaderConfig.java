@@ -57,6 +57,12 @@ public class ReaderConfig<T> {
     private int endIndex = -1;
 
     /**
+     * 读取表为对象
+     * 默认读取为List
+     */
+    private boolean readAsObject = false;
+
+    /**
      * 索引映射信息
      * key: 索引
      * value: 映射信息

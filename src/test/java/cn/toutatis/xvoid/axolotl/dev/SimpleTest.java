@@ -4,6 +4,7 @@ import cn.toutatis.xvoid.axolotl.AxolotlDocumentReaders;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringEntity;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringKeepIntactEntity;
 import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import org.junit.Assert;
@@ -57,6 +58,18 @@ public class SimpleTest {
         AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
         List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData(OneFieldStringEntity.class, 0);
         System.err.println(oneFieldStringEntities);
+    }
+
+    @Test
+    public void testMultiData(){
+        File file = FileToolkit.getResourceFileAsFile("sec/测试28张表.xls");
+        if (file != null && file.exists()){
+            AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+            ReadConfigBuilder<DmsRegMonetary> builder = new ReadConfigBuilder<>(DmsRegMonetary.class, true);
+            builder.setSheetIndex(0);
+            DmsRegMonetary dmsRegMonetary = excelReader.readSheetDataAsObject(builder.build());
+            System.err.println(dmsRegMonetary);
+        }
     }
 
 }

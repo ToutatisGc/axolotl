@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.Meta;
+import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
 import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
@@ -52,6 +53,14 @@ public class AxolotlExcelReader<T>{
     private WorkBookContext workBookContext;
 
     /**
+     * [内部属性]
+     * 直接指定读取的类
+     * 在读取数据时使用不指定读取类型的读取方法时，使用该类读取数据
+     */
+    private final ReaderConfig<T> _sheetLevelReaderConfig;
+
+
+    /**
      * 构造文件读取器
      */
     public AxolotlExcelReader(File excelFile) {
@@ -78,8 +87,7 @@ public class AxolotlExcelReader<T>{
             throw new IllegalArgumentException("读取的类型对象不能为空");
         }
         this.detectFileAndInitWorkbook(excelFile);
-        this.workBookContext.setDirectReadClass(clazz);
-        this.workBookContext.setUseDefaultReaderConfig(withDefaultConfig);
+        this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,withDefaultConfig);
     }
 
     /**
@@ -126,6 +134,26 @@ public class AxolotlExcelReader<T>{
             LOGGER.error("加载文件失败",e);
             throw new AxolotlExcelReadException(e.getMessage());
         }
+    }
+
+    /**
+     * [ROOT]
+     * 读取Excel文件数据为一个实体
+     * @param readerConfig 读取配置
+     * @param <RT> 读取类型
+     * @return 读取的数据
+     */
+    public <RT> RT readSheetDataAsObject(ReaderConfig<RT> readerConfig){
+        if (readerConfig != null){
+            readerConfig.setReadAsObject(true);
+        }
+        assert readerConfig != null;
+        Sheet sheet = this.searchSheet(readerConfig);
+        this.preCheckAndFixReadConfig(readerConfig);
+        this.processMergedCells(sheet);
+        RT instance = readerConfig.getCastClassInstance();
+        this.convertPositionCellToInstance(instance, readerConfig,sheet);
+        return instance;
     }
 
     public <RT> List<RT> readSheetData(Class<RT> castClass,String sheetName){
@@ -182,17 +210,7 @@ public class AxolotlExcelReader<T>{
     public <RT> List<RT> readSheetData(ReaderConfig<RT> readerConfig) {
         List<RT> readResult = new ArrayList<>();
         // 查找sheet
-        Sheet sheet;
-        if (readerConfig.getSheetName() != null){
-            sheet = workBookContext.getWorkbook().getSheet(readerConfig.getSheetName());
-            if (sheet != null){
-                readerConfig.setSheetIndex(sheet.getWorkbook().getSheetIndex(sheet));
-            }else {
-                readerConfig.setSheetIndex(-1);
-            }
-        }else {
-            sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
-        }
+        Sheet sheet = this.searchSheet(readerConfig);
         // 检查并修正配置文件
         this.preCheckAndFixReadConfig(readerConfig);
         // 空表返回空list
@@ -205,6 +223,26 @@ public class AxolotlExcelReader<T>{
         return readResult;
     }
 
+    private Sheet searchSheet(ReaderConfig<?> readerConfig){
+        if (readerConfig == null){return null;}
+        Sheet sheet;
+        if (readerConfig.getSheetName() != null){
+            sheet = workBookContext.getWorkbook().getSheet(readerConfig.getSheetName());
+            if (sheet != null){
+                readerConfig.setSheetIndex(sheet.getWorkbook().getSheetIndex(sheet));
+            }else {
+                readerConfig.setSheetIndex(-1);
+            }
+        }else {
+            sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
+        }
+        return sheet;
+    }
+
+    /**
+     * 处理合并单元格
+     * @param sheet 工作表
+     */
     private void processMergedCells(Sheet sheet) {
         List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
         LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "开始处理工作表合并单元格");
@@ -215,9 +253,13 @@ public class AxolotlExcelReader<T>{
             int lastColumn = mergedRegion.getLastColumn();
             Cell leftTopCell = sheet.getRow(firstRow).getCell(firstColumn);
             LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "处理合并单元格[%s]".formatted(mergedRegion.formatAsString()));
-            for (int r = firstRow; r <= lastRow; r++) {
-                for (int c = firstColumn; c <= lastColumn; c++) {
-                    Cell cell = sheet.getRow(r).getCell(c);
+            for (int rowIndex = firstRow; rowIndex <= lastRow; rowIndex++) {
+                for (int columnIndex = firstColumn; columnIndex <= lastColumn; columnIndex++) {
+                    Row row = sheet.getRow(rowIndex);
+                    Cell cell =row.getCell(columnIndex);
+                    if (cell == null){
+                        cell = row.createCell(columnIndex, leftTopCell.getCellType());
+                    }
                     switch (leftTopCell.getCellType()){
                         case STRING:
                             cell.setCellValue(leftTopCell.getStringCellValue());
@@ -296,39 +338,54 @@ public class AxolotlExcelReader<T>{
      */
     @SneakyThrows
     private <RT> void row2SimplePOJO(RT instance, Row row, ReaderConfig<RT> readerConfig){
-        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
-        for (Map.Entry<String, EntityCellMappingInfo<?>> positionMappingInfoEntry : positionMappingInfos.entrySet()) {
-            EntityCellMappingInfo<?> positionMappingInfo = positionMappingInfoEntry.getValue();
-            workBookContext.setCurrentReadRowIndex(positionMappingInfo.getRowPosition());
-            workBookContext.setCurrentReadColumnIndex(positionMappingInfo.getColumnPosition());
-            CellGetInfo cellValue = this.getPositionCellOriginalValue(row.getSheet(), positionMappingInfo);
-            Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, positionMappingInfo, readerConfig);
-            Field field = instance.getClass().getDeclaredField(positionMappingInfo.getFieldName());
-            field.setAccessible(true);
-            field.set(instance, adaptiveValue);
-        }
+        this.convertPositionCellToInstance(instance,readerConfig,row.getSheet());
         List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
         for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
             workBookContext.setCurrentReadRowIndex(row.getRowNum());
             workBookContext.setCurrentReadColumnIndex(indexMappingInfo.getColumnPosition());
             CellGetInfo cellValue = this.getCellOriginalValue(row,indexMappingInfo.getColumnPosition(), indexMappingInfo);
             Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, indexMappingInfo, readerConfig);
-            Field field = instance.getClass().getDeclaredField(indexMappingInfo.getFieldName());
-            field.setAccessible(true);
-            Object o = field.get(instance);
-            if (o!= null){
-                if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.FIELD_EXIST_OVERRIDE)){
-                    field.set(instance, adaptiveValue);
-                }
-            }else {
-                field.set(instance, adaptiveValue);
-            }
+            this.assignValueToField(instance,adaptiveValue,indexMappingInfo,readerConfig);
+        }
+    }
+
+    private void convertPositionCellToInstance(Object instance,ReaderConfig<?> readerConfig,Sheet sheet){
+        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
+        for (Map.Entry<String, EntityCellMappingInfo<?>> positionMappingInfoEntry : positionMappingInfos.entrySet()) {
+            EntityCellMappingInfo<?> positionMappingInfo = positionMappingInfoEntry.getValue();
+            workBookContext.setCurrentReadRowIndex(positionMappingInfo.getRowPosition());
+            workBookContext.setCurrentReadColumnIndex(positionMappingInfo.getColumnPosition());
+            CellGetInfo cellValue = this.getPositionCellOriginalValue(sheet, positionMappingInfo);
+            Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, positionMappingInfo, readerConfig);
+            this.assignValueToField(instance,adaptiveValue,positionMappingInfo,readerConfig);
         }
     }
 
     /**
+     * [ROOT]
+     * 讲适配后的值赋值给实体类字段
+     * @param instance 实体类实例
+     * @param adaptiveValue 适配后的值
+     * @param mappingInfo 映射信息
+     * @param readerConfig 读取配置
+     */
+    @SneakyThrows
+    private void assignValueToField(Object instance,Object adaptiveValue, EntityCellMappingInfo<?> mappingInfo,ReaderConfig<?> readerConfig){
+        Field field = instance.getClass().getDeclaredField(mappingInfo.getFieldName());
+        field.setAccessible(true);
+        Object o = field.get(instance);
+        if (o!= null){
+            if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.FIELD_EXIST_OVERRIDE)){
+                field.set(instance, adaptiveValue);
+            }
+        }else {
+            field.set(instance, adaptiveValue);
+        }
+    }
+
+    /**
+     * [ROOT]
      * 适配实体类的字段
-     *
      * @param info 单元格值
      * @param mappingInfo 映射信息
      * @return 适配实体类的字段值
@@ -407,9 +464,6 @@ public class AxolotlExcelReader<T>{
         if (mappingInfo == null){
             mappingInfo = new EntityCellMappingInfo<>(String.class);
             mappingInfo.setColumnPosition(index);
-        }
-        if (mappingInfo.getMappingType() == EntityCellMappingInfo.MappingType.POSITION){
-            throw new AxolotlExcelReadException("位置映射请使用getPositionCellValue方法");
         }
         return this.getIndexCellValue(row,index, mappingInfo);
     }
@@ -498,8 +552,6 @@ public class AxolotlExcelReader<T>{
         });
     }
 
-
-
     /**
      * [ROOT]
      * 预校验读取配置是否正常
@@ -529,6 +581,12 @@ public class AxolotlExcelReader<T>{
         if (readerConfig.getStartIndex() < 0){
             throw new AxolotlExcelReadException("读取起始行不得小于0");
         }
+        if (readerConfig.isReadAsObject()){
+            if (!readerConfig.getIndexMappingInfos().isEmpty()){
+                String simpleName = ColumnBind.class.getSimpleName();
+                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,"读取对象时不用指定@"+simpleName+"注解");
+            }
+        }
         //修正部分
         if (readerConfig.getInitialRowPositionOffset() < 0){
             LOGGER.warn("读取的初始行偏移量不能小于0，将被修正为0");
@@ -538,7 +596,9 @@ public class AxolotlExcelReader<T>{
             if (readerConfig.getEndIndex() != -1){
                 throw new AxolotlExcelReadException("读取结束行不得小于0");
             }
-            LOGGER.info("未设置读取的结束行,将被默认修正为读取该表最大行数");
+            if (!readerConfig.isReadAsObject()){
+                LOGGER.info("未设置读取的结束行,将被默认修正为读取该表最大行数");
+            }
             readerConfig.setEndIndex(workBookContext.getWorkbook().getSheetAt(sheetIndex).getLastRowNum()+1);
         }
     }

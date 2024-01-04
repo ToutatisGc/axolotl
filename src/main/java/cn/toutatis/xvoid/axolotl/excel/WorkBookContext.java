@@ -3,7 +3,6 @@ package cn.toutatis.xvoid.axolotl.excel;
 import cn.toutatis.xvoid.axolotl.excel.support.AbstractContext;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Workbook;
 
@@ -22,12 +21,6 @@ public class WorkBookContext extends AbstractContext {
     private Workbook workbook;
 
     /**
-     * 是否使用默认的读取配置
-     */
-    @Setter @Getter
-    private boolean useDefaultReaderConfig = false;
-
-    /**
      * 公式计算器
      */
     private FormulaEvaluator formulaEvaluator;
@@ -43,11 +36,8 @@ public class WorkBookContext extends AbstractContext {
     private int currentReadColumnIndex = -1;
 
     /**
-     * [内部属性]
-     * 直接指定读取的类
-     * 在读取数据时使用不指定读取类型的读取方法时，使用该类读取数据
+     * 是否是事件驱动的读取
      */
-    private Class<?> _directReadClass;
     private boolean _eventDriven = false;
 
     public WorkBookContext(File file, DetectResult detectResult) {
@@ -68,14 +58,6 @@ public class WorkBookContext extends AbstractContext {
             formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
         }
         return formulaEvaluator;
-    }
-
-    protected Class<?> getDirectReadClass() {
-        return _directReadClass;
-    }
-
-    protected void setDirectReadClass(Class<?> _directClass) {
-        this._directReadClass = _directClass;
     }
 
     public boolean getEventDriven() {
