@@ -71,9 +71,8 @@ public class ReaderConfig<T> {
 
     /**
      * 位置映射信息
-     * key: 位置[A5=0,4,B2=1,1]
      */
-    private Map<String,EntityCellMappingInfo<?>> positionMappingInfos;
+    private List<EntityCellMappingInfo<?>> positionMappingInfos;
 
     /**
      * 读取的特性
@@ -157,8 +156,8 @@ public class ReaderConfig<T> {
      */
     private void processEntityFieldMappingToCell() {
         Field[] declaredFields = castClass.getDeclaredFields();
-        List<EntityCellMappingInfo<?>> entityCellMappingInfos = new ArrayList<>(declaredFields.length);
-        HashMap<String, EntityCellMappingInfo<?>> positionMappingInfos = new HashMap<>();
+        List<EntityCellMappingInfo<?>> entityCellMappingInfos = new ArrayList<>();
+        List<EntityCellMappingInfo<?>> positionMappingInfos = new ArrayList<>();
         boolean preciseLocalization = getReadPolicyAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
         AtomicInteger idx = new AtomicInteger(-1);
         for (Field declaredField : declaredFields) {
@@ -195,7 +194,7 @@ public class ReaderConfig<T> {
                     }
                     entityCellMappingInfo.setColumnPosition(columnIndex);
                     entityCellMappingInfo.setRowPosition(Integer.parseInt(alphaNumeric[1])-1);
-                    positionMappingInfos.put(columnIndex+","+entityCellMappingInfo.getRowPosition(),entityCellMappingInfo);
+                    positionMappingInfos.add(entityCellMappingInfo);
                 }else {
                     throw new IllegalArgumentException("指定单元格位置格式错误");
                 }

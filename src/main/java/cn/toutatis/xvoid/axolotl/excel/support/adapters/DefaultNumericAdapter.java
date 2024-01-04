@@ -29,7 +29,8 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
         }
         switch (cellGetInfo.getCellType()){
             case NUMERIC:
-                return numberClass.cast(cellGetInfo.getCellValue());
+                Double doubleValue = (Double) cellValue;
+                return this.castDoubleToNumber(doubleValue);
             case STRING:
                 ReaderConfig<?> readerConfig = getReaderConfig();
                 EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
@@ -40,7 +41,8 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
                     }
                 }
                 if (Validator.strIsNumber((String) cellValue)){
-                    return numberClass.cast(cellGetInfo.getCellValue());
+                    Double cellDoubleValue = Double.valueOf((String) cellValue);
+                    return this.castDoubleToNumber(cellDoubleValue);
                 }else {
                     throw new AxolotlExcelReadException("字符串不是数字格式无法转换");
                 }
@@ -53,6 +55,23 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
             case BLANK:
             default:
                 return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private NT castDoubleToNumber(Double doubleValue) {
+        if (numberClass.equals(Double.class)) {
+            return (NT) doubleValue;
+        } else if (numberClass.equals(Float.class)) {
+            return (NT) Float.valueOf(doubleValue.floatValue());
+        } else if (numberClass.equals(Long.class)) {
+            return (NT) Long.valueOf(doubleValue.longValue());
+        } else if (numberClass.equals(Integer.class)) {
+            return (NT) Integer.valueOf(doubleValue.intValue());
+        } else if (numberClass.equals(Short.class)) {
+            return (NT) Short.valueOf(doubleValue.shortValue());
+        }else {
+            throw new AxolotlExcelReadException("不支持的数字类型转换");
         }
     }
 

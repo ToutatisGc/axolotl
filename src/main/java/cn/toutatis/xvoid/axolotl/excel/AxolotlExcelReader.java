@@ -350,9 +350,8 @@ public class AxolotlExcelReader<T>{
     }
 
     private void convertPositionCellToInstance(Object instance,ReaderConfig<?> readerConfig,Sheet sheet){
-        Map<String, EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
-        for (Map.Entry<String, EntityCellMappingInfo<?>> positionMappingInfoEntry : positionMappingInfos.entrySet()) {
-            EntityCellMappingInfo<?> positionMappingInfo = positionMappingInfoEntry.getValue();
+        List<EntityCellMappingInfo<?>> positionMappingInfos = readerConfig.getPositionMappingInfos();
+        for (EntityCellMappingInfo<?> positionMappingInfo : positionMappingInfos) {
             workBookContext.setCurrentReadRowIndex(positionMappingInfo.getRowPosition());
             workBookContext.setCurrentReadColumnIndex(positionMappingInfo.getColumnPosition());
             CellGetInfo cellValue = this.getPositionCellOriginalValue(sheet, positionMappingInfo);

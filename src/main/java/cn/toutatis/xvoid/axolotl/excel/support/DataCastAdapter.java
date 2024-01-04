@@ -25,6 +25,4 @@ public interface DataCastAdapter<FT> {
      */
     boolean support(CellType cellType, Class<FT> clazz);
 
-
-
 }
