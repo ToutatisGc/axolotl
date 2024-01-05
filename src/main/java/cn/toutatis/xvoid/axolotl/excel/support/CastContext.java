@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.support;
 
+import cn.toutatis.xvoid.axolotl.excel.toolkit.ExcelToolkit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -20,4 +21,7 @@ public class CastContext<FT> {
 
     private int currentReadRowIndex;
 
+    public String getHumanReadablePosition() {
+        return ExcelToolkit.getHumanReadablePosition(currentReadRowIndex, currentReadColumnIndex);
+    }
 }

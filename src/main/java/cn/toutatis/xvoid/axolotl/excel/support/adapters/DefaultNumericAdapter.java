@@ -31,7 +31,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
         switch (cellGetInfo.getCellType()){
             case NUMERIC:
                 Double doubleValue = (Double) cellValue;
-                return this.castDoubleToNumber(doubleValue);
+                return this.castDoubleToOtherTypeNumber(doubleValue);
             case STRING:
                 ReaderConfig<?> readerConfig = getReaderConfig();
                 EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
@@ -43,7 +43,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
                 }
                 if (Validator.strIsNumber((String) cellValue)){
                     Double cellDoubleValue = Double.valueOf((String) cellValue);
-                    return this.castDoubleToNumber(cellDoubleValue);
+                    return this.castDoubleToOtherTypeNumber(cellDoubleValue);
                 }else {
                     throw new AxolotlExcelReadException("字符串不是数字格式无法转换");
                 }
@@ -60,7 +60,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
     }
 
     @SuppressWarnings("unchecked")
-    private NT castDoubleToNumber(Double doubleValue) {
+    private NT castDoubleToOtherTypeNumber(Double doubleValue) {
         if (numberClass.equals(Double.class)) {
             return (NT) doubleValue;
         } else if (numberClass.equals(BigDecimal.class)){
@@ -81,7 +81,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
     @Override
     public boolean support(CellType cellType, Class<NT> clazz) {
         return clazz == Integer.class || clazz == String.class ||
-                clazz == int.class ||
+                clazz == int.class || clazz == BigDecimal.class ||
                 clazz == Long.class || clazz == long.class ||
                 clazz == Double.class || clazz == double.class ||
                 clazz == Float.class || clazz == float.class ||

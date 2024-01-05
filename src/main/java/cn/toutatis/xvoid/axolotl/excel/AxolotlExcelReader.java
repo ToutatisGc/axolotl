@@ -289,7 +289,7 @@ public class AxolotlExcelReader<T>{
             if (initialRowPositionOffset > 0){
                 LOGGER.debug("跳过前{}行",initialRowPositionOffset);
                 startIndex = startIndex + initialRowPositionOffset;
-                endIndex = endIndex + initialRowPositionOffset;
+//                endIndex = endIndex + initialRowPositionOffset;
             }
         }
         for (int i = startIndex; i < endIndex; i++) {

@@ -21,11 +21,11 @@ import java.util.Map;
 public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implements DataCastAdapter<String> {
     @Override
     public String cast(CellGetInfo cellGetInfo, CastContext<String> context) {
-        ReaderConfig<?> readerConfig = getReaderConfig();
         Object cellValue = cellGetInfo.getCellValue();
         if (!cellGetInfo.isAlreadyFillValue()){
             return context.getCastType().cast(cellValue);
         }
+        ReaderConfig<?> readerConfig = getReaderConfig();
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
         Map<RowLevelReadPolicy, Object> excludePolicies = entityCellMappingInfo.getExcludePolicies();
         return switch (cellGetInfo.getCellType()) {

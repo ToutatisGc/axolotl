@@ -82,8 +82,10 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
                 }else {
                     throw new AxolotlExcelReadException("读取值[%s]无法转换日期格式,请自行转换格式".formatted(cellValue));
                 }
+            case BLANK:
+                return null;
             default:
-                throw new AxolotlExcelReadException("读取类型[%s]无法转换日期格式".formatted(cellGetInfo.getCellType()));
+                throw new AxolotlExcelReadException("单元格位置:[%s]读取类型[%s]无法转换日期格式".formatted(context.getHumanReadablePosition(),cellGetInfo.getCellType()));
         }
     }
 

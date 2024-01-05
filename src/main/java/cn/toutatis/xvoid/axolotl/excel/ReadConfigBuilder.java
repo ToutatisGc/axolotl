@@ -12,7 +12,7 @@ public class ReadConfigBuilder<T> {
     /**
      * 构造方法
      *
-     * @param castClass      类型
+     * @param castClass 类型
      * @param withDefaultConfig 是否使用默认配置
      */
     public ReadConfigBuilder(Class<T> castClass, boolean withDefaultConfig) {

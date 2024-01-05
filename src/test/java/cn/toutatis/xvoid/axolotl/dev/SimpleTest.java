@@ -3,16 +3,22 @@ package cn.toutatis.xvoid.axolotl.dev;
 import cn.toutatis.xvoid.axolotl.AxolotlDocumentReaders;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringEntity;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringKeepIntactEntity;
+import cn.toutatis.xvoid.axolotl.entities.ValidTestEntity;
 import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SimpleTest {
 
@@ -71,10 +77,23 @@ public class SimpleTest {
             ReadConfigBuilder<DmsRegReceivables> dmsRegReceivablesReadConfigBuilder = new ReadConfigBuilder<>(DmsRegReceivables.class, true);
             dmsRegReceivablesReadConfigBuilder.setSheetIndex(2);
             dmsRegReceivablesReadConfigBuilder.setInitialRowPositionOffset(8);
-            dmsRegReceivablesReadConfigBuilder.setEndIndex(1);
+//            dmsRegReceivablesReadConfigBuilder.setEndIndex();
             List<DmsRegReceivables> dmsRegReceivables = excelReader.readSheetData(dmsRegReceivablesReadConfigBuilder.build());
             for (DmsRegReceivables dmsRegReceivable : dmsRegReceivables) {
                 System.err.println(dmsRegReceivable);
+            }
+            System.err.println(dmsRegReceivables.size());
+        }
+    }
+
+    @Test
+    public void testValidate() {
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            Validator validator = validatorFactory.getValidator();
+            ValidTestEntity validTestEntity = new ValidTestEntity();
+            Set<ConstraintViolation<ValidTestEntity>> validate = validator.validate(validTestEntity);
+            for (ConstraintViolation<ValidTestEntity> va : validate) {
+                System.err.println(va.getMessage());
             }
         }
     }

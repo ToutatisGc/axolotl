@@ -3,6 +3,7 @@ package cn.toutatis.xvoid.axolotl.dev;
 import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -28,7 +29,7 @@ public class DmsRegReceivables{
     @ColumnBind(columnIndex = 3)
     private String receivablesExpirationTimeString;
 
-    @ColumnBind(columnIndex = 3,format = "yyyy-MM-dd")
+    @ColumnBind(columnIndex = 3)
     private LocalDateTime receivablesExpirationLocalDateTime;
 
     @ColumnBind(columnIndex = 3)
@@ -58,6 +59,9 @@ public class DmsRegReceivables{
      */
     @ColumnBind(columnIndex = 8)
     private String receivablesVerify;
+
+    @ColumnBind(columnIndex = 8)
+    private BigDecimal receivablesVerifyBigDecimal;
     /**
      * 备注
      */
