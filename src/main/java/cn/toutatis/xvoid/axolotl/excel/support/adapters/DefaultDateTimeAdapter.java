@@ -13,11 +13,9 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.Map;
 
@@ -45,15 +43,31 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
                     if (!excelPolicies.containsKey(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                         if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                             cellValue = Regex.convertSingleLine(cellValue.toString());
-                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(context.getDataFormat());
-                            LocalDateTime localDateTime = LocalDateTime.parse((CharSequence) cellValue, formatter);
-                            return dateClass.cast(localDateTime);
                         }
                     }
+                    if (cellValue.toString().length() != context.getDataFormat().length()){
+                        throw new AxolotlExcelReadException("请指定正确的日期格式,获取为:[%s],尝试转换为:[%s]".formatted(cellValue, context.getDataFormat()));
+                    }
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(context.getDataFormat());
+                    LocalDateTime localDateTime;
+                    try {
+                        localDateTime = LocalDateTime.parse((CharSequence) cellValue, formatter);
+                    }catch (DateTimeParseException timeParseException){
+                        if (timeParseException.getMessage().contains("Unable to obtain LocalDateTime from")){
+                            localDateTime = LocalDate.parse(cellValue.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay();
+                        }else {
+                            throw timeParseException;
+                        }
+                    }
+                    return dateClass.cast(localDateTime);
                 }else if (dateClass == Date.class){
                     SimpleDateFormat format = new SimpleDateFormat(context.getDataFormat());
-                    Date date = Time.parseData(format, cellValue.toString());
-                    return dateClass.cast(date);
+                    try {
+                        Date date = Time.parseData(format, cellValue.toString());
+                        return dateClass.cast(date);
+                    }catch(Exception parseException){
+                        throw new AxolotlExcelReadException(context,"请指定正确的日期格式,获取为:[%s],尝试转换为:[%s]".formatted(cellValue, context.getDataFormat()));
+                    }
                 }
             case NUMERIC:
                 if (DateUtil.isValidExcelDate((Double) cellValue)) {

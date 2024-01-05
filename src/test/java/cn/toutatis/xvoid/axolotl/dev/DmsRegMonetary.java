@@ -1,6 +1,5 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
-import cn.toutatis.xvoid.axolotl.entities.OneFieldStringEntity;
 import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyPositionBind;
 import lombok.Data;
 
@@ -41,7 +40,7 @@ public class DmsRegMonetary implements Serializable {
     @SpecifyPositionBind("I11")
     private int monetaryResourcesBankBookBalanceInt;
 
-    @SpecifyPositionBind("I11")
-    public OneFieldStringEntity oneFieldString;
+//    @SpecifyPositionBind("I11")
+//    public OneFieldStringEntity oneFieldString;
 
 }

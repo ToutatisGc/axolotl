@@ -68,7 +68,14 @@ public class SimpleTest {
             ReadConfigBuilder<DmsRegMonetary> builder = new ReadConfigBuilder<>(DmsRegMonetary.class, true);
             builder.setSheetIndex(0);
             DmsRegMonetary dmsRegMonetary = excelReader.readSheetDataAsObject(builder.build());
-            System.err.println(dmsRegMonetary);
+            ReadConfigBuilder<DmsRegReceivables> dmsRegReceivablesReadConfigBuilder = new ReadConfigBuilder<>(DmsRegReceivables.class, true);
+            dmsRegReceivablesReadConfigBuilder.setSheetIndex(2);
+            dmsRegReceivablesReadConfigBuilder.setInitialRowPositionOffset(8);
+            dmsRegReceivablesReadConfigBuilder.setEndIndex(1);
+            List<DmsRegReceivables> dmsRegReceivables = excelReader.readSheetData(dmsRegReceivablesReadConfigBuilder.build());
+            for (DmsRegReceivables dmsRegReceivable : dmsRegReceivables) {
+                System.err.println(dmsRegReceivable);
+            }
         }
     }
 

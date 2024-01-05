@@ -11,6 +11,7 @@ import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import org.apache.poi.ss.usermodel.CellType;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> implements DataCastAdapter<NT> {
@@ -62,12 +63,14 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
     private NT castDoubleToNumber(Double doubleValue) {
         if (numberClass.equals(Double.class)) {
             return (NT) doubleValue;
+        } else if (numberClass.equals(BigDecimal.class)){
+            return (NT) new BigDecimal(doubleValue.toString());
+        } else if (numberClass.equals(Integer.class)) {
+            return (NT) Integer.valueOf(doubleValue.intValue());
         } else if (numberClass.equals(Float.class)) {
             return (NT) Float.valueOf(doubleValue.floatValue());
         } else if (numberClass.equals(Long.class)) {
             return (NT) Long.valueOf(doubleValue.longValue());
-        } else if (numberClass.equals(Integer.class)) {
-            return (NT) Integer.valueOf(doubleValue.intValue());
         } else if (numberClass.equals(Short.class)) {
             return (NT) Short.valueOf(doubleValue.shortValue());
         }else {

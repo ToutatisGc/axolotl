@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.support.AbstractContext;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
+import cn.toutatis.xvoid.axolotl.excel.toolkit.ExcelToolkit;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -81,7 +82,6 @@ public class WorkBookContext extends AbstractContext {
      * @return 当前读取到的行和列号的可读字符串
      */
     public String getCurrentHumanReadablePosition() {
-        char i = (char) ( 'A' + currentReadColumnIndex);
-        return String.format("%s", i+("%d".formatted(currentReadRowIndex + 1)));
+        return ExcelToolkit.getHumanReadablePosition(currentReadRowIndex, currentReadColumnIndex);
     }
 }

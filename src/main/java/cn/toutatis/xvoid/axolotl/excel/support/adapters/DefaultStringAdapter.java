@@ -30,21 +30,22 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
         Map<RowLevelReadPolicy, Object> excludePolicies = entityCellMappingInfo.getExcludePolicies();
         return switch (cellGetInfo.getCellType()) {
             case STRING -> {
+                String cellValueString = (String) cellValue;
                 if (!excludePolicies.containsKey(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                     if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
-                        cellValue = Regex.convertSingleLine(cellValue.toString());
+                        cellValueString = Regex.convertSingleLine(cellValueString).replace(" ","");
                     }
                 }
-                if (Validator.strIsNumber((String) cellValue)){
+                if (Validator.strIsNumber(cellValueString)){
                     if (!excludePolicies.containsKey(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
                         if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
                             if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
-                                cellValue = Time.regexTime(context.getDataFormat(), DateUtil.getJavaDate(Double.parseDouble((String) cellValue)));
+                                cellValueString = Time.regexTime(context.getDataFormat(), DateUtil.getJavaDate(Double.parseDouble(cellValueString)));
                             }
                         }
                     }
                 }
-                yield cellValue.toString();
+                yield cellValueString;
             }
             case NUMERIC -> {
                 if (!excludePolicies.containsKey(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
@@ -56,7 +57,7 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 }
                 yield "%s".formatted(cellValue);
             }
-            case BOOLEAN, FORMULA -> cellGetInfo.getCellValue().toString();
+            case BOOLEAN, FORMULA -> cellValue.toString();
             default -> null;
         };
     }

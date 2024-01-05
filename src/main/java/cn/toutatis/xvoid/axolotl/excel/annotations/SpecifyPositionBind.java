@@ -21,7 +21,7 @@ public @interface SpecifyPositionBind {
      */
     String value();
 
-    String format() default Time.SIMPLE_DATE_FORMAT_REGEX;
+    String format() default Time.YMD_HORIZONTAL_FORMAT_REGEX;
 
     /**
      * 指定单元格位置的适配器，默认使用默认适配器
