@@ -93,6 +93,7 @@ public class SimpleTest {
             ValidTestEntity validTestEntity = new ValidTestEntity();
             Set<ConstraintViolation<ValidTestEntity>> validate = validator.validate(validTestEntity);
             for (ConstraintViolation<ValidTestEntity> va : validate) {
+                System.err.println(va.getPropertyPath().toString());
                 System.err.println(va.getMessage());
             }
         }

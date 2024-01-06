@@ -46,7 +46,7 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
                         }
                     }
                     if (cellValue.toString().length() != context.getDataFormat().length()){
-                        throw new AxolotlExcelReadException("请指定正确的日期格式,获取为:[%s],尝试转换为:[%s]".formatted(cellValue, context.getDataFormat()));
+                        throw new AxolotlExcelReadException(context,"请指定正确的日期格式,获取为:[%s],尝试转换为:[%s]".formatted(cellValue, context.getDataFormat()));
                     }
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(context.getDataFormat());
                     LocalDateTime localDateTime;
@@ -80,12 +80,12 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
                         return dateClass.cast(zonedDateTime.toLocalDateTime());
                     }
                 }else {
-                    throw new AxolotlExcelReadException("读取值[%s]无法转换日期格式,请自行转换格式".formatted(cellValue));
+                    throw new AxolotlExcelReadException(context,"读取值[%s]无法转换日期格式,请自行转换格式".formatted(cellValue));
                 }
             case BLANK:
                 return null;
             default:
-                throw new AxolotlExcelReadException("单元格位置:[%s]读取类型[%s]无法转换日期格式".formatted(context.getHumanReadablePosition(),cellGetInfo.getCellType()));
+                throw new AxolotlExcelReadException(context,"单元格位置:[%s]读取类型[%s]无法转换日期格式".formatted(context.getHumanReadablePosition(),cellGetInfo.getCellType()));
         }
     }
 

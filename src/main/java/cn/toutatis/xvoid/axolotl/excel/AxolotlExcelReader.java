@@ -11,11 +11,16 @@ import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.support.adapters.AbstractDataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
+import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException.ExceptionType;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.support.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -34,6 +39,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Excel读取器
@@ -51,6 +57,8 @@ public class AxolotlExcelReader<T>{
      */
     @Getter
     private WorkBookContext workBookContext;
+
+    private Validator validator;
 
     /**
      * [内部属性]
@@ -132,7 +140,11 @@ public class AxolotlExcelReader<T>{
             workBookContext.setWorkbook(workbook);
         } catch (IOException | RecordFormatException | InvalidFormatException e) {
             LOGGER.error("加载文件失败",e);
-            throw new AxolotlExcelReadException(e.getMessage());
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,e.getMessage());
+        }
+        // 初始化校验器
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            this.validator = validatorFactory.getValidator();
         }
     }
 
@@ -346,6 +358,14 @@ public class AxolotlExcelReader<T>{
             CellGetInfo cellValue = this.getCellOriginalValue(row,indexMappingInfo.getColumnPosition(), indexMappingInfo);
             Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, indexMappingInfo, readerConfig);
             this.assignValueToField(instance,adaptiveValue,indexMappingInfo,readerConfig);
+            if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.VALIDATE_READ_ROW_DATA)){
+                Set<ConstraintViolation<RT>> validate = validator.validate(instance);
+                if (!validate.isEmpty()){
+                    for (ConstraintViolation<RT> constraintViolation : validate) {
+                        throw new AxolotlExcelReadException(indexMappingInfo, constraintViolation.getMessage());
+                    }
+                }
+            }
         }
     }
 
@@ -403,16 +423,16 @@ public class AxolotlExcelReader<T>{
                 return this.adaptiveValue(adapter,info, (EntityCellMappingInfo<Object>) mappingInfo, (ReaderConfig<Object>) readerConfig);
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
-                throw new AxolotlExcelReadException(e);
+                throw new AxolotlExcelReadException(ExceptionType.CONVERT_FIELD_ERROR,e);
             }
         }else {
-            throw new AxolotlExcelReadException("[%s]字段请配置适配器,字段类型:[%s]".formatted(mappingInfo.getFieldName(), mappingInfo.getFieldType()));
+            throw new AxolotlExcelReadException(mappingInfo,"[%s]字段请配置适配器,字段类型:[%s]".formatted(mappingInfo.getFieldName(), mappingInfo.getFieldType()));
         }
     }
 
     private Object adaptiveValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo, ReaderConfig<Object> readerConfig) {
         if (adapter == null){
-            throw new AxolotlExcelReadException("未找到转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+            throw new AxolotlExcelReadException(mappingInfo,"未找到转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
         if (adapter instanceof AbstractDataCastAdapter<Object> abstractDataCastAdapter){
             abstractDataCastAdapter.setReaderConfig(readerConfig);
@@ -424,7 +444,7 @@ public class AxolotlExcelReader<T>{
 
     private Object castValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo) {
         if (!adapter.support(info.getCellType(), mappingInfo.getFieldType())){
-            throw new AxolotlExcelReadException("不支持转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+            throw new AxolotlExcelReadException(mappingInfo,"不支持转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
         CastContext<Object> castContext = new CastContext<>(
                 mappingInfo.getFieldType(), mappingInfo.getFormat(),
@@ -496,11 +516,10 @@ public class AxolotlExcelReader<T>{
             }
             case BOOLEAN -> value = cell.getBooleanCellValue();
             case FORMULA -> value = getFormulaCellValue(cell);
-            case BLANK -> {
-                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,
-                        "空白单元格位置:[%s]".formatted(workBookContext.getCurrentHumanReadablePosition())
-                );
-            }
+            case BLANK ->
+                    LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,
+                    "空白单元格位置:[%s]".formatted(workBookContext.getCurrentHumanReadablePosition())
+                    );
             default -> LOGGER.error(
                     "未知的单元格类型:{},单元格位置:[{}]",cell.getCellType(),
                     workBookContext.getCurrentHumanReadablePosition()
@@ -562,7 +581,7 @@ public class AxolotlExcelReader<T>{
         if (readerConfig == null){
             String msg = "读取配置不能为空";
             LOGGER.error(msg);
-            throw new AxolotlExcelReadException(msg);
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,msg);
         }
         int sheetIndex = readerConfig.getSheetIndex();
         if (sheetIndex < 0){
@@ -571,14 +590,14 @@ public class AxolotlExcelReader<T>{
                 LOGGER.warn(msg+"将返回空数据");
                 return;
             }
-            throw new AxolotlExcelReadException(msg);
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,msg);
         }
         Class<?> castClass = readerConfig.getCastClass();
         if (castClass == null){
-            throw new AxolotlExcelReadException("读取的类型对象不能为空");
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"读取的类型对象不能为空");
         }
         if (readerConfig.getStartIndex() < 0){
-            throw new AxolotlExcelReadException("读取起始行不得小于0");
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"读取起始行不得小于0");
         }
         if (readerConfig.isReadAsObject()){
             if (!readerConfig.getIndexMappingInfos().isEmpty()){
@@ -593,7 +612,7 @@ public class AxolotlExcelReader<T>{
         }
         if (readerConfig.getEndIndex() < 0){
             if (readerConfig.getEndIndex() != -1){
-                throw new AxolotlExcelReadException("读取结束行不得小于0");
+                throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"读取结束行不得小于0");
             }
             if (!readerConfig.isReadAsObject()){
                 LOGGER.info("未设置读取的结束行,将被默认修正为读取该表最大行数");
@@ -620,7 +639,7 @@ public class AxolotlExcelReader<T>{
                 String msg = String.format("未知的公式单元格类型位置:[%d,%d],单元格类型:[%s],单元格值:[%s]",
                         cell.getRowIndex(), cell.getColumnIndex(), evaluated.getCellType(), evaluated);
                 LOGGER.error(msg);
-                throw new AxolotlExcelReadException(msg);
+                throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,msg);
             }
         };
         CellGetInfo cellGetInfo = new CellGetInfo(true, value);

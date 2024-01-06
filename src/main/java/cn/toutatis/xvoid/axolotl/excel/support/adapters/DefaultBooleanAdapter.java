@@ -46,7 +46,7 @@ public class DefaultBooleanAdapter extends AbstractDataCastAdapter<Boolean> impl
             default:
                 break;
         }
-        throw new AxolotlExcelReadException("无法将值[%s]转换为布尔值".formatted(cellGetInfo.getCellValue()));
+        throw new AxolotlExcelReadException(context,"无法将值[%s]转换为布尔值".formatted(cellGetInfo.getCellValue()));
     }
 
     @Override

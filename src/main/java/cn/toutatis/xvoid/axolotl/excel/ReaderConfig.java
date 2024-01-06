@@ -255,7 +255,7 @@ public class ReaderConfig<T> {
                 return castClass.getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
-                throw new AxolotlExcelReadException("类型实例化失败:"+e.getMessage());
+                throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,"类型实例化失败:"+e.getMessage());
             }
         }else{
             throw new IllegalArgumentException("转换类型为空");

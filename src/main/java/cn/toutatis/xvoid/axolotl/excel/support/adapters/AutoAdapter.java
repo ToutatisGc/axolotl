@@ -31,7 +31,12 @@ public class AutoAdapter extends AbstractDataCastAdapter<Object> {
         DataCastAdapter<?> adapter = DefaultAdapters.getAdapter(clazz);
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
         if (adapter == null){
-            throw new AxolotlExcelReadException("未找到可转换的字段类型:[%s],请配置适配器".formatted(entityCellMappingInfo.getFieldType().getSimpleName()));
+            throw new AxolotlExcelReadException(
+                    entityCellMappingInfo,
+                    "未找到可转换的字段类型:[%s],请配置适配器".formatted(
+                            entityCellMappingInfo.getFieldType().getSimpleName()
+                    )
+            );
         }
         if (adapter instanceof AbstractDataCastAdapter abstractDataCastAdapter){
             abstractDataCastAdapter.setReaderConfig(getReaderConfig());

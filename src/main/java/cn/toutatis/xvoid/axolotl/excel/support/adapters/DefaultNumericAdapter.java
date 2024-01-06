@@ -31,7 +31,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
         switch (cellGetInfo.getCellType()){
             case NUMERIC:
                 Double doubleValue = (Double) cellValue;
-                return this.castDoubleToOtherTypeNumber(doubleValue);
+                return this.castDoubleToOtherTypeNumber(doubleValue,context);
             case STRING:
                 ReaderConfig<?> readerConfig = getReaderConfig();
                 EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
@@ -43,9 +43,9 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
                 }
                 if (Validator.strIsNumber((String) cellValue)){
                     Double cellDoubleValue = Double.valueOf((String) cellValue);
-                    return this.castDoubleToOtherTypeNumber(cellDoubleValue);
+                    return this.castDoubleToOtherTypeNumber(cellDoubleValue,context);
                 }else {
-                    throw new AxolotlExcelReadException("字符串不是数字格式无法转换");
+                    throw new AxolotlExcelReadException(context,"字符串不是数字格式无法转换");
                 }
             case BOOLEAN:
                 if ((boolean)cellGetInfo.getCellValue()){
@@ -60,7 +60,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
     }
 
     @SuppressWarnings("unchecked")
-    private NT castDoubleToOtherTypeNumber(Double doubleValue) {
+    private NT castDoubleToOtherTypeNumber(Double doubleValue,CastContext<NT> context) {
         if (numberClass.equals(Double.class)) {
             return (NT) doubleValue;
         } else if (numberClass.equals(BigDecimal.class)){
@@ -74,7 +74,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
         } else if (numberClass.equals(Short.class)) {
             return (NT) Short.valueOf(doubleValue.shortValue());
         }else {
-            throw new AxolotlExcelReadException("不支持的数字类型转换");
+            throw new AxolotlExcelReadException(context,"不支持的数字类型转换");
         }
     }
 

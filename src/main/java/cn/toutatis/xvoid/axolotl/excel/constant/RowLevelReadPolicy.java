@@ -55,7 +55,13 @@ public enum RowLevelReadPolicy {
     /**
      * 如果字段存在值覆盖掉原值
      */
-    FIELD_EXIST_OVERRIDE(Type.BOOLEAN, true,true);
+    FIELD_EXIST_OVERRIDE(Type.BOOLEAN, true,true),
+
+    /**
+     * 读取数据后校验数据
+     */
+    VALIDATE_READ_ROW_DATA(Type.BOOLEAN, true,true);
+
 
     public enum Type{
         BOOLEAN,
