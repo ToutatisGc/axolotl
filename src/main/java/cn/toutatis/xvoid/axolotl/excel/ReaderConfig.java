@@ -24,8 +24,9 @@ public class ReaderConfig<T> {
 
     /**
      * 表索引
+     * 默认读取第一张表
      */
-    private int sheetIndex = -1;
+    private int sheetIndex = 0;
 
     /**
      * 表名

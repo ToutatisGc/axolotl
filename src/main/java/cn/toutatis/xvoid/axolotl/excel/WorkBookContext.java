@@ -81,7 +81,7 @@ public class WorkBookContext extends AbstractContext {
      * 获取当前读取到的行和列号的可读字符串
      * @return 当前读取到的行和列号的可读字符串
      */
-    public String getCurrentHumanReadablePosition() {
+    public String getHumanReadablePosition() {
         return ExcelToolkit.getHumanReadablePosition(currentReadRowIndex, currentReadColumnIndex);
     }
 }

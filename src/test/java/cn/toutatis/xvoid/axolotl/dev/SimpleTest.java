@@ -79,18 +79,29 @@ public class SimpleTest {
         File file = FileToolkit.getResourceFileAsFile("sec/测试28张表.xls");
         if (file != null && file.exists()){
             AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
-            ReadConfigBuilder<DmsRegMonetary> builder = new ReadConfigBuilder<>(DmsRegMonetary.class, true);
-            builder.setSheetIndex(0);
-            DmsRegMonetary dmsRegMonetary = excelReader.readSheetDataAsObject(builder.build());
-            ReadConfigBuilder<DmsRegReceivables> dmsRegReceivablesReadConfigBuilder = new ReadConfigBuilder<>(DmsRegReceivables.class, true);
-            dmsRegReceivablesReadConfigBuilder.setSheetIndex(2);
-            dmsRegReceivablesReadConfigBuilder.setInitialRowPositionOffset(8);
-//            dmsRegReceivablesReadConfigBuilder.setEndIndex();
-            List<DmsRegReceivables> dmsRegReceivables = excelReader.readSheetData(dmsRegReceivablesReadConfigBuilder.build());
-            for (DmsRegReceivables dmsRegReceivable : dmsRegReceivables) {
-                System.err.println(dmsRegReceivable);
+//            ReadConfigBuilder<DmsRegMonetary> builder = new ReadConfigBuilder<>(DmsRegMonetary.class, true);
+//            builder.setSheetIndex(0);
+//            DmsRegMonetary dmsRegMonetary = excelReader.readSheetDataAsObject(builder.build());
+//            ReadConfigBuilder<DmsRegReceivables> dmsRegReceivablesReadConfigBuilder = new ReadConfigBuilder<>(DmsRegReceivables.class, true);
+//            dmsRegReceivablesReadConfigBuilder.setSheetIndex(2);
+//            dmsRegReceivablesReadConfigBuilder.setInitialRowPositionOffset(8);
+////            dmsRegReceivablesReadConfigBuilder.setEndIndex();
+//            List<DmsRegReceivables> dmsRegReceivables = excelReader.readSheetData(dmsRegReceivablesReadConfigBuilder.build());
+//            for (DmsRegReceivables dmsRegReceivable : dmsRegReceivables) {
+//                System.err.println(dmsRegReceivable);
+//            }
+//            System.err.println(dmsRegReceivables.size());
+            try {
+                ReadConfigBuilder<DmsMerge> dmsMergeConfig = new ReadConfigBuilder<>(DmsMerge.class);
+                dmsMergeConfig
+                        .setInitialRowPositionOffset(6)
+                        .setEndIndex(28);
+                List<DmsMerge> dmsMerges = excelReader.readSheetData(dmsMergeConfig);
+                System.err.println(dmsMerges);
+            }catch (Exception e){
+                System.err.println(excelReader.getHumanReadablePosition());
+                e.printStackTrace();
             }
-            System.err.println(dmsRegReceivables.size());
         }
     }
 
@@ -105,6 +116,18 @@ public class SimpleTest {
                 System.err.println(va.getMessage());
             }
         }
+    }
+
+    @Test
+    public void testHelperConstructor(){
+        File file = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
+        AxolotlExcelReader<OneFieldStringEntity> excelReader = AxolotlDocumentReaders.getExcelReader(file, OneFieldStringEntity.class);
+//        List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData();
+//        System.err.println(oneFieldStringEntities);
+//        List<OneFieldStringEntity> oneFieldStringEntities1 = excelReader.readSheetData(0, 3);
+//        System.err.println(oneFieldStringEntities1);
+        List<OneFieldStringEntity> oneFieldStringEntities2 = excelReader.readSheetData(1, 3);
+        System.err.println(oneFieldStringEntities2);
     }
 
 }

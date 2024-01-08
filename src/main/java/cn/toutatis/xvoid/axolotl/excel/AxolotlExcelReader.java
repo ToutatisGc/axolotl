@@ -168,12 +168,36 @@ public class AxolotlExcelReader<T>{
         return instance;
     }
 
+    public List<T> readSheetData(){
+        return this.readSheetData(0);
+    }
+    public List<T> readSheetData(int start){
+        return this.readSheetData(
+                _sheetLevelReaderConfig.getSheetName(),_sheetLevelReaderConfig.getSheetIndex(),
+                0, this.getRecordRowNumber(),start
+        );
+    }
+
+    public List<T> readSheetData(int start,int end){
+        return this.readSheetData(
+                _sheetLevelReaderConfig.getSheetName(),_sheetLevelReaderConfig.getSheetIndex(),
+                start, end,0
+        );
+    }
+    public List<T> readSheetData(int start,int end,int initialRowPositionOffset){
+        return this.readSheetData(
+                _sheetLevelReaderConfig.getSheetName(),_sheetLevelReaderConfig.getSheetIndex(),
+                start, end,initialRowPositionOffset
+        );
+    }
+
     /**
      * 使用表级配置读取数据
      * @param sheetIndex sheet索引
      * @return 读取的数据
      */
-    public List<T> readSheetData(int sheetIndex,int start,int end,int initialRowPositionOffset){
+    private List<T> readSheetData(String sheetName,int sheetIndex,int start,int end,int initialRowPositionOffset){
+        _sheetLevelReaderConfig.setSheetName(sheetName);
         _sheetLevelReaderConfig.setSheetIndex(sheetIndex);
         _sheetLevelReaderConfig.setStartIndex(start);
         _sheetLevelReaderConfig.setEndIndex(end);
@@ -190,6 +214,11 @@ public class AxolotlExcelReader<T>{
     public <RT> List<RT> readSheetData(Class<RT> castClass,int sheetIndex){
         ReadConfigBuilder<RT> configBuilder = new ReadConfigBuilder<>(castClass, true);
         configBuilder.setSheetIndex(sheetIndex);
+        return this.readSheetData(configBuilder);
+    }
+
+    public <RT> List<RT> readSheetData(Class<RT> castClass){
+        ReadConfigBuilder<RT> configBuilder = new ReadConfigBuilder<>(castClass, true);
         return this.readSheetData(configBuilder);
     }
 
@@ -534,14 +563,19 @@ public class AxolotlExcelReader<T>{
                 value = cell.getNumericCellValue();
             }
             case BOOLEAN -> value = cell.getBooleanCellValue();
-            case FORMULA -> value = getFormulaCellValue(cell);
-            case BLANK ->
-                    LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,
-                    "空白单元格位置:[%s]".formatted(workBookContext.getCurrentHumanReadablePosition())
-                    );
+            case FORMULA -> {
+                cellGetInfo = getFormulaCellValue(cell);
+                return cellGetInfo;
+            }
+            case BLANK ->{
+                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,
+                        "空白单元格位置:[%s]".formatted(workBookContext.getHumanReadablePosition())
+                );
+                return this.getBlankCellValue(mappingInfo);
+            }
             default -> LOGGER.error(
                     "未知的单元格类型:{},单元格位置:[{}]",cell.getCellType(),
-                    workBookContext.getCurrentHumanReadablePosition()
+                    workBookContext.getHumanReadablePosition()
             );
         }
         cellGetInfo.setAlreadyFillValue(true);
@@ -673,7 +707,7 @@ public class AxolotlExcelReader<T>{
             }
         };
         CellGetInfo cellGetInfo = new CellGetInfo(true, value);
-        cellGetInfo.setCellType(cell.getCellType());
+        cellGetInfo.setCellType(evaluated.getCellType());
         return cellGetInfo;
     }
 
@@ -724,8 +758,12 @@ public class AxolotlExcelReader<T>{
         if (isPhysical){
             return sheet.getPhysicalNumberOfRows();
         }else {
-            return sheet.getLastRowNum();
+            return sheet.getLastRowNum()+1;
         }
+    }
+
+    public String getHumanReadablePosition(){
+        return workBookContext.getHumanReadablePosition();
     }
 
 }
