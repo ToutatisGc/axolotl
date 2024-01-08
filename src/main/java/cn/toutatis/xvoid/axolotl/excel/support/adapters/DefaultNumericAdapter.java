@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.support.adapters;
 
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
@@ -12,6 +13,7 @@ import cn.toutatis.xvoid.toolkit.validator.Validator;
 import org.apache.poi.ss.usermodel.CellType;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
 
 public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> implements DataCastAdapter<NT> {
@@ -64,7 +66,10 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
         if (numberClass.equals(Double.class)) {
             return (NT) doubleValue;
         } else if (numberClass.equals(BigDecimal.class)){
-            return (NT) new BigDecimal(doubleValue.toString());
+            BigDecimal bigDecimal =
+                    new BigDecimal(doubleValue.toString())
+                    .setScale(AxolotlDefaultConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP);
+            return (NT) bigDecimal;
         } else if (numberClass.equals(Integer.class)) {
             return (NT) Integer.valueOf(doubleValue.intValue());
         } else if (numberClass.equals(Float.class)) {

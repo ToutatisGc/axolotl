@@ -8,6 +8,7 @@ import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
+import com.alibaba.fastjson.JSON;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -79,25 +80,25 @@ public class SimpleTest {
         File file = FileToolkit.getResourceFileAsFile("sec/测试28张表.xls");
         if (file != null && file.exists()){
             AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
-//            ReadConfigBuilder<DmsRegMonetary> builder = new ReadConfigBuilder<>(DmsRegMonetary.class, true);
-//            builder.setSheetIndex(0);
-//            DmsRegMonetary dmsRegMonetary = excelReader.readSheetDataAsObject(builder.build());
-//            ReadConfigBuilder<DmsRegReceivables> dmsRegReceivablesReadConfigBuilder = new ReadConfigBuilder<>(DmsRegReceivables.class, true);
-//            dmsRegReceivablesReadConfigBuilder.setSheetIndex(2);
-//            dmsRegReceivablesReadConfigBuilder.setInitialRowPositionOffset(8);
-////            dmsRegReceivablesReadConfigBuilder.setEndIndex();
-//            List<DmsRegReceivables> dmsRegReceivables = excelReader.readSheetData(dmsRegReceivablesReadConfigBuilder.build());
-//            for (DmsRegReceivables dmsRegReceivable : dmsRegReceivables) {
-//                System.err.println(dmsRegReceivable);
-//            }
-//            System.err.println(dmsRegReceivables.size());
+            ReadConfigBuilder<DmsRegMonetary> builder = new ReadConfigBuilder<>(DmsRegMonetary.class, true);
+            builder.setSheetIndex(0);
+            DmsRegMonetary dmsRegMonetary = excelReader.readSheetDataAsObject(builder.build());
+            ReadConfigBuilder<DmsRegReceivables> dmsRegReceivablesReadConfigBuilder = new ReadConfigBuilder<>(DmsRegReceivables.class, true);
+            dmsRegReceivablesReadConfigBuilder.setSheetIndex(2);
+            dmsRegReceivablesReadConfigBuilder.setInitialRowPositionOffset(8);
+//            dmsRegReceivablesReadConfigBuilder.setEndIndex();
+            List<DmsRegReceivables> dmsRegReceivables = excelReader.readSheetData(dmsRegReceivablesReadConfigBuilder.build());
+            for (DmsRegReceivables dmsRegReceivable : dmsRegReceivables) {
+                System.err.println(dmsRegReceivable);
+            }
+            System.err.println(dmsRegReceivables.size());
             try {
                 ReadConfigBuilder<DmsMerge> dmsMergeConfig = new ReadConfigBuilder<>(DmsMerge.class);
                 dmsMergeConfig
-                        .setInitialRowPositionOffset(6)
+                        .setInitialRowPositionOffset(5)
                         .setEndIndex(28);
                 List<DmsMerge> dmsMerges = excelReader.readSheetData(dmsMergeConfig);
-                System.err.println(dmsMerges);
+                System.err.println(JSON.toJSONString(dmsMerges));
             }catch (Exception e){
                 System.err.println(excelReader.getHumanReadablePosition());
                 e.printStackTrace();

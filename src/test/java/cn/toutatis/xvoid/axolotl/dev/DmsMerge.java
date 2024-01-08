@@ -17,12 +17,18 @@ public class DmsMerge {
     @ColumnBind(columnIndex = 2)
     private BigDecimal amount1;
 
+    @ColumnBind(columnIndex = 2)
+    private String amount1String;
+
     @ColumnBind(columnIndex = 3)
     private String debt;
     @ColumnBind(columnIndex = 4)
     private Integer rowNumber2;
     @ColumnBind(columnIndex = 5)
     private BigDecimal amount2;
+
+    @ColumnBind(columnIndex = 5)
+    private String amount2String;
 
 
 }
