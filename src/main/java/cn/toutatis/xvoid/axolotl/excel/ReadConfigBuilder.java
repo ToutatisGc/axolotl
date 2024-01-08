@@ -9,6 +9,10 @@ public class ReadConfigBuilder<T> {
 
     private final ReaderConfig<T> readerConfig;
 
+    public ReadConfigBuilder(Class<T> castClass) {
+        readerConfig = new ReaderConfig<>(castClass);
+    }
+
     /**
      * 构造方法
      *

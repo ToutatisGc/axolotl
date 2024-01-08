@@ -59,6 +59,14 @@ public class SimpleTest {
     }
 
     @Test
+    public void testOutIndexSheet(){
+        File file = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
+        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData(OneFieldStringEntity.class, 10);
+        System.err.println(oneFieldStringEntities);
+    }
+
+    @Test
     public void testCellMergeSheet(){
         File file = FileToolkit.getResourceFileAsFile("workbook/单元格合并测试.xlsx");
         AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);

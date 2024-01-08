@@ -1,8 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
-import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
-import cn.toutatis.xvoid.axolotl.excel.annotations.KeepIntact;
-import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyPositionBind;
+import cn.toutatis.xvoid.axolotl.excel.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
@@ -80,6 +78,11 @@ public class ReaderConfig<T> {
     private Map<RowLevelReadPolicy, Object> rowReadPolicyMap = new HashMap<>();
 
     /**
+     * 读取类注解
+     */
+    private boolean readClassAnnotation = false;
+
+    /**
      * 默认构造
      */
     public ReaderConfig() {
@@ -128,7 +131,7 @@ public class ReaderConfig<T> {
      * @param castClass 读取的Java类型
      */
     public void setCastClass(Class<T> castClass) {
-        this.setCastClass(castClass,false);
+        this.setCastClass(castClass,true);
     }
 
     /**
@@ -143,10 +146,23 @@ public class ReaderConfig<T> {
     }
 
     /**
-     *
+     * 处理实体注解
+     * NamingWorkSheet优先级>IndexWorkSheet优先级
+     * @see NamingWorkSheet 命名工作表
+     * @see IndexWorkSheet 索引指定工作表
      */
     private void processClassAnnotation() {
-        // TODO 读取WorkSheet注解
+        NamingWorkSheet namingWorkSheet = castClass.getAnnotation(NamingWorkSheet.class);
+        if (namingWorkSheet != null) {
+            this.setSheetName(namingWorkSheet.sheetName());
+            this.setReadClassAnnotation(true);
+            return;
+        }
+        IndexWorkSheet indexWorkSheet = castClass.getAnnotation(IndexWorkSheet.class);
+        if (indexWorkSheet != null) {
+            this.setStartIndex(indexWorkSheet.sheetIndex());
+            this.setReadClassAnnotation(true);
+        }
     }
 
     /**

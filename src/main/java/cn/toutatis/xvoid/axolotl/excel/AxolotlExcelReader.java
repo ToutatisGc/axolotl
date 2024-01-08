@@ -50,7 +50,7 @@ public class AxolotlExcelReader<T>{
     /**
      * 日志
      */
-    private final Logger LOGGER  = LoggerToolkit.getLogger(AxolotlExcelReader.class);
+    private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlExcelReader.class);
 
     /**
      * 工作簿元信息
@@ -66,7 +66,6 @@ public class AxolotlExcelReader<T>{
      * 在读取数据时使用不指定读取类型的读取方法时，使用该类读取数据
      */
     private final ReaderConfig<T> _sheetLevelReaderConfig;
-
 
     /**
      * 构造文件读取器
@@ -165,7 +164,21 @@ public class AxolotlExcelReader<T>{
         this.processMergedCells(sheet);
         RT instance = readerConfig.getCastClassInstance();
         this.convertPositionCellToInstance(instance, readerConfig,sheet);
+        this.validateConvertEntity(instance, readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.VALIDATE_READ_ROW_DATA));
         return instance;
+    }
+
+    /**
+     * 使用表级配置读取数据
+     * @param sheetIndex sheet索引
+     * @return 读取的数据
+     */
+    public List<T> readSheetData(int sheetIndex,int start,int end,int initialRowPositionOffset){
+        _sheetLevelReaderConfig.setSheetIndex(sheetIndex);
+        _sheetLevelReaderConfig.setStartIndex(start);
+        _sheetLevelReaderConfig.setEndIndex(end);
+        _sheetLevelReaderConfig.setInitialRowPositionOffset(initialRowPositionOffset);
+        return this.readSheetData(_sheetLevelReaderConfig);
     }
 
     public <RT> List<RT> readSheetData(Class<RT> castClass,String sheetName){
@@ -246,7 +259,20 @@ public class AxolotlExcelReader<T>{
                 readerConfig.setSheetIndex(-1);
             }
         }else {
-            sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
+            try {
+                sheet = workBookContext.getWorkbook().getSheetAt(readerConfig.getSheetIndex());
+            }catch (IllegalArgumentException e){
+                if (e.getMessage().contains("out of range")){
+                    int numberOfSheets = workBookContext.getWorkbook().getNumberOfSheets()-1;
+                    LoggerToolkitKt.warnWithModule(LOGGER, Meta.MODULE_NAME, "表索引[%s]超出范围[0-%s],将返回空数据或抛出异常"
+                            .formatted(readerConfig.getSheetIndex(),numberOfSheets)
+                    );
+                }else {
+                    throw e;
+                }
+                sheet = null;
+                readerConfig.setSheetIndex(-1);
+            }
         }
         return sheet;
     }
@@ -358,15 +384,8 @@ public class AxolotlExcelReader<T>{
             CellGetInfo cellValue = this.getCellOriginalValue(row,indexMappingInfo.getColumnPosition(), indexMappingInfo);
             Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, indexMappingInfo, readerConfig);
             this.assignValueToField(instance,adaptiveValue,indexMappingInfo,readerConfig);
-            if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.VALIDATE_READ_ROW_DATA)){
-                Set<ConstraintViolation<RT>> validate = validator.validate(instance);
-                if (!validate.isEmpty()){
-                    for (ConstraintViolation<RT> constraintViolation : validate) {
-                        throw new AxolotlExcelReadException(indexMappingInfo, constraintViolation.getMessage());
-                    }
-                }
-            }
         }
+        this.validateConvertEntity(instance, readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.VALIDATE_READ_ROW_DATA));
     }
 
     private void convertPositionCellToInstance(Object instance,ReaderConfig<?> readerConfig,Sheet sheet){
@@ -570,6 +589,17 @@ public class AxolotlExcelReader<T>{
         });
     }
 
+    private <RT> void validateConvertEntity(RT instance, boolean isValidate) {
+        if (isValidate){
+            Set<ConstraintViolation<RT>> validate = validator.validate(instance);
+            if (!validate.isEmpty()){
+                for (ConstraintViolation<RT> constraintViolation : validate) {
+                    throw new AxolotlExcelReadException(workBookContext, constraintViolation.getMessage());
+                }
+            }
+        }
+    }
+
     /**
      * [ROOT]
      * 预校验读取配置是否正常
@@ -587,7 +617,7 @@ public class AxolotlExcelReader<T>{
         if (sheetIndex < 0){
             String msg = "读取的sheet不存在[%s]".formatted(readerConfig.getSheetName() != null? readerConfig.getSheetName() : readerConfig.getSheetIndex());
             if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.IGNORE_EMPTY_SHEET_ERROR)){
-                LOGGER.warn(msg+"将返回空数据");
+                LoggerToolkitKt.warnWithModule(LOGGER,Meta.MODULE_NAME,msg+"将返回空数据");
                 return;
             }
             throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,msg);
@@ -645,6 +675,57 @@ public class AxolotlExcelReader<T>{
         CellGetInfo cellGetInfo = new CellGetInfo(true, value);
         cellGetInfo.setCellType(cell.getCellType());
         return cellGetInfo;
+    }
+
+    public int getPhysicalRowNumber(){
+        return getRowNumber(true);
+    }
+
+    public int getRecordRowNumber(){
+        return getRowNumber(false);
+    }
+
+    /**
+     * 获取行数
+     * @param isPhysical 是否是物理行数
+     * @return 行数
+     */
+    public int getRowNumber(boolean isPhysical){
+        return getRowNumber(_sheetLevelReaderConfig,isPhysical);
+    }
+
+    /**
+     * 获取行数
+     * @param readerConfig 读取配置
+     * @param isPhysical 是否是物理行数
+     * @return 行数
+     */
+    public int getRowNumber(ReaderConfig<?> readerConfig,boolean isPhysical){
+        return getRowNumber(readerConfig.getSheetIndex(),isPhysical);
+    }
+
+    public int getPhysicalRowNumber(ReaderConfig<?> readerConfig){
+        return getRowNumber(readerConfig.getSheetIndex(),true);
+    }
+
+    public int getRecordRowNumber(ReaderConfig<?> readerConfig){
+        return getRowNumber(readerConfig.getSheetIndex(),false);
+    }
+
+    /**
+     * [ROOT]
+     * 获取行数
+     * @param sheetIndex 表索引
+     * @param isPhysical 是否是物理行数
+     * @return 行数
+     */
+    public int getRowNumber(int sheetIndex,boolean isPhysical){
+        Sheet sheet = workBookContext.getWorkbook().getSheetAt(sheetIndex);
+        if (isPhysical){
+            return sheet.getPhysicalNumberOfRows();
+        }else {
+            return sheet.getLastRowNum();
+        }
     }
 
 }

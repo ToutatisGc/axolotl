@@ -19,7 +19,7 @@ public @interface NamingWorkSheet {
     /**
      * 指定表名称
      */
-    String sheetName() default "";
+    String sheetName();
 
 
 }
