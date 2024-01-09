@@ -8,7 +8,7 @@ import java.io.File;
  * 文档加载器
  * @author Toutatis_Gc
  */
-public class AxolotlDocumentReaders {
+public class Axolotls {
 
     public static <T> AxolotlExcelReader<T> getExcelReader(File excelFile, Class<T> clazz){
         return new AxolotlExcelReader<>(excelFile, clazz);

@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
-import cn.toutatis.xvoid.axolotl.AxolotlDocumentReaders;
+import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringEntity;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringKeepIntactEntity;
 import cn.toutatis.xvoid.axolotl.entities.ValidTestEntity;
@@ -30,7 +30,7 @@ public class SimpleTest {
     @Test
     public void readBlankSheet(){
         File file = FileToolkit.getResourceFileAsFile("workbook/空白表格.xlsx");
-        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<Map> test = excelReader.readSheetData(Map.class, 0);
         Assert.assertEquals(0, test.size());
     }
@@ -38,7 +38,7 @@ public class SimpleTest {
     @Test
     public void testNamedSheet(){
         File file = FileToolkit.getResourceFileAsFile("workbook/命名空白表格.xlsx");
-        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<Map> mapList = excelReader.readSheetData(Map.class, "表格1");
         Assert.assertEquals(0, mapList.size());
         try {
@@ -51,7 +51,7 @@ public class SimpleTest {
     @Test
     public void testSingleRowSheet(){
         File file = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
-        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData(OneFieldStringEntity.class, 0);
         System.err.println(oneFieldStringEntities);
         List<OneFieldStringKeepIntactEntity> oneFieldStringKeepIntactEntities =
@@ -62,7 +62,7 @@ public class SimpleTest {
     @Test
     public void testOutIndexSheet(){
         File file = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
-        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData(OneFieldStringEntity.class, 10);
         System.err.println(oneFieldStringEntities);
     }
@@ -70,7 +70,7 @@ public class SimpleTest {
     @Test
     public void testCellMergeSheet(){
         File file = FileToolkit.getResourceFileAsFile("workbook/单元格合并测试.xlsx");
-        AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData(OneFieldStringEntity.class, 0);
         System.err.println(oneFieldStringEntities);
     }
@@ -79,7 +79,7 @@ public class SimpleTest {
     public void testMultiData(){
         File file = FileToolkit.getResourceFileAsFile("sec/测试28张表.xls");
         if (file != null && file.exists()){
-            AxolotlExcelReader<Object> excelReader = AxolotlDocumentReaders.getExcelReader(file);
+            AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
             ReadConfigBuilder<DmsRegMonetary> builder = new ReadConfigBuilder<>(DmsRegMonetary.class, true);
             builder.setSheetIndex(0);
             DmsRegMonetary dmsRegMonetary = excelReader.readSheetDataAsObject(builder.build());
@@ -121,8 +121,9 @@ public class SimpleTest {
 
     @Test
     public void testHelperConstructor(){
+
         File file = FileToolkit.getResourceFileAsFile("workbook/单行数据测试.xlsx");
-        AxolotlExcelReader<OneFieldStringEntity> excelReader = AxolotlDocumentReaders.getExcelReader(file, OneFieldStringEntity.class);
+        AxolotlExcelReader<OneFieldStringEntity> excelReader = Axolotls.getExcelReader(file, OneFieldStringEntity.class);
 //        List<OneFieldStringEntity> oneFieldStringEntities = excelReader.readSheetData();
 //        System.err.println(oneFieldStringEntities);
 //        List<OneFieldStringEntity> oneFieldStringEntities1 = excelReader.readSheetData(0, 3);
