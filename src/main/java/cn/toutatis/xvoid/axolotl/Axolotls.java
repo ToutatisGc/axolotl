@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl;
 
 import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelWriter;
 
 import java.io.File;
 
@@ -16,6 +17,10 @@ public class Axolotls {
 
     public static AxolotlExcelReader<Object> getExcelReader(File excelFile){
         return new AxolotlExcelReader<>(excelFile);
+    }
+
+    public static AxolotlExcelWriter getExcelWriter(File outputFile){
+        return new AxolotlExcelWriter(outputFile);
     }
 
 }

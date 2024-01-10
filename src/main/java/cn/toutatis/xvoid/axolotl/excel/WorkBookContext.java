@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.support.AbstractContext;
-import cn.toutatis.xvoid.axolotl.excel.support.tika.DetectResult;
+import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.toolkit.ExcelToolkit;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
