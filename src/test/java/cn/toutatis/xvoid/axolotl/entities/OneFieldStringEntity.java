@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.entities;
 
-import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
 import lombok.Data;
 
 @Data

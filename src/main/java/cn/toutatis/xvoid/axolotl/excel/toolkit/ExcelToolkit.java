@@ -12,7 +12,7 @@ public class ExcelToolkit {
      */
     public static String getHumanReadablePosition(int rowIndex, int columnIndex) {
         char i = (char) ( 'A' + columnIndex);
-        return String.format("%s", i+("%d".formatted(rowIndex + 1)));
+        return String.format("%s", i+(String.format("%d",rowIndex + 1)));
     }
 
 }

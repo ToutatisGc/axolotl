@@ -1,6 +1,6 @@
-package cn.toutatis.xvoid.axolotl.excel.annotations;
+package cn.toutatis.xvoid.axolotl.excel.reader.annotations;
 
-import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

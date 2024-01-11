@@ -1,10 +1,10 @@
-package cn.toutatis.xvoid.axolotl.excel.support.adapters;
+package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 
-import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
-import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
-import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import org.apache.poi.ss.usermodel.CellType;
 
 /**
@@ -31,14 +31,11 @@ public class AutoAdapter extends AbstractDataCastAdapter<Object> {
         DataCastAdapter<?> adapter = DefaultAdapters.getAdapter(clazz);
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
         if (adapter == null){
-            throw new AxolotlExcelReadException(
-                    entityCellMappingInfo,
-                    "未找到可转换的字段类型:[%s],请配置适配器".formatted(
-                            entityCellMappingInfo.getFieldType().getSimpleName()
-                    )
-            );
+            String msg = String.format("未找到可转换的字段类型:[%s],请配置适配器", entityCellMappingInfo.getFieldType().getSimpleName());
+            throw new AxolotlExcelReadException(entityCellMappingInfo, msg);
         }
-        if (adapter instanceof AbstractDataCastAdapter abstractDataCastAdapter){
+        if (adapter instanceof AbstractDataCastAdapter){
+            AbstractDataCastAdapter abstractDataCastAdapter = (AbstractDataCastAdapter) adapter;
             abstractDataCastAdapter.setReaderConfig(getReaderConfig());
             abstractDataCastAdapter.setEntityCellMappingInfo(entityCellMappingInfo);
             return abstractDataCastAdapter.support(cellType,clazz);

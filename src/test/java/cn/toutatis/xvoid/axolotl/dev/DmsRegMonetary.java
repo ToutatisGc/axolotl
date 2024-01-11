@@ -1,15 +1,14 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
-import cn.toutatis.xvoid.axolotl.excel.annotations.SpecifyPositionBind;
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.SpecifyPositionBind;
 import lombok.Data;
 
-import java.io.Serial;
 import java.io.Serializable;
+
 
 @Data
 public class DmsRegMonetary implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private String formId;

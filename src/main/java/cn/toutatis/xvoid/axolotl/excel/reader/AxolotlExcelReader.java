@@ -1,17 +1,20 @@
-package cn.toutatis.xvoid.axolotl.excel;
+package cn.toutatis.xvoid.axolotl.excel.reader;
 
 import cn.toutatis.xvoid.axolotl.Meta;
-import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
-import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
-import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
-import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
-import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
-import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.adapters.AbstractDataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.adapters.AutoAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
-import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException.ExceptionType;
+import cn.toutatis.xvoid.axolotl.excel.ReadConfigBuilder;
+import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.WorkBookContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException.ExceptionType;
 import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
@@ -293,8 +296,9 @@ public class AxolotlExcelReader<T>{
             }catch (IllegalArgumentException e){
                 if (e.getMessage().contains("out of range")){
                     int numberOfSheets = workBookContext.getWorkbook().getNumberOfSheets()-1;
-                    LoggerToolkitKt.warnWithModule(LOGGER, Meta.MODULE_NAME, "表索引[%s]超出范围[0-%s],将返回空数据或抛出异常"
-                            .formatted(readerConfig.getSheetIndex(),numberOfSheets)
+                    ;
+                    LoggerToolkitKt.warnWithModule(LOGGER, Meta.MODULE_NAME,
+                            String.format("表索引[%s]超出范围[0-%s],将返回空数据或抛出异常",readerConfig.getSheetIndex(),numberOfSheets)
                     );
                 }else {
                     throw e;
@@ -319,7 +323,7 @@ public class AxolotlExcelReader<T>{
             int firstColumn = mergedRegion.getFirstColumn();
             int lastColumn = mergedRegion.getLastColumn();
             Cell leftTopCell = sheet.getRow(firstRow).getCell(firstColumn);
-            LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "处理合并单元格[%s]".formatted(mergedRegion.formatAsString()));
+            LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, String.format("处理合并单元格[%s]",mergedRegion.formatAsString()));
             for (int rowIndex = firstRow; rowIndex <= lastRow; rowIndex++) {
                 for (int columnIndex = firstColumn; columnIndex <= lastColumn; columnIndex++) {
                     Row row = sheet.getRow(rowIndex);
@@ -389,8 +393,8 @@ public class AxolotlExcelReader<T>{
 
     @SuppressWarnings({"unchecked","rawtypes"})
     private <RT> void convertCellToInstance(Row row,RT instance,ReaderConfig<RT> readerConfig){
-        if (instance instanceof Map mapInstance){
-            this.row2MapInstance(mapInstance, row,readerConfig);
+        if (instance instanceof Map){
+            this.row2MapInstance((Map)instance, row,readerConfig);
         }else{
             this.row2SimplePOJO(instance,row,readerConfig);
         }
@@ -474,15 +478,16 @@ public class AxolotlExcelReader<T>{
                 throw new AxolotlExcelReadException(ExceptionType.CONVERT_FIELD_ERROR,e);
             }
         }else {
-            throw new AxolotlExcelReadException(mappingInfo,"[%s]字段请配置适配器,字段类型:[%s]".formatted(mappingInfo.getFieldName(), mappingInfo.getFieldType()));
+            throw new AxolotlExcelReadException(mappingInfo,String.format("[%s]字段请配置适配器,字段类型:[%s]",mappingInfo.getFieldName(), mappingInfo.getFieldType()));
         }
     }
 
     private Object adaptiveValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo, ReaderConfig<Object> readerConfig) {
         if (adapter == null){
-            throw new AxolotlExcelReadException(mappingInfo,"未找到转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+            throw new AxolotlExcelReadException(mappingInfo,String.format("未找到转换的类型:[%s->%s],字段:[%s]",info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
-        if (adapter instanceof AbstractDataCastAdapter<Object> abstractDataCastAdapter){
+        if (adapter instanceof AbstractDataCastAdapter){
+            AbstractDataCastAdapter<Object> abstractDataCastAdapter = (AbstractDataCastAdapter<Object>) adapter;
             abstractDataCastAdapter.setReaderConfig(readerConfig);
             abstractDataCastAdapter.setEntityCellMappingInfo(mappingInfo);
             return castValue(abstractDataCastAdapter, info, mappingInfo);
@@ -492,7 +497,7 @@ public class AxolotlExcelReader<T>{
 
     private Object castValue(DataCastAdapter<Object> adapter, CellGetInfo info, EntityCellMappingInfo<Object> mappingInfo) {
         if (!adapter.support(info.getCellType(), mappingInfo.getFieldType())){
-            throw new AxolotlExcelReadException(mappingInfo,"不支持转换的类型:[%s->%s],字段:[%s]".formatted(info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
+            throw new AxolotlExcelReadException(mappingInfo,String.format("不支持转换的类型:[%s->%s],字段:[%s]",info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
         CastContext<Object> castContext = new CastContext<>(
                 mappingInfo.getFieldType(), mappingInfo.getFormat(),
@@ -557,26 +562,28 @@ public class AxolotlExcelReader<T>{
         CellType cellType = cell.getCellType();
         cellGetInfo.setCellType(cellType);
         switch (cellType) {
-            case STRING -> value = cell.getStringCellValue();
-            case NUMERIC -> {
+            case STRING:
+                value = cell.getStringCellValue();
+                break;
+            case NUMERIC:
                 cellGetInfo.set_cell(cell);
                 value = cell.getNumericCellValue();
-            }
-            case BOOLEAN -> value = cell.getBooleanCellValue();
-            case FORMULA -> {
+                break;
+            case BOOLEAN:
+                value = cell.getBooleanCellValue();
+                break;
+            case FORMULA:
                 cellGetInfo = getFormulaCellValue(cell);
                 return cellGetInfo;
-            }
-            case BLANK ->{
-                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,
-                        "空白单元格位置:[%s]".formatted(workBookContext.getHumanReadablePosition())
-                );
+            case BLANK:
+                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,String.format("空白单元格位置:[%s]",workBookContext.getHumanReadablePosition()));
                 return this.getBlankCellValue(mappingInfo);
-            }
-            default -> LOGGER.error(
-                    "未知的单元格类型:{},单元格位置:[{}]",cell.getCellType(),
-                    workBookContext.getHumanReadablePosition()
-            );
+            default:
+                LOGGER.error(
+                        "未知的单元格类型:{},单元格位置:[{}]", cell.getCellType(),
+                        workBookContext.getHumanReadablePosition()
+                );
+                break;
         }
         cellGetInfo.setAlreadyFillValue(true);
         cellGetInfo.setCellValue(value);
@@ -649,7 +656,7 @@ public class AxolotlExcelReader<T>{
         }
         int sheetIndex = readerConfig.getSheetIndex();
         if (sheetIndex < 0){
-            String msg = "读取的sheet不存在[%s]".formatted(readerConfig.getSheetName() != null? readerConfig.getSheetName() : readerConfig.getSheetIndex());
+            String msg = String.format("读取的sheet不存在[%s]",readerConfig.getSheetName() != null? readerConfig.getSheetName() : readerConfig.getSheetIndex());
             if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.IGNORE_EMPTY_SHEET_ERROR)){
                 LoggerToolkitKt.warnWithModule(LOGGER,Meta.MODULE_NAME,msg+"将返回空数据");
                 return;
@@ -695,17 +702,23 @@ public class AxolotlExcelReader<T>{
         // 从元数据中获取计算计算器
         CellValue evaluated = workBookContext.getFormulaEvaluator().evaluate(cell);
         // 将单元格为公式的单元格值转换为计算结果
-        Object value = switch (evaluated.getCellType()) {
-            case STRING -> evaluated.getStringValue();
-            case NUMERIC -> evaluated.getNumberValue();
-            case BOOLEAN -> evaluated.getBooleanValue();
-            default -> {
+        Object value;
+        switch (evaluated.getCellType()) {
+            case STRING:
+                value = evaluated.getStringValue();
+                break;
+            case NUMERIC:
+                value = evaluated.getNumberValue();
+                break;
+            case BOOLEAN:
+                value = evaluated.getBooleanValue();
+                break;
+            default:
                 String msg = String.format("未知的公式单元格类型位置:[%d,%d],单元格类型:[%s],单元格值:[%s]",
                         cell.getRowIndex(), cell.getColumnIndex(), evaluated.getCellType(), evaluated);
                 LOGGER.error(msg);
-                throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,msg);
-            }
-        };
+                throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR, msg);
+        }
         CellGetInfo cellGetInfo = new CellGetInfo(true, value);
         cellGetInfo.setCellType(evaluated.getCellType());
         return cellGetInfo;

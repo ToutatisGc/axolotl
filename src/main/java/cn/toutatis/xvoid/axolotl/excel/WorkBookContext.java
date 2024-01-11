@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
-import cn.toutatis.xvoid.axolotl.excel.support.AbstractContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.AbstractContext;
 import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.toolkit.ExcelToolkit;
 import lombok.Getter;
@@ -65,15 +65,15 @@ public class WorkBookContext extends AbstractContext {
         return _eventDriven;
     }
 
-    protected void setEventDriven() {
+    public void setEventDriven() {
         this._eventDriven = true;
     }
 
-    protected void setCurrentReadRowIndex(int currentReadRowIndex) {
+    public void setCurrentReadRowIndex(int currentReadRowIndex) {
         this.currentReadRowIndex = currentReadRowIndex;
     }
 
-    protected void setCurrentReadColumnIndex(int currentReadColumnIndex) {
+    public void setCurrentReadColumnIndex(int currentReadColumnIndex) {
         this.currentReadColumnIndex = currentReadColumnIndex;
     }
 

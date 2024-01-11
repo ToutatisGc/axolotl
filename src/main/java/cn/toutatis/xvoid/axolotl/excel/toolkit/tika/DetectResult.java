@@ -125,7 +125,9 @@ public class DetectResult {
      * @return 是否识别成功
      */
     public boolean isDetect() {
-        return Objects.requireNonNullElseGet(detect, this::isWantedMimeType);
+        if (Objects.isNull(detect)){
+            return isWantedMimeType();
+        }else return detect;
     }
 
     /**

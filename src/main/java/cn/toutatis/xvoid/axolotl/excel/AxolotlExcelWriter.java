@@ -1,19 +1,14 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
-import cn.toutatis.xvoid.toolkit.constant.Time;
 import com.alibaba.fastjson.JSONObject;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.xssf.streaming.SXSSFCell;
-import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 文档文件写入器
@@ -40,22 +35,24 @@ public class AxolotlExcelWriter {
 
     public void write(List<?> data) throws IOException {
         SXSSFSheet sheet = workbook.createSheet();
-        for (int i = 0; i < data.size(); i++) {
-            SXSSFRow row = sheet.createRow(i);
-            SXSSFCell cell = row.createCell(0);
-            cell.setCellValue(i);
-            SXSSFCell cell1 = row.createCell(1);
-            CellStyle cellStyle = workbook.createCellStyle();
-            cellStyle.setDataFormat(workbook.createDataFormat().getFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX));
-            cell1.setCellValue(LocalDateTime.now());
-            cell1.setCellStyle(cellStyle);
-            SXSSFCell cell2 = row.createCell(2);
-            CellStyle cellStyle2 = workbook.createCellStyle();
-            cellStyle2.setDataFormat(workbook.createDataFormat().getFormat(Time.HMS_COLON_FORMAT_REGEX+"A"));
-            cell2.setCellValue(LocalDateTime.now());
-            cell2.setCellStyle(cellStyle2);
-        }
-        workbook.write(new FileOutputStream(outputFile));
+        Object o = data.get(0);
+        System.err.println(o instanceof Map);
+//        for (int i = 0; i < data.size(); i++) {
+//            SXSSFRow row = sheet.createRow(i);
+//            SXSSFCell cell = row.createCell(0);
+//            cell.setCellValue(i);
+//            SXSSFCell cell1 = row.createCell(1);
+//            CellStyle cellStyle = workbook.createCellStyle();
+//            cellStyle.setDataFormat(workbook.createDataFormat().getFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX));
+//            cell1.setCellValue(LocalDateTime.now());
+//            cell1.setCellStyle(cellStyle);
+//            SXSSFCell cell2 = row.createCell(2);
+//            CellStyle cellStyle2 = workbook.createCellStyle();
+//            cellStyle2.setDataFormat(workbook.createDataFormat().getFormat(Time.HMS_COLON_FORMAT_REGEX+"A"));
+//            cell2.setCellValue(LocalDateTime.now());
+//            cell2.setCellStyle(cellStyle2);
+//        }
+//        workbook.write(new FileOutputStream(outputFile));
     }
 
     private void exceptionHandler(Exception e){

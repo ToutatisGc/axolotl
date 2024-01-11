@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.annotations;
+package cn.toutatis.xvoid.axolotl.excel.reader.annotations;
 
 import kotlin.annotation.MustBeDocumented;
 

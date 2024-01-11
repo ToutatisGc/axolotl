@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
-import cn.toutatis.xvoid.axolotl.excel.annotations.ColumnBind;
-import cn.toutatis.xvoid.axolotl.excel.annotations.NamingWorkSheet;
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.NamingWorkSheet;
 import lombok.Data;
 
 import java.math.BigDecimal;

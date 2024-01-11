@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl;
 
-import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.AxolotlExcelWriter;
 
 import java.io.File;

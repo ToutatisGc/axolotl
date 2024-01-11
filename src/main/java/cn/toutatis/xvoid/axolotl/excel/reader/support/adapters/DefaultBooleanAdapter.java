@@ -1,9 +1,9 @@
-package cn.toutatis.xvoid.axolotl.excel.support.adapters;
+package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 
-import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
-import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
-import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.exceptions.AxolotlExcelReadException;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import org.apache.poi.ss.usermodel.CellType;
 
 import java.util.HashMap;
@@ -40,13 +40,15 @@ public class DefaultBooleanAdapter extends AbstractDataCastAdapter<Boolean> impl
                 String upperCase = cellValue.toUpperCase();
                 return trueFalseMap.getOrDefault(upperCase, false);
             case NUMERIC:
-                if (cellGetInfo.getCellValue() instanceof Number number){
-                    return number.intValue() == 1;
+                if (cellGetInfo.getCellValue() instanceof Number){
+                    Object cellGetInfoCellValue = cellGetInfo.getCellValue();
+                    return ((Number) cellGetInfoCellValue).intValue() == 1;
                 }
             default:
                 break;
         }
-        throw new AxolotlExcelReadException(context,"无法将值[%s]转换为布尔值".formatted(cellGetInfo.getCellValue()));
+
+        throw new AxolotlExcelReadException(context,String.format("无法将值[%s]转换为布尔值",cellGetInfo.getCellValue()));
     }
 
     @Override

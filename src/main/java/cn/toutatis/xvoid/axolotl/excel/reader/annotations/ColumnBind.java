@@ -1,7 +1,7 @@
-package cn.toutatis.xvoid.axolotl.excel.annotations;
+package cn.toutatis.xvoid.axolotl.excel.reader.annotations;
 
-import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
-import cn.toutatis.xvoid.axolotl.excel.support.adapters.AutoAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 
 import java.lang.annotation.ElementType;
@@ -29,7 +29,7 @@ public @interface ColumnBind {
 
     /**
      * 自定义适配器
-     * @see cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter
+     * @see cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter
      */
     Class<? extends DataCastAdapter<?>> adapter() default AutoAdapter.class;
 

@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.annotations;
+package cn.toutatis.xvoid.axolotl.excel.reader.annotations;
 
 import kotlin.annotation.MustBeDocumented;
 
@@ -8,18 +8,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 表名称指定注解
+ * 表索引指定注解
  */
 @WorkSheet
 @MustBeDocumented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NamingWorkSheet {
+public @interface IndexWorkSheet {
 
     /**
-     * 指定表名称
+     * 指定表索引
      */
-    String sheetName();
-
+    int sheetIndex() default 0;
 
 }

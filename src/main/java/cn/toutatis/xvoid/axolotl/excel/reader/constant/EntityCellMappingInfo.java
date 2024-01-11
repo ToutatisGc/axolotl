@@ -1,6 +1,6 @@
-package cn.toutatis.xvoid.axolotl.excel.constant;
+package cn.toutatis.xvoid.axolotl.excel.reader.constant;
 
-import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
 import lombok.Data;
 
 import java.util.HashMap;
@@ -55,7 +55,7 @@ public class EntityCellMappingInfo<FT> {
 
     /**
      * 排除的读取特性
-     * @see cn.toutatis.xvoid.axolotl.excel.annotations.KeepIntact
+     * @see cn.toutatis.xvoid.axolotl.excel.reader.annotations.KeepIntact
      * @see RowLevelReadPolicy 读取特性
      */
     private Map<RowLevelReadPolicy,Object> excludePolicies = new HashMap<>();

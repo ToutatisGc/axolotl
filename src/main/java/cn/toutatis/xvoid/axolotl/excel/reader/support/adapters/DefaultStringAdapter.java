@@ -1,12 +1,12 @@
-package cn.toutatis.xvoid.axolotl.excel.support.adapters;
+package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
-import cn.toutatis.xvoid.axolotl.excel.constant.AxolotlDefaultConfig;
-import cn.toutatis.xvoid.axolotl.excel.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.constant.RowLevelReadPolicy;
-import cn.toutatis.xvoid.axolotl.excel.support.CastContext;
-import cn.toutatis.xvoid.axolotl.excel.support.CellGetInfo;
-import cn.toutatis.xvoid.axolotl.excel.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -29,15 +29,15 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
         ReaderConfig<?> readerConfig = getReaderConfig();
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
         Map<RowLevelReadPolicy, Object> excludePolicies = entityCellMappingInfo.getExcludePolicies();
-        return switch (cellGetInfo.getCellType()) {
-            case STRING -> {
+        switch (cellGetInfo.getCellType()) {
+            case STRING:
                 String cellValueString = (String) cellValue;
                 if (!excludePolicies.containsKey(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
                     if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.TRIM_CELL_VALUE)) {
-                        cellValueString = Regex.convertSingleLine(cellValueString).replace(" ","");
+                        cellValueString = Regex.convertSingleLine(cellValueString).replace(" ", "");
                     }
                 }
-                if (Validator.strIsNumber(cellValueString)){
+                if (Validator.strIsNumber(cellValueString)) {
                     if (!excludePolicies.containsKey(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
                         if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
                             if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
@@ -46,26 +46,30 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                         }
                     }
                 }
-                yield cellValueString;
-            }
-            case NUMERIC -> {
+                return cellValueString;
+
+            case NUMERIC:
                 if (!excludePolicies.containsKey(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
                     if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.CAST_NUMBER_TO_DATE)) {
                         if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
                             cellValue = Time.regexTime(context.getDataFormat(), DateUtil.getJavaDate((Double) cellValue));
-                            yield "%s".formatted(cellValue);
+                            return String.format("%s", cellValue);
                         }
                     }
                 }
-                if ((Double) cellValue % 1 == 0){
-                    yield ((Double) cellValue).intValue()+"";
-                }else {
-                    yield String.format("%."+ AxolotlDefaultConfig.XVOID_DEFAULT_DECIMAL_SCALE +"f", (Double) cellValue);
+                if ((Double) cellValue % 1 == 0) {
+                    return Integer.toString(((Double) cellValue).intValue());
+                } else {
+                    return String.format("%." + AxolotlDefaultConfig.XVOID_DEFAULT_DECIMAL_SCALE + "f", (Double) cellValue);
                 }
-            }
-            case BOOLEAN, FORMULA -> cellValue.toString();
-            default -> null;
-        };
+
+            case BOOLEAN:
+            case FORMULA:
+                return cellValue.toString();
+
+            default:
+                return null;
+        }
     }
 
     @Override
