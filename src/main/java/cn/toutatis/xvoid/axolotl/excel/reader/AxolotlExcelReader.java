@@ -380,7 +380,7 @@ public class AxolotlExcelReader<T>{
     private <RT> RT readRow(Sheet sheet,int rowNumber,ReaderConfig<RT> readerConfig){
         RT instance = readerConfig.getCastClassInstance();
         Row row = sheet.getRow(rowNumber);
-        if (row == null){
+        if (row == null || blankRowCheck(row)){
             if (readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.INCLUDE_EMPTY_ROW)){
                 return instance;
             }else{
@@ -389,6 +389,27 @@ public class AxolotlExcelReader<T>{
         }
         this.convertCellToInstance(row,instance,readerConfig);
         return instance;
+    }
+
+    /**
+     * 检查行是否为空
+     * @param row 行
+     * @return 行数据是否为空
+     */
+    private boolean blankRowCheck(Row row){
+        int isAllBlank = 0;
+        short lastCellNum = row.getLastCellNum();
+        for (int i = 0; i < lastCellNum; i++) {
+            Cell cell = row.getCell(i);
+            if (cell == null || cell.getCellType() == CellType.BLANK){
+                isAllBlank++;
+            }else {
+                return false;
+            }
+        }
+        boolean blankRow = isAllBlank == lastCellNum;
+        LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, String.format("行[%s]数据为空",row.getRowNum()));
+        return blankRow;
     }
 
     @SuppressWarnings({"unchecked","rawtypes"})
