@@ -1,16 +1,14 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
-import com.alibaba.fastjson.JSONObject;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.xssf.streaming.SXSSFCell;
-import org.apache.poi.xssf.streaming.SXSSFRow;
+import cn.hutool.core.util.IdUtil;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlTheme;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 文档文件写入器
@@ -55,19 +53,13 @@ public class AxolotlExcelWriter {
 //            cell2.setCellValue(LocalDateTime.now());
 //            cell2.setCellStyle(cellStyle2);
 //        }
-//        workbook.write(new FileOutputStream(outputFile));
+        AxolotlTheme axolotlTheme = new AxolotlTheme();
+        axolotlTheme.setWriterConfig(writerConfig);
+        axolotlTheme.renderHeader(sheet);
+        workbook.write(new FileOutputStream(outputFile));
     }
 
-    private void createWorkSheetStyle(SXSSFSheet sheet,WriterConfig writerConfig) {
-        CellStyle cellStyle = workbook.createCellStyle();
-        SXSSFRow columnNamesRow = sheet.createRow(1);
-        List<String> columnNames = writerConfig.getColumnNames();
-        for (int i = 0; i < columnNames.size(); i++) {
-            SXSSFCell cell = columnNamesRow.createCell(i);
-            cell.setCellValue(columnNames.get(i));
-            cell.setCellStyle(cellStyle);
-        }
-    }
+
 
     private void exceptionHandler(Exception e){
 
@@ -75,17 +67,27 @@ public class AxolotlExcelWriter {
 
 
     public static void main(String[] args) throws IOException {
-        AxolotlExcelWriter writer = new AxolotlExcelWriter(new File("D:\\test.xlsx"));
-        ArrayList<JSONObject> data = new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
-            JSONObject json = new JSONObject();
-            json.put("id", i);
-            json.put("name", "name" + i);
-            json.put("age", i);
-            json.put("sex", i % 2 == 0? "男" : "女");
-            json.put("address", "address" + i);
-            data.add(json);
-        }
+
+        AxolotlExcelWriter writer = new AxolotlExcelWriter(new File("D:\\"+IdUtil.randomUUID()+".xlsx"));
+        WriterConfig writerConfig = new WriterConfig();
+        writerConfig.setTitle("测试生成表标题");
+        ArrayList<String> columnNames = new ArrayList<>();
+        columnNames.add("名称");
+        columnNames.add("性别");
+        columnNames.add("身份证号");
+        columnNames.add("地址");
+        writerConfig.setColumnNames(columnNames);
+        writer.write(writerConfig);
+//        ArrayList<JSONObject> data = new ArrayList<>();
+//        for (int i = 0; i < 50; i++) {
+//            JSONObject json = new JSONObject();
+//            json.put("id", i);
+//            json.put("name", "name" + i);
+//            json.put("age", i);
+//            json.put("sex", i % 2 == 0? "男" : "女");
+//            json.put("address", "address" + i);
+//            data.add(json);
+//        }
         writer.close();
 
     }
