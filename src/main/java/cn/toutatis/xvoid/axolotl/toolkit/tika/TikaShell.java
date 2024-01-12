@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.toolkit.tika;
+package cn.toutatis.xvoid.axolotl.toolkit.tika;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.CommonMimeType;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;

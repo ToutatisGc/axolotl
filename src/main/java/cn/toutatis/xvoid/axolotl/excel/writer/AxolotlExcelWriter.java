@@ -1,6 +1,9 @@
-package cn.toutatis.xvoid.axolotl.excel;
+package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
@@ -8,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 文档文件写入器
@@ -33,10 +35,11 @@ public class AxolotlExcelWriter {
     }
 
 
-    public void write(List<?> data) throws IOException {
+    public void write(WriterConfig writerConfig) throws IOException {
         SXSSFSheet sheet = workbook.createSheet();
-        Object o = data.get(0);
-        System.err.println(o instanceof Map);
+
+//        Object o = data.get(0);
+//        System.err.println(o instanceof Map);
 //        for (int i = 0; i < data.size(); i++) {
 //            SXSSFRow row = sheet.createRow(i);
 //            SXSSFCell cell = row.createCell(0);
@@ -53,6 +56,17 @@ public class AxolotlExcelWriter {
 //            cell2.setCellStyle(cellStyle2);
 //        }
 //        workbook.write(new FileOutputStream(outputFile));
+    }
+
+    private void createWorkSheetStyle(SXSSFSheet sheet,WriterConfig writerConfig) {
+        CellStyle cellStyle = workbook.createCellStyle();
+        SXSSFRow columnNamesRow = sheet.createRow(1);
+        List<String> columnNames = writerConfig.getColumnNames();
+        for (int i = 0; i < columnNames.size(); i++) {
+            SXSSFCell cell = columnNamesRow.createCell(i);
+            cell.setCellValue(columnNames.get(i));
+            cell.setCellStyle(cellStyle);
+        }
     }
 
     private void exceptionHandler(Exception e){
@@ -72,7 +86,6 @@ public class AxolotlExcelWriter {
             json.put("address", "address" + i);
             data.add(json);
         }
-        writer.write(data);
         writer.close();
 
     }

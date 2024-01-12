@@ -15,8 +15,8 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastA
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException.ExceptionType;
-import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.DetectResult;
-import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.TikaShell;
+import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
+import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
