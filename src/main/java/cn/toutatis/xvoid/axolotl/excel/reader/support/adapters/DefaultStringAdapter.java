@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
@@ -60,7 +60,7 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 if ((Double) cellValue % 1 == 0) {
                     return Integer.toString(((Double) cellValue).intValue());
                 } else {
-                    return String.format("%." + AxolotlDefaultConfig.XVOID_DEFAULT_DECIMAL_SCALE + "f", (Double) cellValue);
+                    return String.format("%." + AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE + "f", (Double) cellValue);
                 }
 
             case BOOLEAN:

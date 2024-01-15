@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
@@ -68,7 +68,7 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
         } else if (numberClass.equals(BigDecimal.class)){
             BigDecimal bigDecimal =
                     new BigDecimal(doubleValue.toString())
-                    .setScale(AxolotlDefaultConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP);
+                    .setScale(AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP);
             return (NT) bigDecimal;
         } else if (numberClass.equals(Integer.class)) {
             return (NT) Integer.valueOf(doubleValue.intValue());

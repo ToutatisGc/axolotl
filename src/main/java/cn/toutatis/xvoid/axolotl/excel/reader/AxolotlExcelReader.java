@@ -5,7 +5,7 @@ import cn.toutatis.xvoid.axolotl.excel.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.WorkBookContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
@@ -30,6 +30,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.util.IOUtils;
 import org.apache.poi.util.RecordFormatException;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.slf4j.Logger;
@@ -39,16 +40,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Excel读取器
  * @author Toutatis_Gc
  */
-public class AxolotlExcelReader<T>{
+public class AxolotlExcelReader<T> implements Iterator<List<T>> {
 
     /**
      * 日志
@@ -131,7 +129,8 @@ public class AxolotlExcelReader<T>{
         try(FileInputStream fis = new FileInputStream(workBookContext.getFile())){
             // 校验文件大小
             Workbook workbook;
-            if (detectResult.getCatchMimeType() == TikaShell.OOXML_EXCEL && excelFile.length() > AxolotlDefaultConfig.XVOID_DEFAULT_MAX_FILE_SIZE){
+            if (detectResult.getCatchMimeType() == TikaShell.OOXML_EXCEL && excelFile.length() > AxolotlDefaultReaderConfig.XVOID_DEFAULT_MAX_FILE_SIZE){
+                IOUtils.setByteArrayMaxOverride(200000000);
                 this.workBookContext.setEventDriven();
                 OPCPackage opcPackage = OPCPackage.open(fis);
                 workbook = XSSFWorkbookFactory.createWorkbook(opcPackage);
@@ -800,4 +799,23 @@ public class AxolotlExcelReader<T>{
         return workBookContext.getHumanReadablePosition();
     }
 
+    private int currentReadBatch = -1;
+
+    @Override
+    public boolean hasNext() {
+        return currentReadBatch * AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE < getRecordRowNumber();
+    }
+
+    @Override
+    public List<T> next() {
+        if (!hasNext()){
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"读取数据错误");
+        }
+        currentReadBatch++;
+        LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,"读取数据行数:"+currentReadBatch*AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE);
+        return this.readSheetData(
+                currentReadBatch*AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE,
+                (currentReadBatch+1)*AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE
+        );
+    }
 }

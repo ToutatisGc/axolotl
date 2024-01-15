@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
 import cn.toutatis.xvoid.axolotl.Axolotls;
+import cn.toutatis.xvoid.axolotl.entities.OneFieldString3Entity;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringEntity;
 import cn.toutatis.xvoid.axolotl.entities.OneFieldStringKeepIntactEntity;
 import cn.toutatis.xvoid.axolotl.entities.ValidTestEntity;
@@ -130,6 +131,18 @@ public class SimpleTest {
 //        System.err.println(oneFieldStringEntities1);
         List<OneFieldStringEntity> oneFieldStringEntities2 = excelReader.readSheetData(1, 3);
         System.err.println(oneFieldStringEntities2);
+    }
+
+    @Test
+    public void itTest(){
+        File file = FileToolkit.getResourceFileAsFile("workbook/innerBig.xlsx");
+        if (file!= null && file.exists()){
+            AxolotlExcelReader<OneFieldString3Entity> excelReader = Axolotls.getExcelReader(file, OneFieldString3Entity.class);
+            while (excelReader.hasNext()){
+                List<OneFieldString3Entity> next = excelReader.next();
+//            System.err.println(next.size());
+            }
+        }
     }
 
 }

@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.toolkit.tika;
 
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.CommonMimeType;
+import cn.toutatis.xvoid.axolotl.common.CommonMimeType;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import lombok.SneakyThrows;

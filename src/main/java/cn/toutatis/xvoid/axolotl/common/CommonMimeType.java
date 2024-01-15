@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.reader.constant;
+package cn.toutatis.xvoid.axolotl.common;
 
 import org.apache.tika.mime.MimeType;
 import org.apache.tika.mime.MimeTypeException;
