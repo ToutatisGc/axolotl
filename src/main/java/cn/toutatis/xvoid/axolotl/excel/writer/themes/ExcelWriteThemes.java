@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public enum ExcelWriteThemes {
 
-    AXOLOTL("默认主题样式",AxolotlTheme.class);
+    $DEFAULT("默认主题样式", AxolotlTheme.class);
 
     private final String styleName;
 

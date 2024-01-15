@@ -18,24 +18,26 @@ public class AxolotlTheme extends AbstractInnerStyleRender implements ExcelStyle
     public void renderHeader(SXSSFSheet sheet) {
         workbook = sheet.getWorkbook();
         this.createTitleRow(sheet);
-        CellStyle headerCellStyle = this.createCommonCellStyle(THEME_COLOR, (short) 12,true);
+        CellStyle headerCellStyle = StyleHelper.createCommonCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TEXT_FONT_SIZE);
         SXSSFRow columnNamesRow = sheet.createRow(1);
         columnNamesRow.setHeight((short) 400);
         List<String> columnNames = writerConfig.getColumnNames();
         for (int i = 0; i < columnNames.size(); i++) {
             SXSSFCell cell = columnNamesRow.createCell(i);
-            cell.setCellValue(columnNames.get(i));
+            String name = columnNames.get(i);
+            cell.setCellValue(name);
             cell.setCellStyle(headerCellStyle);
+            sheet.setColumnWidth(i,StyleHelper.getPresetCellLength(name));
         }
+        workbook.setPrintArea(workbook.getSheetIndex(sheet), 0,writerConfig.getColumnNames().size() - 1,0, 10 );
     }
 
     private void createTitleRow(SXSSFSheet sheet){
-//        sheet.setDefaultColumnStyle();
         SXSSFRow titleRow = sheet.createRow(0);
         titleRow.setHeight((short) 600);
         SXSSFCell startPositionCell = titleRow.createCell(0);
         startPositionCell.setCellValue(writerConfig.getTitle());
-        CellStyle titleCellStyle = this.createCommonCellStyle(THEME_COLOR,(short) 18,true);
+        CellStyle titleCellStyle = StyleHelper.createCommonCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TITLE_FONT_SIZE);
         startPositionCell.setCellStyle(titleCellStyle);
         CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, writerConfig.getColumnNames().size() - 1);
         for (int rowNum = cellAddresses.getFirstRow(); rowNum <= cellAddresses.getLastRow(); rowNum++) {
@@ -50,24 +52,4 @@ public class AxolotlTheme extends AbstractInnerStyleRender implements ExcelStyle
         sheet.addMergedRegion(cellAddresses);
     }
 
-    private CellStyle createCommonCellStyle(IndexedColors color, short fontSize, boolean bold) {
-        CellStyle commonCellStyle = workbook.createCellStyle();
-        BorderStyle borderStyle = BorderStyle.MEDIUM;
-        commonCellStyle.setBorderTop(borderStyle);
-        commonCellStyle.setBorderRight(borderStyle);
-        commonCellStyle.setBorderBottom(borderStyle);
-        commonCellStyle.setBorderLeft(borderStyle);
-        commonCellStyle.setTopBorderColor(color.getIndex());
-        commonCellStyle.setRightBorderColor(color.getIndex());
-        commonCellStyle.setBottomBorderColor(color.getIndex());
-        commonCellStyle.setLeftBorderColor(color.getIndex());
-        commonCellStyle.setAlignment(HorizontalAlignment.CENTER);
-        commonCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-        Font font = workbook.createFont();
-        font.setFontName("宋体");
-        font.setBold(bold);
-        font.setFontHeightInPoints(fontSize);
-        commonCellStyle.setFont(font);
-        return commonCellStyle;
-    }
 }

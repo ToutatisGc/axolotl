@@ -1,9 +1,13 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.hutool.core.util.IdUtil;
-import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlTheme;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.AbstractInnerStyleRender;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelStyleRender;
+import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import lombok.SneakyThrows;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,6 +19,8 @@ import java.util.ArrayList;
  * @author Toutatis_Gc
  */
 public class AxolotlExcelWriter {
+
+    private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlExcelWriter.class);
 
     /**
      * 输出文件
@@ -33,29 +39,16 @@ public class AxolotlExcelWriter {
     }
 
 
+    @SneakyThrows
     public void write(WriterConfig writerConfig) throws IOException {
         SXSSFSheet sheet = workbook.createSheet();
-
-//        Object o = data.get(0);
-//        System.err.println(o instanceof Map);
-//        for (int i = 0; i < data.size(); i++) {
-//            SXSSFRow row = sheet.createRow(i);
-//            SXSSFCell cell = row.createCell(0);
-//            cell.setCellValue(i);
-//            SXSSFCell cell1 = row.createCell(1);
-//            CellStyle cellStyle = workbook.createCellStyle();
-//            cellStyle.setDataFormat(workbook.createDataFormat().getFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX));
-//            cell1.setCellValue(LocalDateTime.now());
-//            cell1.setCellStyle(cellStyle);
-//            SXSSFCell cell2 = row.createCell(2);
-//            CellStyle cellStyle2 = workbook.createCellStyle();
-//            cellStyle2.setDataFormat(workbook.createDataFormat().getFormat(Time.HMS_COLON_FORMAT_REGEX+"A"));
-//            cell2.setCellValue(LocalDateTime.now());
-//            cell2.setCellStyle(cellStyle2);
-//        }
-        AxolotlTheme axolotlTheme = new AxolotlTheme();
-        axolotlTheme.setWriterConfig(writerConfig);
-        axolotlTheme.renderHeader(sheet);
+        ExcelStyleRender styleRender = writerConfig.getStyleRender();
+        if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
+            innerStyleRender.setWriterConfig(writerConfig);
+            innerStyleRender.renderHeader(sheet);
+        }else {
+            styleRender.renderHeader(sheet);
+        }
         workbook.write(new FileOutputStream(outputFile));
     }
 
