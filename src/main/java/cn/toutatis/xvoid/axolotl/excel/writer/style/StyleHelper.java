@@ -30,7 +30,8 @@ public class StyleHelper {
     public static final Integer SERIAL_NUMBER_LENGTH = 5120;
 
     static {
-        PRESET_CELL_LENGTH_MAP.put("姓名",1500);
+        PRESET_CELL_LENGTH_MAP.put("姓名",3500);
+        PRESET_CELL_LENGTH_MAP.put("名称",5000);
         PRESET_CELL_LENGTH_MAP.put("身份证",SERIAL_NUMBER_LENGTH);
         PRESET_CELL_LENGTH_MAP.put("身份证号",SERIAL_NUMBER_LENGTH);
         PRESET_CELL_LENGTH_MAP.put("身份证号码",SERIAL_NUMBER_LENGTH);

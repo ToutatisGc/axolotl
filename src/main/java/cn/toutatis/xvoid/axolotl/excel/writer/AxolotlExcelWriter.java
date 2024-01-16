@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractInnerStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -22,26 +23,25 @@ public class AxolotlExcelWriter {
 
     private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlExcelWriter.class);
 
-    /**
-     * 输出文件
-     */
-    private final File outputFile;
-
     private final SXSSFWorkbook workbook;
 
-    public AxolotlExcelWriter(File outputFile) {
-        this.outputFile = outputFile;
+    private final WriterConfig writerConfig;
+
+    public AxolotlExcelWriter(WriterConfig writerConfig) {
+        this.writerConfig = writerConfig;
         workbook = new SXSSFWorkbook();
     }
 
     public void close() throws IOException {
         workbook.close();
+        writerConfig.getOutputStream().close();
     }
 
 
     @SneakyThrows
-    public void write(WriterConfig writerConfig) throws IOException {
+    public void write() throws IOException {
         SXSSFSheet sheet = workbook.createSheet();
+        workbook.setSheetName(writerConfig.getSheetIndex(),writerConfig.getSheetName());
         ExcelStyleRender styleRender = writerConfig.getStyleRender();
         if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
             innerStyleRender.setWriterConfig(writerConfig);
@@ -49,7 +49,8 @@ public class AxolotlExcelWriter {
         }else {
             styleRender.renderHeader(sheet);
         }
-        workbook.write(new FileOutputStream(outputFile));
+        styleRender.renderData(sheet,writerConfig.getData());
+        workbook.write(writerConfig.getOutputStream());
     }
 
 
@@ -60,27 +61,31 @@ public class AxolotlExcelWriter {
 
 
     public static void main(String[] args) throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
 
-        AxolotlExcelWriter writer = new AxolotlExcelWriter(new File("D:\\"+IdUtil.randomUUID()+".xlsx"));
         WriterConfig writerConfig = new WriterConfig();
         writerConfig.setTitle("测试生成表标题");
         ArrayList<String> columnNames = new ArrayList<>();
         columnNames.add("名称");
+        columnNames.add("姓名");
         columnNames.add("性别");
         columnNames.add("身份证号");
         columnNames.add("地址");
         writerConfig.setColumnNames(columnNames);
-        writer.write(writerConfig);
-//        ArrayList<JSONObject> data = new ArrayList<>();
-//        for (int i = 0; i < 50; i++) {
-//            JSONObject json = new JSONObject();
-//            json.put("id", i);
-//            json.put("name", "name" + i);
-//            json.put("age", i);
-//            json.put("sex", i % 2 == 0? "男" : "女");
-//            json.put("address", "address" + i);
-//            data.add(json);
-//        }
+        ArrayList<JSONObject> data = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            JSONObject json = new JSONObject(true);
+            json.put("name", "name" + i);
+            json.put("age", i);
+            json.put("sex", i % 2 == 0? "男" : "女");
+            json.put("card", 555444114);
+            json.put("address", null);
+            data.add(json);
+        }
+        writerConfig.setData(data);
+        writerConfig.setOutputStream(fileOutputStream);
+        AxolotlExcelWriter writer = new AxolotlExcelWriter(writerConfig);
+        writer.write();
         writer.close();
 
     }

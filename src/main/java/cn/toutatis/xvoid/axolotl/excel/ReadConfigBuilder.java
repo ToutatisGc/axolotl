@@ -9,6 +9,11 @@ public class ReadConfigBuilder<T> {
 
     private final ReaderConfig<T> readerConfig;
 
+    /**
+     * 构造函数，接受一个Class类型参数用于泛型类型的指定
+     *
+     * @param castClass 类型
+     */
     public ReadConfigBuilder(Class<T> castClass) {
         readerConfig = new ReaderConfig<>(castClass);
     }
@@ -16,7 +21,7 @@ public class ReadConfigBuilder<T> {
     /**
      * 构造方法
      *
-     * @param castClass 类型
+     * @param castClass         类型
      * @param withDefaultConfig 是否使用默认配置
      */
     public ReadConfigBuilder(Class<T> castClass, boolean withDefaultConfig) {
@@ -36,6 +41,7 @@ public class ReadConfigBuilder<T> {
 
     /**
      * 设置工作表名称
+     *
      * @param sheetName 工作表名称
      * @return 返回ReadConfigBuilder对象
      */
