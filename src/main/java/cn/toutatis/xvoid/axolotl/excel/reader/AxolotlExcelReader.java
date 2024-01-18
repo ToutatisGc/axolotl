@@ -163,7 +163,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
         assert readerConfig != null;
         Sheet sheet = this.searchSheet(readerConfig);
         this.preCheckAndFixReadConfig(readerConfig);
-        this.processMergedCells(sheet);
+        this.spreadMergedCells(sheet);
         RT instance = readerConfig.getCastClassInstance();
         this.convertPositionCellToInstance(instance, readerConfig,sheet);
         this.validateConvertEntity(instance, readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.VALIDATE_READ_ROW_DATA));
@@ -274,7 +274,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
             return readResult;
         }
         // 处理合并单元格
-        this.processMergedCells(sheet);
+        this.spreadMergedCells(sheet);
         this.readSheetData(sheet,readerConfig,readResult);
         return readResult;
     }
@@ -313,7 +313,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
      * 处理合并单元格
      * @param sheet 工作表
      */
-    private void processMergedCells(Sheet sheet) {
+    private void spreadMergedCells(Sheet sheet) {
         List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
         LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "开始处理工作表合并单元格");
         for (CellRangeAddress mergedRegion : mergedRegions) {
@@ -359,12 +359,25 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
             if (initialRowPositionOffset > 0){
                 LOGGER.debug("跳过前{}行",initialRowPositionOffset);
                 startIndex = startIndex + initialRowPositionOffset;
-//                endIndex = endIndex + initialRowPositionOffset;
             }
         }
+        //TODO 转化表头
+        this.findHeadCellPosition(readerConfig);
         for (int i = startIndex; i < endIndex; i++) {
             RT instance = this.readRow(sheet, i, readerConfig);
             if (instance!= null){list.add(instance);}
+        }
+    }
+
+    private void findHeadCellPosition(ReaderConfig<?> readerConfig){
+        int readHeadRows = Math.max(getRecordRowNumber(readerConfig), AxolotlDefaultReaderConfig.XVOID_DEFAULT_HEADER_FINDING_ROW);
+        List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
+        for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
+            //TODO 文件流支持
+//            indexMappingInfo.
+        }
+        for (int i = 0; i < readHeadRows; i++) {
+
         }
     }
 

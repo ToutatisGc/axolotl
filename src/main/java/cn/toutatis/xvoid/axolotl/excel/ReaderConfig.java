@@ -235,7 +235,7 @@ public class ReaderConfig<T> {
             }
         }
         this.positionMappingInfos = positionMappingInfos;
-        indexMappingInfos = entityCellMappingInfos;
+        this.indexMappingInfos = entityCellMappingInfos;
     }
 
     /**

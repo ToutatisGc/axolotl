@@ -1,13 +1,15 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.support.AbstractContext;
-import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
+import com.google.common.collect.HashBasedTable;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.File;
+import java.util.HashMap;
 
 /**
  * 工作簿元信息
@@ -36,6 +38,7 @@ public class WorkBookContext extends AbstractContext {
     @Getter
     private int currentReadColumnIndex = -1;
 
+
     /**
      * 是否是事件驱动的读取
      */
@@ -48,6 +51,15 @@ public class WorkBookContext extends AbstractContext {
 
     public void setWorkbook(Workbook workbook) {
         this.workbook = workbook;
+    }
+
+    public static void main(String[] args) {
+        HashMap<Integer, HashBasedTable<String, Integer, Integer>> workbookHeaders = new HashMap<>();
+        HashBasedTable<String, Integer, Integer> sheetHeader = HashBasedTable.create();
+        sheetHeader.put("姓名", 0,1);
+        sheetHeader.put("姓名", 1,1);
+        workbookHeaders.put(2,sheetHeader);
+        System.err.println(workbookHeaders);
     }
 
     /**

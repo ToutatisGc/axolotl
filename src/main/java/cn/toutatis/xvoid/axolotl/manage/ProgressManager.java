@@ -30,6 +30,15 @@ public interface ProgressManager {
     void updateProgress(String progressId, int currentRecords);
 
     /**
+     * 获取进度。
+     * @param progressId    进度ID，用于标识要更新的进度任务。
+     *                      The progress ID identifying the progress task to be updated.
+     * @return 当前进度。
+     *         The current progress.
+     */
+    Double getProgress(String progressId);
+
+    /**
      * 检查进度是否已完成。
      * Checks if the progress has been completed.
      *
@@ -40,7 +49,4 @@ public interface ProgressManager {
      */
     boolean isFinished(String progressId);
 
-    // 可拓展内容：可以在此接口中添加更多与进度管理相关的方法或事件。
-
-    // Extension: Additional methods or events related to progress management can be added to this interface.
 }

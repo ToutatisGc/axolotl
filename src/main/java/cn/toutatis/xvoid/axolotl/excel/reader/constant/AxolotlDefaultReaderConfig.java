@@ -22,7 +22,10 @@ public class AxolotlDefaultReaderConfig {
      */
     public static final int XVOID_DEFAULT_DECIMAL_SCALE = 2;
 
-
+    /**
+     * 默认的表头查找行数
+     */
+    public static final int XVOID_DEFAULT_HEADER_FINDING_ROW = 10;
 
 
 }
