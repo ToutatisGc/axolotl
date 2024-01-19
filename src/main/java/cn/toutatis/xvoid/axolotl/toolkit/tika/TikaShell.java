@@ -1,6 +1,8 @@
 package cn.toutatis.xvoid.axolotl.toolkit.tika;
 
 import cn.toutatis.xvoid.axolotl.common.CommonMimeType;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -12,7 +14,10 @@ import org.apache.tika.mime.MimeTypes;
 import org.slf4j.Logger;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Tika 工具壳
@@ -138,6 +143,43 @@ public class TikaShell {
         try {
             //解析出文件的媒体类型
             String detectMimeTypeString = tika.detect(ins);
+            if (CommonMimeType.ZIP.toString().equals(detectMimeTypeString)){
+                ZipEntry entry;
+                ZipInputStream zipInputStream = new ZipInputStream(ins);
+                while ((entry = zipInputStream.getNextEntry()) != null) {
+                    // 处理 ZIP 文件中的每个条目
+                    System.out.println("Entry: " + entry.getName());
+//
+//                    // 读取条目内容
+//                    byte[] buffer = new byte[1024];
+//                    int bytesRead;
+//                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
+//                        // 处理读取的数据，这里简单地打印
+//                        System.out.write(buffer, 0, bytesRead);
+//                    }
+                    System.out.println(); // 换行
+                }
+                String findFile = null;
+//                ZipEntry entry;
+//                while ((entry = zipInputStream.getNextEntry()) != null) {
+//
+//                    if (entry.isDirectory()){continue;}
+//                    if (entry.getName().equals(AxolotlDefaultReaderConfig.EXCEL_ZIP_XML_FILE_NAME)){
+//                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//                        byte[] buffer = new byte[1024];
+//                        int bytesRead;
+//
+//                        while ((bytesRead = zipInputStream.read(buffer)) != -1) {
+//                            baos.write(buffer, 0, bytesRead);
+//                        }
+//                        String fileContent = baos.toString(StandardCharsets.UTF_8);
+//                        System.err.println(fileContent);
+//                    }
+//                }
+                zipInputStream.close();
+            }else {
+                detectResult.returnInfo("文件不是Excel文件");
+            }
             MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(detectMimeTypeString);
             LoggerHelper.debug(
                     LOGGER, LoggerHelper.format("文件媒体类型：%s 期望媒体类型：%s" ,detectMimeTypeString, mimeType)

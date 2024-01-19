@@ -24,12 +24,20 @@ public class CommonMimeType {
      */
     public static final MimeType OOXML_EXCEL;
 
+    /**
+     * ZIP 压缩文件
+     * 进行流读取时，Excel文件也为zip格式
+     * application/zip
+     * 后缀为[.zip]
+     */
+    public static final MimeType ZIP;
 
     static {
         try {
             MimeTypes defaultMimeTypes = MimeTypes.getDefaultMimeTypes();
             MS_EXCEL = defaultMimeTypes.forName("application/vnd.ms-excel");
             OOXML_EXCEL = defaultMimeTypes.forName("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            ZIP = defaultMimeTypes.forName("application/zip");
         } catch (MimeTypeException e) {
             throw new RuntimeException(e);
         }
