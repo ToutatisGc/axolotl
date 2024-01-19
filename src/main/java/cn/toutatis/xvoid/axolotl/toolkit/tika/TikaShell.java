@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.toolkit.tika;
 
 import cn.toutatis.xvoid.axolotl.common.CommonMimeType;
+import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import lombok.SneakyThrows;
@@ -10,9 +11,7 @@ import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -22,7 +21,7 @@ import java.util.List;
 public class TikaShell {
 
     /**
-     *
+     * 日志工具
      */
     private static final Logger LOGGER = LoggerToolkit.getLogger(TikaShell.class);
 
@@ -79,7 +78,7 @@ public class TikaShell {
      * @return 检测结果
      */
     @SneakyThrows
-    public static DetectResult detect(File file, MimeType mimeType, boolean throwException,boolean alreadyPreCheck) {
+    public static DetectResult detect(File file, MimeType mimeType, boolean throwException, boolean alreadyPreCheck) {
         DetectResult preCheck;
         if (alreadyPreCheck){
             //已通过预检测
@@ -90,56 +89,77 @@ public class TikaShell {
         }
         if (preCheck.isDetect()){
             //进行文件后缀匹配
-            try {
-                DetectResult detectResult = new DetectResult(false);
-                detectResult.setWantedMimeType(mimeType);
-                //获取文件后缀
-                String fileSuffix = '.'+FileToolkit.getFileSuffix(file).toLowerCase();
-                //获取期望的文件后缀
-                List<String> extensions = mimeType.getExtensions();
-                //进行后缀匹配
-                int idx = -1;
-                for (int i = 0; i < extensions.size(); i++) {
-                    String extension = extensions.get(i);
-                    if (extension.equalsIgnoreCase(fileSuffix)){
-                        idx = i;
-                        break;
-                    }
+            DetectResult detectResult = new DetectResult(false);
+            detectResult.setWantedMimeType(mimeType);
+            //获取文件后缀
+            String fileSuffix = '.'+FileToolkit.getFileSuffix(file).toLowerCase();
+            //获取期望的文件后缀
+            List<String> extensions = mimeType.getExtensions();
+            //进行后缀匹配
+            int idx = -1;
+            for (int i = 0; i < extensions.size(); i++) {
+                String extension = extensions.get(i);
+                if (extension.equalsIgnoreCase(fileSuffix)){
+                    idx = i;
+                    break;
                 }
-                LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + mimeType.getExtensions() + ", 匹配的后缀索引：[" + idx + "]");
-                if (idx == -1){
-                    //文件后缀不匹配 返回错误信息
-                    String msg ="["+file.getName()+"]文件后缀不匹配";
-                    detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_SUFFIX_PROBLEM);
-                    if (throwException){throw new IOException(msg);}
-                    return detectResult.returnInfo(msg);
-                }
-                //解析出文件的媒体类型
-                MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(tika.detect(file));
-                LOGGER.debug("文件媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType);
-                if (detectMimeType.equals(mimeType)){
-                    //文件媒体类型与期望媒体类型一致 返回检测结果
-                    return new DetectResult(true,detectMimeType);
-                }else {
-                    //不一致  返回错误信息
-                    detectResult.setCatchMimeType(detectMimeType);
-                    detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM);
-                    String msg = (file.getName()+"文件媒体类型不匹配，媒体类型：" + tika.detect(file) + ", 期望媒体类型：" + mimeType);
-                    if (throwException){throw new IOException(msg);}
-                    return detectResult.returnInfo(msg);
-                }
-            } catch (IOException e) {
-                String msg = file.getName()+"文件读取失败";
-                if (throwException){throw new IOException(msg);}
-                LOGGER.error(msg, e);
-                DetectResult detectResult = new DetectResult(false, DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM, msg);
-                detectResult.setWantedMimeType(mimeType);
-                return detectResult;
             }
+            LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + mimeType.getExtensions() + ", 匹配的后缀索引：[" + idx + "]");
+            if (idx == -1){
+                //文件后缀不匹配 返回错误信息
+                String msg ="["+file.getName()+"]文件后缀不匹配";
+                detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_SUFFIX_PROBLEM);
+                if (throwException){throw new IOException(msg);}
+                return detectResult.returnInfo(msg);
+            }
+            return detect(new FileInputStream(file), mimeType, throwException);
         }else{
             //再次预检测失败 返回错误信息
             if (throwException){throw new IOException(preCheck.getMessage());}
             return preCheck;
+        }
+    }
+    /**
+     * 判断文件是否正常并且为需要的格式
+     * 1.文件预检查
+     * 2.文件后缀是否匹配
+     * 3.文件媒体类型是否匹配
+     *
+     * @param ins 文件流
+     * @param mimeType 想要匹配的MIME类型
+     * @param throwException 是否抛出异常
+     * @return 检测结果
+     */
+    @SneakyThrows
+    public static DetectResult detect(InputStream ins, MimeType mimeType, boolean throwException) {
+        //进行文件后缀匹配
+        DetectResult detectResult = new DetectResult(false);
+        detectResult.setWantedMimeType(mimeType);
+        try {
+            //解析出文件的媒体类型
+            String detectMimeTypeString = tika.detect(ins);
+            MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(detectMimeTypeString);
+            LoggerHelper.debug(
+                    LOGGER, LoggerHelper.format("文件媒体类型：%s 期望媒体类型：%s" ,detectMimeTypeString, mimeType)
+            );
+            if (detectMimeType.equals(mimeType)){
+                //文件媒体类型与期望媒体类型一致 返回检测结果
+                return new DetectResult(true,detectMimeType);
+            }else {
+                //不一致  返回错误信息
+                detectResult.setCatchMimeType(detectMimeType);
+                detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM);
+                String msg = ("文件媒体类型不匹配，媒体类型：" + detectMimeTypeString + ", 期望媒体类型：" + mimeType);
+                if (throwException){throw new IOException(msg);}
+                return detectResult.returnInfo(msg);
+            }
+        } catch (IOException e) {
+            String msg = "文件读取失败";
+            if (throwException){throw new IOException(msg);}
+            LOGGER.error(msg, e);
+            detectResult = new DetectResult(false, DetectResult.FileStatus.FILE_SELF_PROBLEM, msg);
+            detectResult.setWantedMimeType(mimeType);
+            return detectResult;
         }
     }
 

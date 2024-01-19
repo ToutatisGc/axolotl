@@ -4,11 +4,16 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.AbstractContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashMap;
 
 /**
@@ -38,14 +43,24 @@ public class WorkBookContext extends AbstractContext {
     @Getter
     private int currentReadColumnIndex = -1;
 
+    @Setter @Getter
+    private byte[] dataCache;
 
     /**
      * 是否是事件驱动的读取
      */
     private boolean _eventDriven = false;
 
+    @SneakyThrows
     public WorkBookContext(File file, DetectResult detectResult) {
         this.setFile(file);
+        this.setDataCache(Files.toByteArray(file));
+        this.setMimeType(detectResult.getCatchMimeType());
+    }
+
+    @SneakyThrows
+    public WorkBookContext(InputStream ins, DetectResult detectResult) {
+        this.setDataCache(ByteStreams.toByteArray(ins));
         this.setMimeType(detectResult.getCatchMimeType());
     }
 
