@@ -2,7 +2,6 @@ package cn.toutatis.xvoid.axolotl.toolkit.tika;
 
 import cn.toutatis.xvoid.axolotl.common.CommonMimeType;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
-import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -117,7 +116,9 @@ public class TikaShell {
                 if (throwException){throw new IOException(msg);}
                 return detectResult.returnInfo(msg);
             }
-            return detect(new FileInputStream(file), mimeType, throwException);
+            try(FileInputStream fis = new FileInputStream(file)){
+                return detect(fis, mimeType, throwException);
+            }
         }else{
             //再次预检测失败 返回错误信息
             if (throwException){throw new IOException(preCheck.getMessage());}
@@ -129,7 +130,7 @@ public class TikaShell {
      * 1.文件预检查
      * 2.文件后缀是否匹配
      * 3.文件媒体类型是否匹配
-     *
+     * 接收流应当为可缓存流
      * @param ins 文件流
      * @param mimeType 想要匹配的MIME类型
      * @param throwException 是否抛出异常
@@ -146,36 +147,21 @@ public class TikaShell {
             if (CommonMimeType.ZIP.toString().equals(detectMimeTypeString)){
                 ZipEntry entry;
                 ZipInputStream zipInputStream = new ZipInputStream(ins);
-                while ((entry = zipInputStream.getNextEntry()) != null) {
-                    // 处理 ZIP 文件中的每个条目
-                    System.out.println("Entry: " + entry.getName());
-//
-//                    // 读取条目内容
-//                    byte[] buffer = new byte[1024];
-//                    int bytesRead;
-//                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
-//                        // 处理读取的数据，这里简单地打印
-//                        System.out.write(buffer, 0, bytesRead);
-//                    }
-                    System.out.println(); // 换行
-                }
                 String findFile = null;
-//                ZipEntry entry;
-//                while ((entry = zipInputStream.getNextEntry()) != null) {
-//
-//                    if (entry.isDirectory()){continue;}
-//                    if (entry.getName().equals(AxolotlDefaultReaderConfig.EXCEL_ZIP_XML_FILE_NAME)){
-//                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//                        byte[] buffer = new byte[1024];
-//                        int bytesRead;
-//
-//                        while ((bytesRead = zipInputStream.read(buffer)) != -1) {
-//                            baos.write(buffer, 0, bytesRead);
-//                        }
-//                        String fileContent = baos.toString(StandardCharsets.UTF_8);
-//                        System.err.println(fileContent);
-//                    }
-//                }
+                while ((entry = zipInputStream.getNextEntry()) != null) {
+
+                    if (entry.isDirectory()){continue;}
+                    if (entry.getName().equals(AxolotlDefaultReaderConfig.EXCEL_ZIP_XML_FILE_NAME)){
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = zipInputStream.read(buffer)) != -1) {
+                            baos.write(buffer, 0, bytesRead);
+                        }
+                        String fileContent = baos.toString(StandardCharsets.UTF_8);
+                        System.err.println(fileContent);
+                    }
+                }
                 zipInputStream.close();
             }else {
                 detectResult.returnInfo("文件不是Excel文件");
