@@ -5,6 +5,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfi
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import com.google.common.io.ByteStreams;
 import lombok.SneakyThrows;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeType;
@@ -76,13 +77,13 @@ public class TikaShell {
      * 3.文件媒体类型是否匹配
      *
      * @param file 文件
-     * @param mimeType 想要匹配的MIME类型
+     * @param wantedMimeType 想要匹配的MIME类型
      * @param throwException 是否抛出异常
      * @param alreadyPreCheck 文件是否已通过预检查
      * @return 检测结果
      */
     @SneakyThrows
-    public static DetectResult detect(File file, MimeType mimeType, boolean throwException, boolean alreadyPreCheck) {
+    public static DetectResult detect(File file, MimeType wantedMimeType, boolean throwException, boolean alreadyPreCheck) {
         DetectResult preCheck;
         if (alreadyPreCheck){
             //已通过预检测
@@ -94,11 +95,11 @@ public class TikaShell {
         if (preCheck.isDetect()){
             //进行文件后缀匹配
             DetectResult detectResult = new DetectResult(false);
-            detectResult.setWantedMimeType(mimeType);
+            detectResult.setWantedMimeType(wantedMimeType);
             //获取文件后缀
             String fileSuffix = '.'+FileToolkit.getFileSuffix(file).toLowerCase();
             //获取期望的文件后缀
-            List<String> extensions = mimeType.getExtensions();
+            List<String> extensions = wantedMimeType.getExtensions();
             //进行后缀匹配
             int idx = -1;
             for (int i = 0; i < extensions.size(); i++) {
@@ -108,7 +109,7 @@ public class TikaShell {
                     break;
                 }
             }
-            LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + mimeType.getExtensions() + ", 匹配的后缀索引：[" + idx + "]");
+            LOGGER.debug("文件后缀：["+ fileSuffix + "], 可匹配的后缀：" + wantedMimeType.getExtensions() + ", 匹配的后缀索引：[" + idx + "]");
             if (idx == -1){
                 //文件后缀不匹配 返回错误信息
                 String msg ="["+file.getName()+"]文件后缀不匹配";
@@ -116,79 +117,89 @@ public class TikaShell {
                 if (throwException){throw new IOException(msg);}
                 return detectResult.returnInfo(msg);
             }
-            try(FileInputStream fis = new FileInputStream(file)){
-                return detect(fis, mimeType, throwException);
-            }
+            String detect = tika.detect(file);
+            return matchMimeType(detect, wantedMimeType,throwException);
         }else{
             //再次预检测失败 返回错误信息
             if (throwException){throw new IOException(preCheck.getMessage());}
             return preCheck;
         }
     }
+
     /**
      * 判断文件是否正常并且为需要的格式
-     * 1.文件预检查
-     * 2.文件后缀是否匹配
-     * 3.文件媒体类型是否匹配
-     * 接收流应当为可缓存流
+     * 流的情况较为特殊，由于流获取内容仅为字节，在获取文件类型时仅能获取较为特殊的几种类型，因此需要进行额外的判断
+     * Excel文件本身为ZIP压缩类型，其中有特殊的标志文件可以进行判断，其余特殊类型请自行实现判断或提交PR进行类型补充
      * @param ins 文件流
-     * @param mimeType 想要匹配的MIME类型
+     * @param wantedMimeType 想要匹配的MIME类型
      * @param throwException 是否抛出异常
      * @return 检测结果
      */
     @SneakyThrows
-    public static DetectResult detect(InputStream ins, MimeType mimeType, boolean throwException) {
-        //进行文件后缀匹配
-        DetectResult detectResult = new DetectResult(false);
-        detectResult.setWantedMimeType(mimeType);
-        try {
-            //解析出文件的媒体类型
-            String detectMimeTypeString = tika.detect(ins);
+    public static DetectResult detect(InputStream ins, MimeType wantedMimeType, boolean throwException) {
+        if (wantedMimeType == null){throw new IllegalArgumentException("期望媒体类型为空");}
+        ByteArrayOutputStream dataCacheOutputStream =  new ByteArrayOutputStream();
+        ByteStreams.copy(ins, dataCacheOutputStream);
+        //解析出文件的媒体类型
+        String detectMimeTypeString = tika.detect(new ByteArrayInputStream(dataCacheOutputStream.toByteArray()));
+        if (wantedMimeType == CommonMimeType.MS_EXCEL || wantedMimeType == CommonMimeType.OOXML_EXCEL){
             if (CommonMimeType.ZIP.toString().equals(detectMimeTypeString)){
                 ZipEntry entry;
-                ZipInputStream zipInputStream = new ZipInputStream(ins);
-                String findFile = null;
-                while ((entry = zipInputStream.getNextEntry()) != null) {
-
-                    if (entry.isDirectory()){continue;}
-                    if (entry.getName().equals(AxolotlDefaultReaderConfig.EXCEL_ZIP_XML_FILE_NAME)){
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        while ((bytesRead = zipInputStream.read(buffer)) != -1) {
-                            baos.write(buffer, 0, bytesRead);
+                try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(dataCacheOutputStream.toByteArray()))){
+                    while ((entry = zipInputStream.getNextEntry()) != null) {
+                        if (entry.isDirectory()){continue;}
+                        if (entry.getName().equals(AxolotlDefaultReaderConfig.EXCEL_ZIP_XML_FILE_NAME)){
+                            ByteArrayOutputStream tmpOutputStream = new ByteArrayOutputStream();
+                            ByteStreams.copy(zipInputStream, tmpOutputStream);
+                            String fileContent = tmpOutputStream.toString(StandardCharsets.UTF_8);
+                            if (fileContent.contains(wantedMimeType.toString())){
+                                detectMimeTypeString = wantedMimeType.toString();
+                            }
                         }
-                        String fileContent = baos.toString(StandardCharsets.UTF_8);
-                        System.err.println(fileContent);
                     }
                 }
-                zipInputStream.close();
-            }else {
-                detectResult.returnInfo("文件不是Excel文件");
-            }
-            MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(detectMimeTypeString);
-            LoggerHelper.debug(
-                    LOGGER, LoggerHelper.format("文件媒体类型：%s 期望媒体类型：%s" ,detectMimeTypeString, mimeType)
-            );
-            if (detectMimeType.equals(mimeType)){
-                //文件媒体类型与期望媒体类型一致 返回检测结果
-                return new DetectResult(true,detectMimeType);
-            }else {
-                //不一致  返回错误信息
-                detectResult.setCatchMimeType(detectMimeType);
-                detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM);
-                String msg = ("文件媒体类型不匹配，媒体类型：" + detectMimeTypeString + ", 期望媒体类型：" + mimeType);
+            } else if (CommonMimeType.TIKA_OOXML_EXCEL.toString().equals(detectMimeTypeString)) {
+                detectMimeTypeString = CommonMimeType.OOXML_EXCEL.toString();
+            } else if (CommonMimeType.TIKA_MS_EXCEL.toString().equals(detectMimeTypeString)) {
+                detectMimeTypeString = CommonMimeType.MS_EXCEL.toString();
+            } else {
+                String msg = "流不是Excel文件";
                 if (throwException){throw new IOException(msg);}
-                return detectResult.returnInfo(msg);
+                DetectResult detectResult = new DetectResult(false);
+                detectResult.setWantedMimeType(wantedMimeType);
+                detectResult.returnInfo(msg);
             }
+        }
+        try {
+            return matchMimeType(detectMimeTypeString, wantedMimeType, throwException);
         } catch (IOException e) {
             String msg = "文件读取失败";
             if (throwException){throw new IOException(msg);}
             LOGGER.error(msg, e);
-            detectResult = new DetectResult(false, DetectResult.FileStatus.FILE_SELF_PROBLEM, msg);
-            detectResult.setWantedMimeType(mimeType);
+            DetectResult detectResult = new DetectResult(false, DetectResult.FileStatus.FILE_SELF_PROBLEM, msg);
+            detectResult.setWantedMimeType(wantedMimeType);
             return detectResult;
         }
+    }
+
+    private static DetectResult matchMimeType(String detectMimeTypeString, MimeType wantedMimeType, boolean throwException) throws MimeTypeException, IOException {
+        MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(detectMimeTypeString);
+        LoggerHelper.debug(
+                LOGGER, LoggerHelper.format("文件媒体类型：%s 期望媒体类型：%s" ,detectMimeTypeString, wantedMimeType)
+        );
+        DetectResult detectResult = new DetectResult(false);
+        if (detectMimeType.equals(wantedMimeType)){
+            //文件媒体类型与期望媒体类型一致 返回检测结果
+            detectResult = new DetectResult(true,detectMimeType);
+        }else {
+            //不一致  返回错误信息
+            detectResult.setCatchMimeType(detectMimeType);
+            detectResult.setCurrentFileStatus(DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM);
+            String msg = ("文件媒体类型不匹配，媒体类型：" + detectMimeTypeString + ", 期望媒体类型：" + wantedMimeType);
+            if (throwException){throw new IOException(msg);}
+            return detectResult.returnInfo(msg);
+        }
+        return detectResult;
     }
 
     /**

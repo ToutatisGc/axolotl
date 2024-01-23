@@ -18,11 +18,18 @@ public class CommonMimeType {
     public static final MimeType MS_EXCEL;
 
     /**
+     * 该类型为读取流的情况获取到的MS_EXCEL格式
+     * 使用tika的API获取到的类型为application/x-tika-msoffice
+     */
+    public static final MimeType TIKA_MS_EXCEL;
+
+    /**
      * OOXML_EXCEL Excel 2007及以上版本
      * application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
      * 后缀为[.xlsx]
      */
     public static final MimeType OOXML_EXCEL;
+    public static final MimeType TIKA_OOXML_EXCEL;
 
     /**
      * ZIP 压缩文件
@@ -36,7 +43,9 @@ public class CommonMimeType {
         try {
             MimeTypes defaultMimeTypes = MimeTypes.getDefaultMimeTypes();
             MS_EXCEL = defaultMimeTypes.forName("application/vnd.ms-excel");
+            TIKA_MS_EXCEL = defaultMimeTypes.forName("application/x-tika-msoffice");
             OOXML_EXCEL = defaultMimeTypes.forName("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            TIKA_OOXML_EXCEL = defaultMimeTypes.forName("application/x-tika-ooxml");
             ZIP = defaultMimeTypes.forName("application/zip");
         } catch (MimeTypeException e) {
             throw new RuntimeException(e);
