@@ -151,7 +151,8 @@ public class TikaShell {
                         if (entry.getName().equals(AxolotlDefaultReaderConfig.EXCEL_ZIP_XML_FILE_NAME)){
                             ByteArrayOutputStream tmpOutputStream = new ByteArrayOutputStream();
                             ByteStreams.copy(zipInputStream, tmpOutputStream);
-                            String fileContent = tmpOutputStream.toString(StandardCharsets.UTF_8);
+
+                            String fileContent = new String(tmpOutputStream.toByteArray(),StandardCharsets.UTF_8);
                             if (fileContent.contains(wantedMimeType.toString())){
                                 detectMimeTypeString = wantedMimeType.toString();
                             }
