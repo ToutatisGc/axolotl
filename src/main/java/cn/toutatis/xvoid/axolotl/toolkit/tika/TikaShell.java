@@ -182,6 +182,15 @@ public class TikaShell {
         }
     }
 
+    /**
+     * 匹配文件媒体类型
+     * @param detectMimeTypeString 文件媒体类型
+     * @param wantedMimeType 期望媒体类型
+     * @param throwException 是否抛出异常
+     * @return 识别结果
+     * @throws MimeTypeException MIME类型异常
+     * @throws IOException 文件读取失败
+     */
     private static DetectResult matchMimeType(String detectMimeTypeString, MimeType wantedMimeType, boolean throwException) throws MimeTypeException, IOException {
         MimeType detectMimeType = MimeTypes.getDefaultMimeTypes().forName(detectMimeTypeString);
         LoggerHelper.debug(

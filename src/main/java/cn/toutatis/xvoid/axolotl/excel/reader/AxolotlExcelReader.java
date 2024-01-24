@@ -20,6 +20,7 @@ import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
+import com.google.common.io.ByteStreams;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -36,10 +37,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -91,13 +89,24 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
         this(excelFile,clazz,true);
     }
 
+    /**
+     * [ROOT]
+     * 流支持构造
+     * @param ins 文件流
+     */
     @SuppressWarnings("unchecked")
     public AxolotlExcelReader(InputStream ins) {
         if (ins == null){
             throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"文件流为空");
         }
-        DetectResult detectResult = this.checkFileFormat(null, ins);
-        this.workBookContext = new WorkBookContext(ins,detectResult);
+        ByteArrayOutputStream dataCacheOutputStream =  new ByteArrayOutputStream();
+        try {
+            ByteStreams.copy(ins, dataCacheOutputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        DetectResult detectResult = this.checkFileFormat(null, new ByteArrayInputStream(dataCacheOutputStream.toByteArray()));
+        this.workBookContext = new WorkBookContext(new ByteArrayInputStream(dataCacheOutputStream.toByteArray()),detectResult);
         this.loadFileDataToWorkBook();
         this._sheetLevelReaderConfig = new ReaderConfig<>((Class<T>) Object.class,true);
     }
