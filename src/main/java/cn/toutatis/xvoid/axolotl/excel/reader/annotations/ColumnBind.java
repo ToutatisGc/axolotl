@@ -17,12 +17,17 @@ import java.lang.annotation.Target;
 public @interface ColumnBind {
 
     /**
+     * 表头名称
+     * @return 表头名称
+     */
+    String[] headerName() default {};
+    /**
      * 单元格序号
      */
-    int columnIndex();
+    int columnIndex() default -1;
 
     /**
-     * 日期格式化
+     * 数据格式化
      * 默认使用LocalDateTime格式
      */
     String format() default Time.YMD_HORIZONTAL_FORMAT_REGEX;

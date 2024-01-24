@@ -5,7 +5,7 @@ import cn.toutatis.xvoid.axolotl.excel.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.WorkBookContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
@@ -15,40 +15,38 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastA
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException.ExceptionType;
-import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.DetectResult;
-import cn.toutatis.xvoid.axolotl.excel.toolkit.tika.TikaShell;
+import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
+import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
+import com.google.common.io.ByteStreams;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.util.IOUtils;
 import org.apache.poi.util.RecordFormatException;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
+import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Excel读取器
  * @author Toutatis_Gc
  */
-public class AxolotlExcelReader<T>{
+public class AxolotlExcelReader<T> implements Iterator<List<T>> {
 
     /**
      * 日志
@@ -61,6 +59,11 @@ public class AxolotlExcelReader<T>{
     @Getter
     private WorkBookContext workBookContext;
 
+    /**
+     * 校验器
+     * JSR-303
+     * 使用Hibernate实现的校验器完成对读取数据的验证
+     */
     private Validator validator;
 
     /**
@@ -88,7 +91,32 @@ public class AxolotlExcelReader<T>{
 
     /**
      * [ROOT]
+     * 流支持构造
+     * @param ins 文件流
+     */
+    @SuppressWarnings("unchecked")
+    public AxolotlExcelReader(InputStream ins) {
+        if (ins == null){
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"文件流为空");
+        }
+        ByteArrayOutputStream dataCacheOutputStream =  new ByteArrayOutputStream();
+        try {
+            ByteStreams.copy(ins, dataCacheOutputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        DetectResult detectResult = this.checkFileFormat(null, new ByteArrayInputStream(dataCacheOutputStream.toByteArray()));
+        this.workBookContext = new WorkBookContext(new ByteArrayInputStream(dataCacheOutputStream.toByteArray()),detectResult);
+        this.loadFileDataToWorkBook();
+        this._sheetLevelReaderConfig = new ReaderConfig<>((Class<T>) Object.class,true);
+    }
+
+    /**
+     * [ROOT]
      * 构造文件读取器
+     * 初始化读取Excel文件
+     * 1.初始化加载文件先判断文件是否正常并且是需要的格式
+     * 2.将文件加载到POI工作簿中
      * @param excelFile Excel工作簿文件
      * @param withDefaultConfig 是否使用默认配置
      */
@@ -96,46 +124,66 @@ public class AxolotlExcelReader<T>{
         if (clazz == null){
             throw new IllegalArgumentException("读取的类型对象不能为空");
         }
-        this.detectFileAndInitWorkbook(excelFile);
+        DetectResult predCheckFileNormal = TikaShell.preCheckFileNormal(excelFile);
+        if (!predCheckFileNormal.isDetect()){
+            predCheckFileNormal.throwException();
+        }
+        DetectResult detectResult = this.checkFileFormat(excelFile, null);
+        workBookContext = new WorkBookContext(excelFile,detectResult);
+        this.loadFileDataToWorkBook();
         this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,withDefaultConfig);
     }
 
-    /**
-     * 初始化读取Excel文件
-     * 1.初始化加载文件先判断文件是否正常并且是需要的格式
-     * 2.将文件加载到POI工作簿中
-     * @param excelFile Excel工作簿文件
-     */
-    private void detectFileAndInitWorkbook(File excelFile) {
+    private DetectResult checkFileFormat(File file,InputStream ins){
         // 检查文件格式是否为XLSX
-        DetectResult detectResult = TikaShell.detect(excelFile, TikaShell.OOXML_EXCEL,false);
+        DetectResult detectResult = this.getFileOrStreamDetectResult(file, ins, TikaShell.OOXML_EXCEL);
         if (!detectResult.isDetect()){
             DetectResult.FileStatus currentFileStatus = detectResult.getCurrentFileStatus();
             if (currentFileStatus == DetectResult.FileStatus.FILE_MIME_TYPE_PROBLEM ||
                     currentFileStatus == DetectResult.FileStatus.FILE_SUFFIX_PROBLEM
             ){
-                //如果是因为后缀不匹配或媒体类型不匹配导致识别不通过 换XLS格式再次识别
-                detectResult = TikaShell.detect(excelFile, TikaShell.MS_EXCEL,false);
+                // 如果是因为后缀不匹配或媒体类型不匹配导致识别不通过 换XLS格式再次识别
+                detectResult = this.getFileOrStreamDetectResult(file, ins, TikaShell.MS_EXCEL);
             }else {
-                //如果是预检查不通过抛出异常
+                // 不通过抛出异常
                 detectResult.throwException();
             }
         }
-        // 检查文件是否正常并且是需要的类型，否则抛出异常
-        if (detectResult.isDetect()){
-            workBookContext = new WorkBookContext(excelFile,detectResult);
-        }else{
+        // 检查文件是否是需要的类型，否则抛出异常
+        if (!detectResult.isDetect()){
             detectResult.throwException();
         }
+        return detectResult;
+    }
+
+    /**
+     * [内部方法]
+     * @param file 文件
+     * @param ins 流
+     * @param mimeType 媒体类型
+     * @return 检查结果
+     */
+    private DetectResult getFileOrStreamDetectResult(File file, InputStream ins, MimeType mimeType){
+        DetectResult detectResult;
+        if (file == null){
+            detectResult = TikaShell.detect(ins,mimeType,false);
+        }else {
+            detectResult = TikaShell.detect(file,mimeType,true);
+        }
+        return detectResult;
+    }
+
+    private void loadFileDataToWorkBook() {
         // 读取文件加载到元信息
-        try(FileInputStream fis = new FileInputStream(workBookContext.getFile())){
-            // 校验文件大小
+        try(InputStream fis = new ByteArrayInputStream(workBookContext.getDataCache())){
             Workbook workbook;
-            if (detectResult.getCatchMimeType() == TikaShell.OOXML_EXCEL && excelFile.length() > AxolotlDefaultConfig.XVOID_DEFAULT_MAX_FILE_SIZE){
+            if (workBookContext.getMimeType() == TikaShell.OOXML_EXCEL){
+                IOUtils.setByteArrayMaxOverride(200000000);
                 this.workBookContext.setEventDriven();
                 OPCPackage opcPackage = OPCPackage.open(fis);
                 workbook = XSSFWorkbookFactory.createWorkbook(opcPackage);
                 opcPackage.close();
+                IOUtils.setByteArrayMaxOverride(-1);
             }else {
                 workbook = WorkbookFactory.create(fis);
             }
@@ -164,7 +212,7 @@ public class AxolotlExcelReader<T>{
         assert readerConfig != null;
         Sheet sheet = this.searchSheet(readerConfig);
         this.preCheckAndFixReadConfig(readerConfig);
-        this.processMergedCells(sheet);
+        this.spreadMergedCells(sheet);
         RT instance = readerConfig.getCastClassInstance();
         this.convertPositionCellToInstance(instance, readerConfig,sheet);
         this.validateConvertEntity(instance, readerConfig.getReadPolicyAsBoolean(RowLevelReadPolicy.VALIDATE_READ_ROW_DATA));
@@ -275,7 +323,7 @@ public class AxolotlExcelReader<T>{
             return readResult;
         }
         // 处理合并单元格
-        this.processMergedCells(sheet);
+        this.spreadMergedCells(sheet);
         this.readSheetData(sheet,readerConfig,readResult);
         return readResult;
     }
@@ -314,7 +362,7 @@ public class AxolotlExcelReader<T>{
      * 处理合并单元格
      * @param sheet 工作表
      */
-    private void processMergedCells(Sheet sheet) {
+    private void spreadMergedCells(Sheet sheet) {
         List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
         LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "开始处理工作表合并单元格");
         for (CellRangeAddress mergedRegion : mergedRegions) {
@@ -360,12 +408,25 @@ public class AxolotlExcelReader<T>{
             if (initialRowPositionOffset > 0){
                 LOGGER.debug("跳过前{}行",initialRowPositionOffset);
                 startIndex = startIndex + initialRowPositionOffset;
-//                endIndex = endIndex + initialRowPositionOffset;
             }
         }
+        //TODO 转化表头
+        this.findHeadCellPosition(readerConfig);
         for (int i = startIndex; i < endIndex; i++) {
             RT instance = this.readRow(sheet, i, readerConfig);
             if (instance!= null){list.add(instance);}
+        }
+    }
+
+    private void findHeadCellPosition(ReaderConfig<?> readerConfig){
+        int readHeadRows = Math.max(getRecordRowNumber(readerConfig), AxolotlDefaultReaderConfig.XVOID_DEFAULT_HEADER_FINDING_ROW);
+        List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
+        for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
+            //TODO 文件流支持
+//            indexMappingInfo.
+        }
+        for (int i = 0; i < readHeadRows; i++) {
+
         }
     }
 
@@ -800,4 +861,23 @@ public class AxolotlExcelReader<T>{
         return workBookContext.getHumanReadablePosition();
     }
 
+    private int currentReadBatch = -1;
+
+    @Override
+    public boolean hasNext() {
+        return currentReadBatch * AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE < getRecordRowNumber();
+    }
+
+    @Override
+    public List<T> next() {
+        if (!hasNext()){
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"读取数据错误");
+        }
+        currentReadBatch++;
+        LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,"读取数据行数:"+currentReadBatch*AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE);
+        return this.readSheetData(
+                currentReadBatch*AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE,
+                (currentReadBatch+1)*AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE
+        );
+    }
 }

@@ -3,7 +3,8 @@ package cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions;
 import cn.toutatis.xvoid.axolotl.excel.WorkBookContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
-import cn.toutatis.xvoid.axolotl.excel.toolkit.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +13,7 @@ import lombok.Setter;
  * @author Toutatis_Gc
  */
 @Getter @Setter
-public class AxolotlExcelReadException extends RuntimeException{
+public class AxolotlExcelReadException extends AxolotlException {
 
     /**
      * 当前读取的行号

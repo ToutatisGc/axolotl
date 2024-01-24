@@ -14,6 +14,12 @@ import java.util.Map;
 public class EntityCellMappingInfo<FT> {
 
     /**
+     * 表头名称
+     * 如果表头有表头名称，读取表
+     */
+    private String[] headerNames;
+
+    /**
      * 字段索引
      */
     private int fieldIndex = -1;

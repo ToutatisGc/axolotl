@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.toolkit.tika;
+package cn.toutatis.xvoid.axolotl.toolkit.tika;
 
 
 import lombok.AllArgsConstructor;
