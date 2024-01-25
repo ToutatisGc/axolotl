@@ -1,10 +1,7 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
 import cn.toutatis.xvoid.axolotl.Axolotls;
-import cn.toutatis.xvoid.axolotl.entities.OneFieldString3Entity;
-import cn.toutatis.xvoid.axolotl.entities.OneFieldStringEntity;
-import cn.toutatis.xvoid.axolotl.entities.OneFieldStringKeepIntactEntity;
-import cn.toutatis.xvoid.axolotl.entities.ValidTestEntity;
+import cn.toutatis.xvoid.axolotl.entities.*;
 import cn.toutatis.xvoid.axolotl.excel.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
@@ -143,6 +140,14 @@ public class SimpleTest {
 //            System.err.println(next.size());
             }
         }
+    }
+
+    @Test
+    public void headerReadTest() {
+        File file = FileToolkit.getResourceFileAsFile("workbook/表头读取测试.xlsx");
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
+        List<HeaderTestEntity> headerTestEntities = excelReader.readSheetData(HeaderTestEntity.class,0,true,0,-1,1);
+        System.err.println(headerTestEntities);
     }
 
 }

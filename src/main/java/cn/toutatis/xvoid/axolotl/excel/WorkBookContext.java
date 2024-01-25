@@ -3,18 +3,17 @@ package cn.toutatis.xvoid.axolotl.excel;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.AbstractContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.HashMap;
 
 /**
  * 工作簿元信息
@@ -68,15 +67,6 @@ public class WorkBookContext extends AbstractContext {
         this.workbook = workbook;
     }
 
-    public static void main(String[] args) {
-        HashMap<Integer, HashBasedTable<String, Integer, Integer>> workbookHeaders = new HashMap<>();
-        HashBasedTable<String, Integer, Integer> sheetHeader = HashBasedTable.create();
-        sheetHeader.put("姓名", 0,1);
-        sheetHeader.put("姓名", 1,1);
-        workbookHeaders.put(2,sheetHeader);
-        System.err.println(workbookHeaders);
-    }
-
     /**
      * 获取工作簿公式计算器
      * @return 公式计算器
@@ -110,5 +100,14 @@ public class WorkBookContext extends AbstractContext {
      */
     public String getHumanReadablePosition() {
         return ExcelToolkit.getHumanReadablePosition(currentReadRowIndex, currentReadColumnIndex);
+    }
+
+    /**
+     * 获取指定索引的sheet
+     * @param idx 索引
+     * @return sheet
+     */
+    public Sheet getIndexSheet(int idx){
+        return workbook.getSheetAt(idx);
     }
 }
