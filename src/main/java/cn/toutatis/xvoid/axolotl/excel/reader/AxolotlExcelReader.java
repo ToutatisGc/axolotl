@@ -499,6 +499,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
         // 提取表头
         Map<String, Integer> headerKeys = indexMappingInfos.stream()
                 .map(EntityCellMappingInfo::getHeaderName)
+                .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toMap(element -> element, i -> -1));
         if (!headerKeys.isEmpty()){
@@ -733,7 +734,8 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
         if (adapter == null){
             throw new AxolotlExcelReadException(mappingInfo,String.format("未找到转换的类型:[%s->%s],字段:[%s]",info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
-        if (adapter instanceof AbstractDataCastAdapter<Object> abstractDataCastAdapter){
+        if (adapter instanceof AbstractDataCastAdapter){
+            AbstractDataCastAdapter<Object> abstractDataCastAdapter = (AbstractDataCastAdapter<Object>) adapter;
             abstractDataCastAdapter.setReaderConfig(readerConfig);
             abstractDataCastAdapter.setEntityCellMappingInfo(mappingInfo);
             return castValue(abstractDataCastAdapter, info, mappingInfo);

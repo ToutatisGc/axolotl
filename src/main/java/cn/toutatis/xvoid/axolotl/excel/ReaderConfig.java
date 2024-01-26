@@ -5,6 +5,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
+import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -222,8 +223,11 @@ public class ReaderConfig<T> {
             if (columnBind != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
                 entityCellMappingInfo.setColumnPosition(columnBind.columnIndex());
-                entityCellMappingInfo.setHeaderName(columnBind.headerName());
-                entityCellMappingInfo.setHeaderNameIndex(columnBind.sameHeaderIdx());
+                String headerName = columnBind.headerName();
+                if (Validator.strNotBlank(headerName)){
+                    entityCellMappingInfo.setHeaderName(headerName);
+                    entityCellMappingInfo.setHeaderNameIndex(columnBind.sameHeaderIdx());
+                }
                 entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
                 entityCellMappingInfo.setFormat(columnBind.format());
                 indexPositionMappingInfos.add(entityCellMappingInfo);
