@@ -502,9 +502,18 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                 .distinct()
                 .collect(Collectors.toMap(element -> element, i -> -1));
         if (!headerKeys.isEmpty()){
-            LoggerHelper.debug(LOGGER,LoggerHelper.format("开始查找表头,数量[%s]", headerKeys.size()));
-            //             表头名称   序号     列位置
-            HashBasedTable<String, Integer, Integer> headerCache = HashBasedTable.create();
+            Map<Integer, HashBasedTable<String, Integer, Integer>> headerCaches = workBookContext.getHeaderCaches();
+            // 表头名称,序号,列位置
+            HashBasedTable<String, Integer, Integer> headerCache;
+            boolean hintCache = false;
+            if (headerCaches.containsKey(readerConfig.getSheetIndex())){
+                LoggerHelper.debug(LOGGER,LoggerHelper.format("从缓存中获取表头,数量[%s]", headerKeys.size()));
+                headerCache = headerCaches.get(readerConfig.getSheetIndex());
+                hintCache = true;
+            }else {
+                LoggerHelper.debug(LOGGER,LoggerHelper.format("开始查找表头,数量[%s],查找表头:%s", headerKeys.size(),headerKeys));
+                headerCache = HashBasedTable.create();
+            }
             Sheet sheet = workBookContext.getIndexSheet(readerConfig.getSheetIndex());
             for (int i = 0; i < readHeadRows; i++) {
                 Row row = sheet.getRow(i);
@@ -523,6 +532,9 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                 }
             }
             LoggerHelper.debug(LOGGER,LoggerHelper.format("查找表头结束,映射信息:%s", headerCache));
+            if (!hintCache){
+                headerCaches.put(readerConfig.getSheetIndex(), headerCache);
+            }
             for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
                 String headerName = indexMappingInfo.getHeaderName();
                 if (StringUtils.isNotBlank(headerName)){
