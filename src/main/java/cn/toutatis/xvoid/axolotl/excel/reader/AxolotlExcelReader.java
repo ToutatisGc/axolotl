@@ -262,7 +262,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     }
 
     /**
-     *
+     * 读取起始和结束位置数据
      */
     public List<T> readSheetData(int start,int end){
         return this.readSheetData(
