@@ -16,7 +16,10 @@ public class LoggerHelper {
      * @return 格式化后的字符串
      */
     public static String format(String message,Object... args){
+        /*JDK17*/
         return message.formatted(args);
+        /*JDK8*/
+        /*return String.format(message,args);*/
     }
     public static void debug(Logger logger,String message) {
         LoggerToolkitKt.debugWithModule(logger, Meta.MODULE_NAME,message);

@@ -499,6 +499,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
         // 提取表头
         Map<String, Integer> headerKeys = indexMappingInfos.stream()
                 .map(EntityCellMappingInfo::getHeaderName)
+                .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toMap(element -> element, i -> -1));
         if (!headerKeys.isEmpty()){
