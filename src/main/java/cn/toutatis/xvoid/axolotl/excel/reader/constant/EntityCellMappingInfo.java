@@ -17,7 +17,12 @@ public class EntityCellMappingInfo<FT> {
      * 表头名称
      * 如果表头有表头名称，读取表
      */
-    private String[] headerNames;
+    private String headerName;
+
+    /**
+     * 若有多个同名表头将使用该索引
+     */
+    private int headerNameIndex = -1;
 
     /**
      * 字段索引
@@ -62,9 +67,9 @@ public class EntityCellMappingInfo<FT> {
     /**
      * 排除的读取特性
      * @see cn.toutatis.xvoid.axolotl.excel.reader.annotations.KeepIntact
-     * @see RowLevelReadPolicy 读取特性
+     * @see ReadPolicy 读取特性
      */
-    private Map<RowLevelReadPolicy,Object> excludePolicies = new HashMap<>();
+    private Map<ReadPolicy,Object> excludePolicies = new HashMap<>();
 
     /**
      * 单元格映射类型

@@ -2,7 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import lombok.Getter;
@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static cn.toutatis.xvoid.axolotl.excel.reader.constant.RowLevelReadPolicy.*;
+import static cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy.*;
 
 @ToString
 @Getter
@@ -76,7 +76,7 @@ public class ReaderConfig<T> {
     /**
      * 读取的特性
      */
-    private Map<RowLevelReadPolicy, Object> rowReadPolicyMap = new HashMap<>();
+    private Map<ReadPolicy, Object> rowReadPolicyMap = new HashMap<>();
 
     /**
      * 读取类注解
@@ -118,9 +118,9 @@ public class ReaderConfig<T> {
     /**
      *
      */
-    private Map<RowLevelReadPolicy, Object> defaultReadPolicy() {
-        Map<RowLevelReadPolicy, Object> defaultReadPolicies = new HashMap<>();
-        for (RowLevelReadPolicy policy : values()) {
+    private Map<ReadPolicy, Object> defaultReadPolicy() {
+        Map<ReadPolicy, Object> defaultReadPolicies = new HashMap<>();
+        for (ReadPolicy policy : values()) {
             if (policy.isDefaultPolicy()){
                 defaultReadPolicies.put(policy,policy.getValue());
             }
@@ -173,7 +173,7 @@ public class ReaderConfig<T> {
      */
     private void processEntityFieldMappingToCell() {
         Field[] declaredFields = castClass.getDeclaredFields();
-        List<EntityCellMappingInfo<?>> entityCellMappingInfos = new ArrayList<>();
+        List<EntityCellMappingInfo<?>> indexPositionMappingInfos = new ArrayList<>();
         List<EntityCellMappingInfo<?>> positionMappingInfos = new ArrayList<>();
         boolean preciseLocalization = getReadPolicyAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
         AtomicInteger idx = new AtomicInteger(-1);
@@ -185,7 +185,7 @@ public class ReaderConfig<T> {
             // 排除特性
             KeepIntact keepIntact = declaredField.getAnnotation(KeepIntact.class);
             if (keepIntact!= null){
-                RowLevelReadPolicy[] excludePolicies = keepIntact.excludePolicies();
+                ReadPolicy[] excludePolicies = keepIntact.excludePolicies();
                 entityCellMappingInfo.setExcludePolicies(
                         Arrays.stream(excludePolicies)
                                 .collect(Collectors.toMap(policy -> policy, policy -> true))
@@ -222,27 +222,29 @@ public class ReaderConfig<T> {
             if (columnBind != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
                 entityCellMappingInfo.setColumnPosition(columnBind.columnIndex());
+                entityCellMappingInfo.setHeaderName(columnBind.headerName());
+                entityCellMappingInfo.setHeaderNameIndex(columnBind.sameHeaderIdx());
                 entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
                 entityCellMappingInfo.setFormat(columnBind.format());
-                entityCellMappingInfos.add(entityCellMappingInfo);
+                indexPositionMappingInfos.add(entityCellMappingInfo);
                 continue;
             }
             // 未指定单元格位置默认情况
             if (!preciseLocalization){
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.UNKNOWN);
                 entityCellMappingInfo.setColumnPosition(idx.get());
-                entityCellMappingInfos.add(entityCellMappingInfo);
+                indexPositionMappingInfos.add(entityCellMappingInfo);
             }
         }
         this.positionMappingInfos = positionMappingInfos;
-        this.indexMappingInfos = entityCellMappingInfos;
+        this.indexMappingInfos = indexPositionMappingInfos;
     }
 
     /**
      *
      */
-    public boolean getReadPolicyAsBoolean(RowLevelReadPolicy policy) {
-        if (policy.getType() != RowLevelReadPolicy.Type.BOOLEAN){
+    public boolean getReadPolicyAsBoolean(ReadPolicy policy) {
+        if (policy.getType() != ReadPolicy.Type.BOOLEAN){
             throw new IllegalArgumentException("读取特性不是一个布尔类型");
         }
         return rowReadPolicyMap.containsKey(policy) && (boolean) rowReadPolicyMap.get(policy);
@@ -251,7 +253,7 @@ public class ReaderConfig<T> {
     /**
      *
      */
-    public void addReadFeature(RowLevelReadPolicy policy, Object value) {
+    public void addReadFeature(ReadPolicy policy, Object value) {
         rowReadPolicyMap.put(policy, value);
     }
 

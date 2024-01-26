@@ -6,7 +6,7 @@ import lombok.Getter;
  * 读取Excel的功能可配置特性
  */
 @Getter
-public enum RowLevelReadPolicy {
+public enum ReadPolicy {
 
 
     /*表相关配置*/
@@ -16,6 +16,12 @@ public enum RowLevelReadPolicy {
      * 空sheet将返回null
      */
     IGNORE_EMPTY_SHEET_ERROR(Type.BOOLEAN, true,true),
+
+    /**
+     * 忽略空表头的错误
+     * 若取消此项配置，在没有读取到指定表头时，将抛出异常
+     */
+    IGNORE_EMPTY_SHEET_HEADER_ERROR(Type.BOOLEAN, true,true),
 
     /*行数据配置*/
     /**
@@ -75,7 +81,7 @@ public enum RowLevelReadPolicy {
     private final Object value;
 
 
-    RowLevelReadPolicy(Type type, boolean defaultPolicy, Object value) {
+    ReadPolicy(Type type, boolean defaultPolicy, Object value) {
         this.type = type;
         this.defaultPolicy = defaultPolicy;
         this.value = value;

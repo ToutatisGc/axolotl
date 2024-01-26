@@ -15,6 +15,10 @@ public class Axolotls {
         return new AxolotlExcelReader<>(excelFile, clazz);
     }
 
+    public static <T> AxolotlExcelReader<T> getExcelReader(InputStream ins, Class<T> clazz){
+        return new AxolotlExcelReader<>(ins, clazz);
+    }
+
     public static AxolotlExcelReader<Object> getExcelReader(File excelFile){
         return new AxolotlExcelReader<>(excelFile);
     }

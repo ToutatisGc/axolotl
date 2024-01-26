@@ -20,11 +20,16 @@ public @interface ColumnBind {
      * 表头名称
      * @return 表头名称
      */
-    String[] headerName() default {};
+    String headerName() default "";
     /**
      * 单元格序号
      */
     int columnIndex() default -1;
+
+    /**
+     * 有多个相同的表头可使用此索引指定位置
+     */
+    int sameHeaderIdx() default -1;
 
     /**
      * 数据格式化
