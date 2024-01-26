@@ -108,19 +108,24 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
      */
     @SuppressWarnings("unchecked")
     public AxolotlExcelReader(InputStream ins) {
+        this(ins, (Class<T>) Object.class);
+    }
+
+    public AxolotlExcelReader(InputStream ins, Class<T> clazz) {
         if (ins == null){
             throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"文件流为空");
         }
         ByteArrayOutputStream dataCacheOutputStream =  new ByteArrayOutputStream();
         try {
             ByteStreams.copy(ins, dataCacheOutputStream);
+            ins.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,e.getMessage());
         }
         DetectResult detectResult = this.checkFileFormat(null, new ByteArrayInputStream(dataCacheOutputStream.toByteArray()));
         this.workBookContext = new WorkBookContext(new ByteArrayInputStream(dataCacheOutputStream.toByteArray()),detectResult);
         this.loadFileDataToWorkBook();
-        this._sheetLevelReaderConfig = new ReaderConfig<>((Class<T>) Object.class,true);
+        this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,true);
     }
 
     /**
@@ -148,7 +153,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     }
 
     /**
-     *
+     * 检查文件格式
      */
     private DetectResult checkFileFormat(File file,InputStream ins){
         // 检查文件格式是否为XLSX
@@ -278,7 +283,6 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     /**
      * 使用表级配置读取数据
      *
-     * @param sheetName 表名
      * @param sheetName 工作表名称
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset 初始行偏移量
@@ -295,7 +299,6 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
 
     /**
      * @param castClass 读取的Java类型
-     * @param sheetName 表名
      * @param sheetName 工作表名称
      */
     public <RT> List<RT> readSheetData(Class<RT> castClass,String sheetName){
@@ -307,12 +310,20 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     /**
      * @param castClass 读取的Java类型
      * @param sheetIndex 表索引
-     * @param sheetIndex 默认读取第一张表
-     * @param sheetIndex sheet索引
      */
     public <RT> List<RT> readSheetData(Class<RT> castClass,int sheetIndex){
         ReadConfigBuilder<RT> configBuilder = new ReadConfigBuilder<>(castClass, true);
         configBuilder.setSheetIndex(sheetIndex);
+        return this.readSheetData(configBuilder);
+    }
+
+    /**
+     * @param castClass 读取的Java类型
+     * @param initialRowPositionOffset 起始偏移量
+     */
+    public <RT> List<RT> readSheetDataOffset(Class<RT> castClass,int initialRowPositionOffset){
+        ReadConfigBuilder<RT> configBuilder = new ReadConfigBuilder<>(castClass, true);
+        configBuilder.setInitialRowPositionOffset(initialRowPositionOffset);
         return this.readSheetData(configBuilder);
     }
 
@@ -470,8 +481,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                 startIndex = startIndex + initialRowPositionOffset;
             }
         }
-        //TODO 转化表头
-        this.findHeadCellPosition(readerConfig);
+        this.matchHeaderCellPosition(readerConfig);
         for (int i = startIndex; i < endIndex; i++) {
             RT instance = this.readRow(sheet, i, readerConfig);
             if (instance!= null){list.add(instance);}
@@ -483,7 +493,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
      *
      * @param readerConfig 读取配置
      */
-    private void findHeadCellPosition(ReaderConfig<?> readerConfig){
+    private void matchHeaderCellPosition(ReaderConfig<?> readerConfig){
         int readHeadRows = Math.min(getRecordRowNumber(readerConfig), AxolotlDefaultReaderConfig.XVOID_DEFAULT_HEADER_FINDING_ROW);
         List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
         // 提取表头
@@ -523,6 +533,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                         }else {
                             throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,LoggerHelper.format("表头[%s]不存在", headerName));
                         }
+                        continue;
                     }
                     Integer assignedIndex = headerKeys.get(headerName);
                     Integer columnIndex;
@@ -540,7 +551,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                     }else{
                         int idx = headerNameIndex + 1;
                         LoggerHelper.debug(LOGGER,LoggerHelper.format("指定同名表头[%s]列为[%s]", headerName, idx));
-                        columnIndex = recordInfo.get(idx);
+                        columnIndex = recordInfo.get(idx) != null ? recordInfo.get(idx) : -1;
                     }
                     indexMappingInfo.setColumnPosition(columnIndex);
                 }
@@ -710,8 +721,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
         if (adapter == null){
             throw new AxolotlExcelReadException(mappingInfo,String.format("未找到转换的类型:[%s->%s],字段:[%s]",info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
-        if (adapter instanceof AbstractDataCastAdapter){
-            AbstractDataCastAdapter<Object> abstractDataCastAdapter = (AbstractDataCastAdapter<Object>) adapter;
+        if (adapter instanceof AbstractDataCastAdapter<Object> abstractDataCastAdapter){
             abstractDataCastAdapter.setReaderConfig(readerConfig);
             abstractDataCastAdapter.setEntityCellMappingInfo(mappingInfo);
             return castValue(abstractDataCastAdapter, info, mappingInfo);
@@ -863,7 +873,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     }
 
     /**
-     *
+     * 校验读取实体是否符合验证规则
      */
     private <RT> void validateConvertEntity(RT instance, boolean isValidate) {
         if (isValidate){
