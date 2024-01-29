@@ -15,6 +15,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastA
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException.ExceptionType;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -518,7 +519,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
             Sheet sheet = workBookContext.getIndexSheet(readerConfig.getSheetIndex());
             for (int i = 0; i < readHeadRows; i++) {
                 Row row = sheet.getRow(i);
-                if (row != null && !blankRowCheck(row)){
+                if (ExcelToolkit.notBlankRowCheck(row)){
                     Iterator<Cell> cellIterator = row.cellIterator();
                     while (cellIterator.hasNext()){
                         Cell cell = cellIterator.next();
@@ -593,7 +594,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     private <RT> RT readRow(Sheet sheet,int rowNumber,ReaderConfig<RT> readerConfig){
         RT instance = readerConfig.getCastClassInstance();
         Row row = sheet.getRow(rowNumber);
-        if (row == null || blankRowCheck(row)){
+        if (ExcelToolkit.blankRowCheck(row)){
             if (readerConfig.getReadPolicyAsBoolean(ReadPolicy.INCLUDE_EMPTY_ROW)){
                 return instance;
             }else{
@@ -602,28 +603,6 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
         }
         this.convertCellToInstance(row,instance,readerConfig);
         return instance;
-    }
-
-    /**
-     * 检查行是否为空
-     *
-     * @param row 行
-     * @return 行数据是否为空
-     */
-    private boolean blankRowCheck(Row row){
-        int isAllBlank = 0;
-        short lastCellNum = row.getLastCellNum();
-        for (int i = 0; i < lastCellNum; i++) {
-            Cell cell = row.getCell(i);
-            if (cell == null || cell.getCellType() == CellType.BLANK){
-                isAllBlank++;
-            }else {
-                return false;
-            }
-        }
-        boolean blankRow = isAllBlank == lastCellNum;
-        LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, String.format("行[%s]数据为空",row.getRowNum()));
-        return blankRow;
     }
 
     /**

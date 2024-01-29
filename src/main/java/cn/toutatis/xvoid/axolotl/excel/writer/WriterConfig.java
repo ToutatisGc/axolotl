@@ -37,7 +37,6 @@ public class WriterConfig {
      */
     private ExcelStyleRender styleRender;
 
-
     /**
      * 数据
      */

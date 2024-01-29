@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.support.AbstractContext;
-import cn.toutatis.xvoid.axolotl.excel.reader.support.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.io.ByteStreams;
