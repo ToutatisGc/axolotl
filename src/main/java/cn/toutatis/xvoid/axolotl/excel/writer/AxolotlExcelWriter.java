@@ -1,9 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.hutool.core.util.IdUtil;
-import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.common.CommonMimeType;
-import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractInnerStyleRender;
@@ -11,12 +9,15 @@ import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.CellAddress;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.WriteContext;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
+import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.HashBasedTable;
 import lombok.SneakyThrows;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -24,14 +25,14 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -79,15 +80,20 @@ public class AxolotlExcelWriter {
         // 读取模板文件内容
         if (templateFile != null){
             LoggerHelper.debug(LOGGER,LoggerHelper.format("正在使用模板文件[%s]作为写入模板",templateFile.getAbsolutePath()));
-            AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(templateFile);
-            if (!CommonMimeType.OOXML_EXCEL.equals(excelReader.getWorkBookContext().getMimeType())){
+            TikaShell.preCheckFileNormalThrowException(templateFile);
+            DetectResult detect = TikaShell.detect(templateFile, CommonMimeType.OOXML_EXCEL);
+            if (!detect.isWantedMimeType()){
                 throw new AxolotlWriteException("请使用xlsx文件作为写入模板");
             }
-            writeContext.setTemplateReader(excelReader);
-            XSSFWorkbook xssfWorkbook = (XSSFWorkbook) writeContext.getTemplateReader().getWorkBookContext().getWorkbook();
-            XSSFSheet sheetAt = xssfWorkbook.getSheetAt(0);
-            System.err.println(sheetAt);
-            workbook = new SXSSFWorkbook(xssfWorkbook);
+            this.writeContext.setTemplateFile(templateFile);
+            try (FileInputStream fis = new FileInputStream(templateFile)){
+                // 切记不可关闭
+                OPCPackage opcPackage = OPCPackage.open(fis);
+                workbook = new SXSSFWorkbook(XSSFWorkbookFactory.createWorkbook(opcPackage));
+            }catch (IOException | InvalidFormatException e){
+                e.printStackTrace();
+                throw new AxolotlWriteException(LoggerHelper.format("模板文件[%s]读取失败",templateFile.getAbsolutePath()));
+            }
         }else {
             workbook = new SXSSFWorkbook();
         }
@@ -102,18 +108,12 @@ public class AxolotlExcelWriter {
 
     @SneakyThrows
     public void writeToTemplate(int sheetIndex, Map<String,Object> singleMap, List<Object> data) throws IOException {
-        SXSSFSheet sheet;
+        XSSFSheet sheet;
         if (writeContext.isTemplateWrite()){
-            Iterator<Sheet> sheetIterator = workbook.sheetIterator();
-            while (sheetIterator.hasNext()){
-                Sheet next = sheetIterator.next();
-                System.err.println(next.getSheetName());
-                System.err.println(workbook.getSheetIndex(next));
-            }
-            System.err.println();
-            sheet = workbook.getSheetAt(sheetIndex);
+            sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
             if (sheet != null){
                 this.resolveTemplate(sheet);
+                workbook.write(writerConfig.getOutputStream());
                 if (Validator.objNotNull(singleMap)){
                     // TODO 填充map数据
                 }
@@ -154,7 +154,7 @@ public class AxolotlExcelWriter {
                     Cell cell = row.getCell(cellIdx);
                     if (cell != null && CellType.STRING.equals(cell.getCellType())){
                         String cellValue = cell.getStringCellValue();
-                        int sheetIndex = workbook.getSheetIndex(sheet);
+                        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
                         CellAddress cellAddress = new CellAddress(cellValue,rowIdx, cellIdx,cell.getCellStyle());
                         findPlaceholderData(
                                 writeContext.getSingleReferenceData(),
@@ -168,6 +168,7 @@ public class AxolotlExcelWriter {
                 }
             }
         }
+        LoggerHelper.debug(LOGGER,LoggerHelper.format("解析模板完成，共解析到%s个占位符",writeContext.getSingleReferenceData().size() + writeContext.getCircleReferenceData().size()));
     }
 
     private void findPlaceholderData(HashBasedTable<Integer, String, CellAddress> data, Pattern pattern, int sheetIndex, CellAddress cellAddress) {

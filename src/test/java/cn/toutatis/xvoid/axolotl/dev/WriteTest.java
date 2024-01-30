@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.dev;
 
+import cn.hutool.core.util.IdUtil;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
@@ -7,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +35,9 @@ public class WriteTest {
     public void testWritePlaceholders() throws Exception {
         File file = FileToolkit.getResourceFileAsFile("workbook/读取占位符测试.xlsx");
         WriterConfig writerConfig = new WriterConfig();
-        AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, null);
+        FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
+        writerConfig.setOutputStream(fileOutputStream);
+        AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig);
         axolotlExcelWriter.writeToTemplate(0, null, null);
     }
 

@@ -3,10 +3,10 @@ package cn.toutatis.xvoid.axolotl.toolkit;
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.*;
 import org.slf4j.Logger;
+
+import java.util.Iterator;
 
 /**
  * Excel工具类
@@ -56,6 +56,47 @@ public class ExcelToolkit {
      */
     public static boolean notBlankRowCheck(Row row){
         return !blankRowCheck(row);
+    }
+
+    public static void cloneOldWorkbook2NewWorkbook(Workbook newWorkbook, Workbook oldWorkBook){
+        if (oldWorkBook == null || newWorkbook == null){return;}
+        Iterator<Sheet> sheetIterator = oldWorkBook.sheetIterator();
+        while (sheetIterator.hasNext()) {
+            Sheet tmpSheet = sheetIterator.next();
+            Sheet sxssfSheet = newWorkbook.createSheet(tmpSheet.getSheetName());
+            cloneOldSheet2NewSheet(sxssfSheet, tmpSheet);
+        }
+    }
+
+    public static void cloneOldSheet2NewSheet(Sheet newSheet, Sheet oldSheet){
+        for (Row tmpRow : oldSheet) {
+            if (tmpRow == null){continue;}
+            Row sxssfRow = newSheet.createRow(tmpRow.getRowNum());
+            cloneOldRow2NewRow(sxssfRow, tmpRow);
+        }
+    }
+
+    public static void cloneOldRow2NewRow(Row newRow, Row oldRow){
+        Iterator<Cell> cellIterator = oldRow.cellIterator();
+        while (cellIterator.hasNext()) {
+            Cell tmpCell = cellIterator.next();
+            if (tmpCell == null){continue;}
+            Cell newCell = newRow.createCell(tmpCell.getColumnIndex());
+            cloneOldCell2NewCell(newCell, tmpCell);
+        }
+    }
+
+    public static void cloneOldCell2NewCell(Cell newCell, Cell oldCell) {
+        if (oldCell == null || newCell == null){return;}
+        newCell.setCellStyle(oldCell.getCellStyle());
+        switch (oldCell.getCellType()){
+            case BOOLEAN -> newCell.setCellValue(oldCell.getBooleanCellValue());
+            case NUMERIC -> newCell.setCellValue(oldCell.getNumericCellValue());
+            case STRING -> newCell.setCellValue(oldCell.getStringCellValue());
+            case FORMULA -> newCell.setCellValue(oldCell.getCellFormula());
+            case ERROR -> newCell.setCellValue(oldCell.getErrorCellValue());
+            case BLANK -> newCell.setCellValue("");
+        }
     }
 
 }

@@ -1,8 +1,9 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
-import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
+
+import java.io.File;
 
 /**
  * 写入上下文
@@ -13,9 +14,9 @@ import lombok.Data;
 public class WriteContext {
 
     /**
-     * 用以读取模板的读取器
+     * 模板文件
      */
-    private AxolotlExcelReader<Object> templateReader;
+    private File templateFile;
 
     /**
      * 当前写入的行数
@@ -37,6 +38,6 @@ public class WriteContext {
      * @return true:是模板写入 false:不是模板写入
      */
     public boolean isTemplateWrite(){
-        return templateReader != null;
+        return templateFile != null;
     }
 }
