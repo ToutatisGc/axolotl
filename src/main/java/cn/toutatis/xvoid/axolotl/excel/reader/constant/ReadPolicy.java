@@ -27,8 +27,9 @@ public enum ReadPolicy {
     /**
      * 空行也视为有效数据
      * 读取时将转换为一个空对象
+     * @since 0.0.5-ALPHA 将该策略默认关闭
      */
-    INCLUDE_EMPTY_ROW(Type.BOOLEAN, true,true),
+    INCLUDE_EMPTY_ROW(Type.BOOLEAN, true,false),
 
     /**
      * 读取的sheet数据按顺序排列
@@ -70,10 +71,20 @@ public enum ReadPolicy {
 
 
     public enum Type{
+
+        /**
+         * 判断类型
+         */
         BOOLEAN,
+        /**
+         * 可执行策略
+         */
         EXECUTABLE,
     }
 
+    /**
+     * 策略类型
+     */
     private final Type type;
 
     private final boolean defaultPolicy;
@@ -87,6 +98,10 @@ public enum ReadPolicy {
         this.value = value;
     }
 
+    /**
+     * 获取策略的值
+     * @return 布尔类型的策略
+     */
     public boolean getPolicyAsBoolean(){
         return (boolean)value;
     }

@@ -255,9 +255,12 @@ public class ReaderConfig<T> {
     }
 
     /**
-     *
+     * 设置策略
      */
-    public void addReadFeature(ReadPolicy policy, Object value) {
+    public void setBooleanReadFeature(ReadPolicy policy, Object value) {
+        if (policy.getType() != ReadPolicy.Type.BOOLEAN || !(value instanceof Boolean)){
+            throw new IllegalArgumentException("读取特性不是一个布尔类型");
+        }
         rowReadPolicyMap.put(policy, value);
     }
 

@@ -124,6 +124,8 @@ public class AxolotlExcelWriter {
                         cell.setCellValue(cellAddress.replacePlaceholder(""));
                     }
                 }
+                // TODO 写入循环数据
+                Map<String, CellAddress> circleData = this.writeContext.getCircleReferenceData().row(sheetIndex);
                 workbook.write(writerConfig.getOutputStream());
             }else{
                 throw new AxolotlWriteException(LoggerHelper.format("工作表索引[%s]模板中不存在",sheetIndex));

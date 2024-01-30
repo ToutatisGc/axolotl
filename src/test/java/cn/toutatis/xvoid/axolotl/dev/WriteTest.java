@@ -45,4 +45,8 @@ public class WriteTest {
         axolotlExcelWriter.writeToTemplate(0, map, null);
     }
 
+    public void testBoolean(){
+        System.err.println();
+    }
+
 }
