@@ -12,7 +12,6 @@ import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
-import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.HashBasedTable;
 import lombok.SneakyThrows;
@@ -24,6 +23,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.slf4j.Logger;
@@ -107,16 +107,24 @@ public class AxolotlExcelWriter {
 
 
     @SneakyThrows
-    public void writeToTemplate(int sheetIndex, Map<String,Object> singleMap, List<Object> data) throws IOException {
+    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<Object> data) throws IOException {
         XSSFSheet sheet;
         if (writeContext.isTemplateWrite()){
             sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
             if (sheet != null){
                 this.resolveTemplate(sheet);
-                workbook.write(writerConfig.getOutputStream());
-                if (Validator.objNotNull(singleMap)){
-                    // TODO 填充map数据
+                HashBasedTable<Integer, String, CellAddress> singleReferenceData = this.writeContext.getSingleReferenceData();
+                Map<String, CellAddress> singleAddressMapping = singleReferenceData.row(sheetIndex);
+                for (String singleKey : singleAddressMapping.keySet()) {
+                    CellAddress cellAddress = singleAddressMapping.get(singleKey);
+                    XSSFCell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
+                    if (singleMap!= null && singleMap.containsKey(singleKey)){
+                        cell.setCellValue(cellAddress.replacePlaceholder(singleMap.get(singleKey).toString()));
+                    }else {
+                        cell.setCellValue(cellAddress.replacePlaceholder(""));
+                    }
                 }
+                workbook.write(writerConfig.getOutputStream());
             }else{
                 throw new AxolotlWriteException(LoggerHelper.format("工作表索引[%s]模板中不存在",sheetIndex));
             }

@@ -46,6 +46,10 @@ public class CellAddress {
     /**
      * 模板单元格的已写入行
      */
-    private int writtenRow;
+    private int writtenRow = -1;
+
+    public String replacePlaceholder(String value) {
+        return cellValue.replace(this.placeholder, value);
+    }
 
 }

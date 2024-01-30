@@ -3,12 +3,15 @@ package cn.toutatis.xvoid.axolotl.dev;
 import cn.hutool.core.util.IdUtil;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
+import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +41,8 @@ public class WriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
         writerConfig.setOutputStream(fileOutputStream);
         AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig);
-        axolotlExcelWriter.writeToTemplate(0, null, null);
+        Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
+        axolotlExcelWriter.writeToTemplate(0, map, null);
     }
 
 }
