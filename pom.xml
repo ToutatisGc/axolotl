@@ -53,7 +53,7 @@
         <dependency>
             <groupId>cn.toutatis</groupId>
             <artifactId>void-toolkit</artifactId>
-            <version>0.0.0-ALPHA</version>
+            <version>0.0.1-ALPHA</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
