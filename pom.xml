@@ -6,7 +6,7 @@
 
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>0.0.4-ALPHA-8</version>
+    <version>0.0.5-ALPHA-8</version>
 
     <name>Axolotl</name>
     <url>http://git.xvoid.cn/Toutatis_Gc/axolotl</url>
@@ -53,7 +53,7 @@
         <dependency>
             <groupId>cn.toutatis</groupId>
             <artifactId>void-toolkit</artifactId>
-            <version>0.0.0-ALPHA-8</version>
+            <version>0.0.1-ALPHA</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.support.AbstractContext;
-import cn.toutatis.xvoid.axolotl.excel.reader.support.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.io.ByteStreams;
@@ -45,9 +45,15 @@ public class WorkBookContext extends AbstractContext {
     @Getter
     private int currentReadColumnIndex = -1;
 
+    /**
+     * 工作簿的缓存数据
+     */
     @Setter @Getter
     private byte[] dataCache;
 
+    /**
+     * 工作簿的表头缓存
+     */
     @Getter
     private final Map<Integer, HashBasedTable<String,Integer,Integer>> headerCaches = new HashMap<>();
 
