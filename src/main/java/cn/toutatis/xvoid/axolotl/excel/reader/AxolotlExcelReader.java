@@ -570,16 +570,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                     indexMappingInfo.setColumnPosition(columnIndex);
                 }
             }
-
         }
-
-//        for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
-//            if (StringUtils.isNotBlank(indexMappingInfo.getHeaderName())){
-//                for (int i = 0; i < readHeadRows; i++) {
-//
-//                }
-//            }
-//        }
     }
 
     /**
@@ -1030,19 +1021,19 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     }
 
     /**
-     *
+     * 获取当前读取位置
      */
     public String getHumanReadablePosition(){
         return workBookContext.getHumanReadablePosition();
     }
 
     /**
-     *
+     * 当前读取批次
      */
     private int currentReadBatch = -1;
 
     /**
-     *
+     * 是否有下一批数据
      */
     @Override
     public boolean hasNext() {
@@ -1050,7 +1041,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
     }
 
     /**
-     *
+     * 获取下一批数据
      */
     @Override
     public List<T> next() {
