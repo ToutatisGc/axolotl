@@ -162,7 +162,10 @@ public class TikaShell {
                 detectMimeTypeString = CommonMimeType.OOXML_EXCEL.toString();
             } else if (CommonMimeType.TIKA_MS_EXCEL.toString().equals(detectMimeTypeString)) {
                 detectMimeTypeString = CommonMimeType.MS_EXCEL.toString();
-            } else {
+            } else if (CommonMimeType.OCTET_STREAM.toString().equals(detectMimeTypeString)){
+                // 二进制流的情况复杂，无法判断类型，只能是将文件尝试读取
+                detectMimeTypeString = wantedMimeType.toString();
+            }else {
                 String msg = "流不是Excel文件";
                 if (throwException){throw new IOException(msg);}
                 DetectResult detectResult = new DetectResult(false);

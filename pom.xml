@@ -6,13 +6,13 @@
 
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>0.0.0</version>
+    <version>1.0.0-ALPHA</version>
 
     <name>Axolotl</name>
     <url>http://git.xvoid.cn/Toutatis_Gc/axolotl</url>
 
     <description>
-        优雅导入Excel数据工具包
+        Axolotl - 优雅文档操作框架
     </description>
 
     <licenses>
@@ -131,6 +131,15 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>

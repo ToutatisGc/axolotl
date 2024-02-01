@@ -85,6 +85,12 @@ public class ReaderConfig<T> {
     private boolean readClassAnnotation = false;
 
     /**
+     * 读取表头最大行数
+     * 默认使用默认值10条
+     */
+    private int searchHeaderMaxRows = -1;
+
+    /**
      * 默认构造
      */
     public ReaderConfig() {
@@ -140,6 +146,10 @@ public class ReaderConfig<T> {
      * @param castClass 读取的Java类型
      */
     public void setCastClass(Class<T> castClass,boolean readClassAnnotation) {
+        // 限制设置类型
+        if (List.class.isAssignableFrom(castClass)){
+            throw new IllegalArgumentException("请指定一般POJO类型");
+        }
         this.castClass = castClass;
         if (readClassAnnotation) {
             this.processClassAnnotation();
