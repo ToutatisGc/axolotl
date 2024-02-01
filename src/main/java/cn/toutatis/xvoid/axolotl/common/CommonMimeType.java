@@ -39,6 +39,12 @@ public class CommonMimeType {
      */
     public static final MimeType ZIP;
 
+    /**
+     * 二进制流
+     * application/octet-stream
+     */
+    public static final MimeType OCTET_STREAM;
+
     static {
         try {
             MimeTypes defaultMimeTypes = MimeTypes.getDefaultMimeTypes();
@@ -47,6 +53,7 @@ public class CommonMimeType {
             OOXML_EXCEL = defaultMimeTypes.forName("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             TIKA_OOXML_EXCEL = defaultMimeTypes.forName("application/x-tika-ooxml");
             ZIP = defaultMimeTypes.forName("application/zip");
+            OCTET_STREAM = defaultMimeTypes.forName("application/octet-stream");
         } catch (MimeTypeException e) {
             throw new RuntimeException(e);
         }

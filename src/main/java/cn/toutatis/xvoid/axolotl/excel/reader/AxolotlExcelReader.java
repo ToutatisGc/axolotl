@@ -413,7 +413,6 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
             }catch (IllegalArgumentException e){
                 if (e.getMessage().contains("out of range")){
                     int numberOfSheets = workBookContext.getWorkbook().getNumberOfSheets()-1;
-                    ;
                     LoggerToolkitKt.warnWithModule(LOGGER, Meta.MODULE_NAME,
                             String.format("表索引[%s]超出范围[0-%s],将返回空数据或抛出异常",readerConfig.getSheetIndex(),numberOfSheets)
                     );
@@ -482,7 +481,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                 startIndex = startIndex + initialRowPositionOffset;
             }
         }
-        this.matchHeaderCellPosition(readerConfig);
+        this.searchHeaderCellPosition(readerConfig);
         for (int i = startIndex; i < endIndex; i++) {
             RT instance = this.readRow(sheet, i, readerConfig);
             if (instance!= null){list.add(instance);}
@@ -491,21 +490,26 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
 
     /**
      * 查找表头
+     * @see ColumnBind 列绑定注解
      *
      * @param readerConfig 读取配置
      */
-    private void matchHeaderCellPosition(ReaderConfig<?> readerConfig){
-        int readHeadRows = Math.min(getRecordRowNumber(readerConfig), AxolotlDefaultReaderConfig.XVOID_DEFAULT_HEADER_FINDING_ROW);
+    private void searchHeaderCellPosition(ReaderConfig<?> readerConfig){
+        Sheet sheet = workBookContext.getIndexSheet(readerConfig.getSheetIndex());
+        // 没有表跳过匹配
+        if (sheet == null){return;}
         List<EntityCellMappingInfo<?>> indexMappingInfos = readerConfig.getIndexMappingInfos();
-        // 提取表头
+        // 提取指定表头
         Map<String, Integer> headerKeys = indexMappingInfos.stream()
                 .map(EntityCellMappingInfo::getHeaderName)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toMap(element -> element, i -> -1));
+        // 实体如果有指定表头则进入匹配表头阶段
         if (!headerKeys.isEmpty()){
+            // 从缓存中获取表头映射
             Map<Integer, HashBasedTable<String, Integer, Integer>> headerCaches = workBookContext.getHeaderCaches();
-            // 表头名称,序号,列位置
+            //                表头名称,序号,列位置
             HashBasedTable<String, Integer, Integer> headerCache;
             boolean hintCache = false;
             if (headerCaches.containsKey(readerConfig.getSheetIndex())){
@@ -516,18 +520,36 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                 LoggerHelper.debug(LOGGER,LoggerHelper.format("开始查找表头,数量[%s],查找表头:%s", headerKeys.size(),headerKeys));
                 headerCache = HashBasedTable.create();
             }
-            Sheet sheet = workBookContext.getIndexSheet(readerConfig.getSheetIndex());
-            for (int i = 0; i < readHeadRows; i++) {
-                Row row = sheet.getRow(i);
-                if (ExcelToolkit.notBlankRowCheck(row)){
-                    Iterator<Cell> cellIterator = row.cellIterator();
-                    while (cellIterator.hasNext()){
-                        Cell cell = cellIterator.next();
-                        if (cell != null && cell.getCellType() == CellType.STRING){
-                            String cellValue = cell.getStringCellValue();
-                            if (headerKeys.containsKey(cellValue)){
-                                LoggerHelper.debug(LOGGER,LoggerHelper.format("查找到表头[%s]", cellValue));
-                                headerCache.put(cellValue, headerCache.row(cellValue).size()+1 , cell.getColumnIndex());
+            int readHeadRows;
+            if (readerConfig.getSearchHeaderMaxRows() > 0){
+                readHeadRows = readerConfig.getSearchHeaderMaxRows();
+            }else{
+                readHeadRows = Math.min(getRecordRowNumber(readerConfig), AxolotlDefaultReaderConfig.XVOID_DEFAULT_HEADER_FINDING_ROW);
+            }
+            // 拣出已经匹配的表头，如果已经匹配过的表头将不会再匹配
+            Map<String, Integer> notAlreadyRecordKeys = new HashMap<>();
+            if (hintCache){
+                Set<String> alreadyRecordKeySet = headerCache.rowKeySet();
+                headerKeys.keySet().stream()
+                        .filter(headerKey -> !alreadyRecordKeySet.contains(headerKey))
+                        .forEach(headerKey -> notAlreadyRecordKeys.put(headerKey, 0));
+            }else {
+                notAlreadyRecordKeys.putAll(headerKeys);
+            }
+            if (!notAlreadyRecordKeys.isEmpty()){
+                for (int i = 0; i < readHeadRows; i++) {
+                    Row row = sheet.getRow(i);
+                    if (ExcelToolkit.notBlankRowCheck(row)){
+                        Iterator<Cell> cellIterator = row.cellIterator();
+                        while (cellIterator.hasNext()){
+                            Cell cell = cellIterator.next();
+                            // 应该没有人会用数字当表头吧...
+                            if (cell != null && cell.getCellType() == CellType.STRING){
+                                String cellValue = cell.getStringCellValue();
+                                if (headerKeys.containsKey(cellValue) && notAlreadyRecordKeys.containsKey(cellValue)){
+                                    LoggerHelper.debug(LOGGER,LoggerHelper.format("查找到表头[%s]", cellValue));
+                                    headerCache.put(cellValue, headerCache.row(cellValue).size()+1 , cell.getColumnIndex());
+                                }
                             }
                         }
                     }
@@ -553,13 +575,8 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                     Integer columnIndex;
                     int headerNameIndex = indexMappingInfo.getHeaderNameIndex();
                     if (headerNameIndex == -1){
-                        if (assignedIndex == -1){
-                            columnIndex = recordInfo.get(1);
-                            assignedIndex = 1;
-                        }else {
-                            assignedIndex+=1;
-                            columnIndex = recordInfo.get(assignedIndex);
-                        }
+                        if (assignedIndex == -1){assignedIndex = 1;} else {assignedIndex+=1;}
+                        columnIndex = recordInfo.get(assignedIndex);
                         LoggerHelper.debug(LOGGER,LoggerHelper.format("映射同名表头[%s]到列[%s]", headerName, columnIndex));
                         headerKeys.put(headerName, assignedIndex);
                     }else{

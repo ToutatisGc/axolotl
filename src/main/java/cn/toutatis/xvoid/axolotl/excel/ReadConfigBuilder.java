@@ -97,6 +97,16 @@ public class ReadConfigBuilder<T> {
     }
 
     /**
+     * 设置读取头的最大行数
+     * @param maxRows 最大行数
+     * @return 返回ReadConfigBuilder对象
+     */
+    public ReadConfigBuilder<T> setSearchHeaderMaxRows(int maxRows) {
+        readerConfig.setSearchHeaderMaxRows(maxRows);
+        return this;
+    }
+
+    /**
      * 构建读取配置
      *
      * @return 返回ReaderConfig对象
