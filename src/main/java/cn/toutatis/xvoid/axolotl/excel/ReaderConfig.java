@@ -167,12 +167,14 @@ public class ReaderConfig<T> {
         NamingWorkSheet namingWorkSheet = castClass.getAnnotation(NamingWorkSheet.class);
         if (namingWorkSheet != null) {
             this.setSheetName(namingWorkSheet.sheetName());
+            this.setInitialRowPositionOffset(namingWorkSheet.readRowOffset());
             this.setReadClassAnnotation(true);
             return;
         }
         IndexWorkSheet indexWorkSheet = castClass.getAnnotation(IndexWorkSheet.class);
         if (indexWorkSheet != null) {
             this.setStartIndex(indexWorkSheet.sheetIndex());
+            this.setInitialRowPositionOffset(indexWorkSheet.readRowOffset());
             this.setReadClassAnnotation(true);
         }
     }

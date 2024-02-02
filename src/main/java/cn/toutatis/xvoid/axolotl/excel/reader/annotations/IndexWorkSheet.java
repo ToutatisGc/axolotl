@@ -21,4 +21,9 @@ public @interface IndexWorkSheet {
      */
     int sheetIndex() default 0;
 
+    /**
+     * 读取起始偏移行
+     */
+    int readRowOffset() default 0;
+
 }

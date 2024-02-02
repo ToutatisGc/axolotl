@@ -21,5 +21,9 @@ public @interface NamingWorkSheet {
      */
     String sheetName();
 
-
+    /**
+     * 读取起始行
+     * @return 起始行
+     */
+    int readRowOffset() default 0;
 }
