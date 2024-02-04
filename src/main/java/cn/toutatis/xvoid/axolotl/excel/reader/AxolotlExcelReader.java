@@ -25,6 +25,7 @@ import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -77,7 +78,8 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
      * 直接指定读取的类
      * 在读取数据时使用不指定读取类型的读取方法时，使用该类读取数据
      */
-    private final ReaderConfig<T> _sheetLevelReaderConfig;
+    @Setter
+    private ReaderConfig<T> _sheetLevelReaderConfig;
 
     /**
      * 构造文件读取器
@@ -432,6 +434,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
      * @param sheet 工作表
      */
     private void spreadMergedCells(Sheet sheet) {
+        // TODO 合并单元格散播策略
         List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
         LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "开始处理工作表合并单元格");
         for (CellRangeAddress mergedRegion : mergedRegions) {
@@ -495,6 +498,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
      * @param readerConfig 读取配置
      */
     private void searchHeaderCellPosition(ReaderConfig<?> readerConfig){
+        if (readerConfig.getSheetIndex() == -1){return;}
         Sheet sheet = workBookContext.getIndexSheet(readerConfig.getSheetIndex());
         // 没有表跳过匹配
         if (sheet == null){return;}
@@ -559,6 +563,7 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
             if (!hintCache){
                 headerCaches.put(readerConfig.getSheetIndex(), headerCache);
             }
+            // 为映射指定列索引
             for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
                 String headerName = indexMappingInfo.getHeaderName();
                 if (StringUtils.isNotBlank(headerName)){
@@ -571,12 +576,15 @@ public class AxolotlExcelReader<T> implements Iterator<List<T>> {
                         }
                         continue;
                     }
+                    // 从筛选过的key中获取当前批次已经指定过的表头位置
                     Integer assignedIndex = headerKeys.get(headerName);
                     Integer columnIndex;
                     int headerNameIndex = indexMappingInfo.getHeaderNameIndex();
+                    // -1没有指定的话按顺序取值
                     if (headerNameIndex == -1){
+                        // -1 为第一次匹配取第一个
                         if (assignedIndex == -1){assignedIndex = 1;} else {assignedIndex+=1;}
-                        columnIndex = recordInfo.get(assignedIndex);
+                        columnIndex = recordInfo.getOrDefault(assignedIndex, -1);
                         LoggerHelper.debug(LOGGER,LoggerHelper.format("映射同名表头[%s]到列[%s]", headerName, columnIndex));
                         headerKeys.put(headerName, assignedIndex);
                     }else{
