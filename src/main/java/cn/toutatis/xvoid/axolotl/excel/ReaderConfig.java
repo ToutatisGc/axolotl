@@ -2,7 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy.*;
+import static cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy.*;
 
 @ToString
 @Getter
@@ -77,7 +77,7 @@ public class ReaderConfig<T> {
     /**
      * 读取的特性
      */
-    private Map<ReadPolicy, Object> rowReadPolicyMap = new HashMap<>();
+    private Map<ExcelReadPolicy, Object> rowReadPolicyMap = new HashMap<>();
 
     /**
      * 读取类注解
@@ -125,9 +125,9 @@ public class ReaderConfig<T> {
     /**
      *
      */
-    private Map<ReadPolicy, Object> defaultReadPolicy() {
-        Map<ReadPolicy, Object> defaultReadPolicies = new HashMap<>();
-        for (ReadPolicy policy : values()) {
+    private Map<ExcelReadPolicy, Object> defaultReadPolicy() {
+        Map<ExcelReadPolicy, Object> defaultReadPolicies = new HashMap<>();
+        for (ExcelReadPolicy policy : values()) {
             if (policy.isDefaultPolicy()){
                 defaultReadPolicies.put(policy,policy.getValue());
             }
@@ -198,7 +198,7 @@ public class ReaderConfig<T> {
             // 排除特性
             KeepIntact keepIntact = declaredField.getAnnotation(KeepIntact.class);
             if (keepIntact!= null){
-                ReadPolicy[] excludePolicies = keepIntact.excludePolicies();
+                ExcelReadPolicy[] excludePolicies = keepIntact.excludePolicies();
                 entityCellMappingInfo.setExcludePolicies(
                         Arrays.stream(excludePolicies)
                                 .collect(Collectors.toMap(policy -> policy, policy -> true))
@@ -257,20 +257,22 @@ public class ReaderConfig<T> {
     }
 
     /**
-     *
+     * 获取一个布尔值类型的读取策略
      */
-    public boolean getReadPolicyAsBoolean(ReadPolicy policy) {
-        if (policy.getType() != ReadPolicy.Type.BOOLEAN){
+    public boolean getReadPolicyAsBoolean(ExcelReadPolicy policy) {
+        if (policy.getType() != ExcelReadPolicy.Type.BOOLEAN){
             throw new IllegalArgumentException("读取特性不是一个布尔类型");
         }
         return rowReadPolicyMap.containsKey(policy) && (boolean) rowReadPolicyMap.get(policy);
     }
 
     /**
-     * 设置策略
+     * 设置读取策略
+     * @param policy 读取策略
+     * @param value 值
      */
-    public void setBooleanReadFeature(ReadPolicy policy, Object value) {
-        if (policy.getType() != ReadPolicy.Type.BOOLEAN || !(value instanceof Boolean)){
+    public void setBooleanReadPolicy(ExcelReadPolicy policy, boolean value) {
+        if (policy.getType() != ExcelReadPolicy.Type.BOOLEAN){
             throw new IllegalArgumentException("读取特性不是一个布尔类型");
         }
         rowReadPolicyMap.put(policy, value);

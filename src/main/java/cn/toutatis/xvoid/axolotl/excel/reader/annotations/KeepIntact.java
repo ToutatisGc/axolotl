@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.reader.annotations;
 
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -18,5 +18,5 @@ public @interface KeepIntact {
      * 排除的读取特性
      * @return 排除的读取特性
      */
-    ReadPolicy[] excludePolicies();
+    ExcelReadPolicy[] excludePolicies();
 }

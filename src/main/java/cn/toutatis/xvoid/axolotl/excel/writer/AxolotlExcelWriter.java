@@ -64,17 +64,32 @@ public class AxolotlExcelWriter {
      */
     private final WriterConfig writerConfig;
 
+    /**
+     * 主构造函数
+     * @param writerConfig 写入配置
+     */
     public AxolotlExcelWriter(WriterConfig writerConfig) {
         this.writerConfig = writerConfig;
         this.workbook = this.initWorkbook(null);
     }
 
+    /**
+     * 构造函数
+     * 可以写入一个模板文件
+     * @param templateFile 模板文件
+     * @param writerConfig 写入配置
+     */
     public AxolotlExcelWriter(File templateFile, WriterConfig writerConfig) {
         TikaShell.preCheckFileNormalThrowException(templateFile);
         this.writerConfig = writerConfig;
         this.workbook = this.initWorkbook(templateFile);
     }
 
+    /**
+     * 初始化工作簿
+     * @param templateFile 模板文件
+     * @return 工作簿
+     */
     private SXSSFWorkbook initWorkbook(File templateFile) {
         SXSSFWorkbook workbook;
         // 读取模板文件内容
@@ -87,7 +102,6 @@ public class AxolotlExcelWriter {
             }
             this.writeContext.setTemplateFile(templateFile);
             try (FileInputStream fis = new FileInputStream(templateFile)){
-                // 切记不可关闭
                 OPCPackage opcPackage = OPCPackage.open(fis);
                 workbook = new SXSSFWorkbook(XSSFWorkbookFactory.createWorkbook(opcPackage));
             }catch (IOException | InvalidFormatException e){
@@ -100,14 +114,38 @@ public class AxolotlExcelWriter {
         return workbook;
     }
 
+    /**
+     * 关闭工作簿所对应输出流
+     * @throws IOException IO异常
+     */
     public void close() throws IOException {
         workbook.close();
         writerConfig.getOutputStream().close();
     }
 
-
     @SneakyThrows
-    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<Object> data) throws IOException {
+    public void write(){
+        SXSSFSheet sheet = workbook.createSheet();
+        workbook.setSheetName(writerConfig.getSheetIndex(),writerConfig.getSheetName());
+        ExcelStyleRender styleRender = writerConfig.getStyleRender();
+        if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
+            innerStyleRender.setWriterConfig(writerConfig);
+            innerStyleRender.renderHeader(sheet);
+        }else {
+            styleRender.renderHeader(sheet);
+        }
+        styleRender.renderData(sheet,writerConfig.getData());
+        workbook.write(writerConfig.getOutputStream());
+    }
+
+    /**
+     * 写入数据到模板
+     * @param sheetIndex 工作簿索引
+     * @param singleMap 固定值映射
+     * @param data 循环数据
+     */
+    @SneakyThrows
+    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<Object> data){
         XSSFSheet sheet;
         if (writeContext.isTemplateWrite()){
             sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
@@ -125,7 +163,9 @@ public class AxolotlExcelWriter {
                     }
                 }
                 // TODO 写入循环数据
-                Map<String, CellAddress> circleData = this.writeContext.getCircleReferenceData().row(sheetIndex);
+                Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
+                // TODO 列漂移写入
+//                Collections.max()
                 workbook.write(writerConfig.getOutputStream());
             }else{
                 throw new AxolotlWriteException(LoggerHelper.format("工作表索引[%s]模板中不存在",sheetIndex));
@@ -135,19 +175,17 @@ public class AxolotlExcelWriter {
         }
     }
 
-    @SneakyThrows
-    public void write(){
-        SXSSFSheet sheet = workbook.createSheet();
-        workbook.setSheetName(writerConfig.getSheetIndex(),writerConfig.getSheetName());
-        ExcelStyleRender styleRender = writerConfig.getStyleRender();
-        if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
-            innerStyleRender.setWriterConfig(writerConfig);
-            innerStyleRender.renderHeader(sheet);
-        }else {
-            styleRender.renderHeader(sheet);
+    /**
+     * 解析数据实体类型
+     * @param data 数据集合
+     */
+    private void resolveDataField(List<Object> data){
+        if (data == null || data.isEmpty()){
+            return;
         }
-        styleRender.renderData(sheet,writerConfig.getData());
-        workbook.write(writerConfig.getOutputStream());
+        Object dataTmp = data.get(0);
+        Class<?> dataClass = dataTmp.getClass();
+
     }
 
     /**
@@ -181,11 +219,18 @@ public class AxolotlExcelWriter {
         LoggerHelper.debug(LOGGER,LoggerHelper.format("解析模板完成，共解析到%s个占位符",writeContext.getSingleReferenceData().size() + writeContext.getCircleReferenceData().size()));
     }
 
-    private void findPlaceholderData(HashBasedTable<Integer, String, CellAddress> data, Pattern pattern, int sheetIndex, CellAddress cellAddress) {
+    /**
+     * 解析模板值到变量
+     * @param referenceData 引用数据
+     * @param pattern 模板匹配正则
+     * @param sheetIndex 工作簿索引
+     * @param cellAddress 单元格地址
+     */
+    private void findPlaceholderData(HashBasedTable<Integer, String, CellAddress> referenceData, Pattern pattern, int sheetIndex, CellAddress cellAddress) {
         Matcher matcher = pattern.matcher(cellAddress.getCellValue());
         if (matcher.find()) {
             cellAddress.setPlaceholder(matcher.group());
-            data.put(sheetIndex, matcher.group(1), cellAddress);
+            referenceData.put(sheetIndex, matcher.group(1), cellAddress);
         }
     }
 

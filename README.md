@@ -211,9 +211,9 @@ List<TestEntity> list = reader.readSheetData(readerConfig);
 ```java
 // 使用 new ReaderConfig<>(false);可取消所有读取策略，基本上以异常抛出形式作为错误，默认为true，包含以下所有默认读取策略
 ReaderConfig<T> readerConfig = new ReaderConfig<>(castClass);
-// 使用setBooleanReadFeature方法可指定读取策略
+// 使用setBooleanReadPolicy方法可指定读取策略
 // 在此实例中，忽略空表异常（IGNORE_EMPTY_SHEET_ERROR）指定为true时，将返回一个空的读取列表，在指定为false时将抛出空表异常
-readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
+readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 ```
 
 📖读取策略说明：

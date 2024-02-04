@@ -3,7 +3,7 @@ package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
@@ -28,18 +28,18 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
         }
         ReaderConfig<?> readerConfig = getReaderConfig();
         EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
-        Map<ReadPolicy, Object> excludePolicies = entityCellMappingInfo.getExcludePolicies();
+        Map<ExcelReadPolicy, Object> excludePolicies = entityCellMappingInfo.getExcludePolicies();
         switch (cellGetInfo.getCellType()) {
             case STRING:
                 String cellValueString = (String) cellValue;
-                if (!excludePolicies.containsKey(ReadPolicy.TRIM_CELL_VALUE)) {
-                    if (readerConfig.getReadPolicyAsBoolean(ReadPolicy.TRIM_CELL_VALUE)) {
+                if (!excludePolicies.containsKey(ExcelReadPolicy.TRIM_CELL_VALUE)) {
+                    if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.TRIM_CELL_VALUE)) {
                         cellValueString = Regex.convertSingleLine(cellValueString).replace(" ", "");
                     }
                 }
                 if (Validator.strIsNumber(cellValueString)) {
-                    if (!excludePolicies.containsKey(ReadPolicy.CAST_NUMBER_TO_DATE)) {
-                        if (readerConfig.getReadPolicyAsBoolean(ReadPolicy.CAST_NUMBER_TO_DATE)) {
+                    if (!excludePolicies.containsKey(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
+                        if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
                             if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
                                 cellValueString = Time.regexTime(context.getDataFormat(), DateUtil.getJavaDate(Double.parseDouble(cellValueString)));
                             }
@@ -49,8 +49,8 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 return cellValueString;
 
             case NUMERIC:
-                if (!excludePolicies.containsKey(ReadPolicy.CAST_NUMBER_TO_DATE)) {
-                    if (readerConfig.getReadPolicyAsBoolean(ReadPolicy.CAST_NUMBER_TO_DATE)) {
+                if (!excludePolicies.containsKey(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
+                    if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
                         if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
                             cellValue = Time.regexTime(context.getDataFormat(), DateUtil.getJavaDate((Double) cellValue));
                             return String.format("%s", cellValue);

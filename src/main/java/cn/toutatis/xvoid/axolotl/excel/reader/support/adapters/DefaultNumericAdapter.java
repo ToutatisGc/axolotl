@@ -3,7 +3,7 @@ package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.ReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
@@ -37,9 +37,9 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
             case STRING:
                 ReaderConfig<?> readerConfig = getReaderConfig();
                 EntityCellMappingInfo<?> entityCellMappingInfo = getEntityCellMappingInfo();
-                Map<ReadPolicy, Object> excelPolicies = entityCellMappingInfo.getExcludePolicies();
-                if (!excelPolicies.containsKey(ReadPolicy.TRIM_CELL_VALUE)) {
-                    if (readerConfig.getReadPolicyAsBoolean(ReadPolicy.TRIM_CELL_VALUE)) {
+                Map<ExcelReadPolicy, Object> excelPolicies = entityCellMappingInfo.getExcludePolicies();
+                if (!excelPolicies.containsKey(ExcelReadPolicy.TRIM_CELL_VALUE)) {
+                    if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.TRIM_CELL_VALUE)) {
                         cellValue = Regex.convertSingleLine(cellValue.toString());
                     }
                 }
