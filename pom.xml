@@ -54,6 +54,12 @@
             <groupId>cn.toutatis</groupId>
             <artifactId>void-toolkit</artifactId>
             <version>0.0.1-ALPHA</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>cn.toutatis</groupId>
+                    <artifactId>void-kotlin-runtime-support</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

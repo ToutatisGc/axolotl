@@ -2,43 +2,45 @@
 
 ![banner](docs.assets/banner.png)
 
-## 1.简介
+## Part.1 简介
 
-​	**✨此项目目前处于ALPHA版本,仅测试使用**✨
+**✨此项目目前处于ALPHA版本✨**
 
-​	此项目是一个基于 Apache POI 框架，用于处理 Excel 文档。
+------
 
-​	通过该框架，用户可以轻松读取、写入、以及操作 Excel  文件中的数据，支持对不同格式（xls、xlsx）的文件进行处理。
+​	此项目基于 Apache POI 框架，用于处理文档内容如Excel工作簿等。
 
-​	项目利用 Apache POI 提供的丰富功能，实现了对大型 Excel  文档的高效处理，并提供了灵活的接口，方便用户根据需求定制化操作。
+​	通过该框架，用户可以轻松读取、写入、以及操作文件中的数据，支持对不同格式的文件进行处理。
 
-​	无论是数据导入、导出，还是对 Excel  内容进行复杂的编辑和分析，此框架都为用户提供了便捷而强大的解决方案，使得 Excel 文档的处理变得更加高效、灵活。
+​	项目利用 Apache POI 提供的丰富功能，实现了对大型文档的高效处理，并提供了灵活的接口，方便用户根据需求定制化操作。
+
+​	无论是数据导入、导出，还是对内容进行复杂的编辑和分析，此框架都为用户提供了便捷而强大的解决方案，使得文档的处理变得更加高效、灵活。
 
 ### 1.1 版本更新说明
 
-#### 🔝0.0.5-ALPHA-8 更新说明（New）
+#### 🔝 0.0.8-ALPHA-8 更新说明
 
-- 构造器现在添加对于InputStream的支持
-- AxolotlExcelReader.readSheetData读取工作表添加了更多灵活读取方法
-- 将读取空行策略默认设置为False（原为True），现在默认不会读取空行内容
-- AxolotlExcelWriter将进入Alpha测试
+- 增加对application/octet-stream的兼容。
+- 使用@IndexWorkSheet和@NamingWorkSheet的起始读取偏移行支持。
+- ReaderConfig增加搜索表头最大行的可配置项。
+- 部分逻辑优化
 
-🧩历史版本更新说明
+#### 🧩历史版本更新说明
 
-请参考文件 [ChangeLog变更记录说明](docs.assets/changelog/Index.md)
+请参考文件 [📂ChangeLog变更记录说明](docs.assets/changelog/Index.md)
 
-## 2.目前支持功能
+## Part.2 目前支持功能
 
 |  支持的文件格式   | 目前支持功能 |      |
 | :---------------: | :----------: | ---- |
 | Excel(.xlsx,.xls) |  导入/导出   |      |
 |     PDF(.pdf)     |  🔜计划支持   |      |
 
-## 3.如何开始使用
+## Part.3 如何开始使用
 
-### 1. 添加Maven依赖
+### 3.1 添加Maven依赖
 
-**⛔Java17版本（暂未实装，请使用Java8版本）**
+**⛔<font color='red'>Java17版本（暂未实装，请使用Java8版本）</font>**
 
 ```xml
 <dependency>
@@ -48,23 +50,28 @@
 </dependency>
 ```
 
-**Java8版本**
+**✅<font color='green'>Java8版本</font>**
 
 ```xml
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>0.0.5-ALPHA-8</version>
+    <version>0.0.8-ALPHA-8</version>
 </dependency>
 ```
 
-### 2. 文档操作
+### 3.2 文档操作
 
-#### 2.1 读取Excel文件
+#### 3.2.1 读取Excel文件
 
-文件支持
+📖Excel文件支持类型：
 
-##### 2.1.1 构建文档读取器
+| MIME-TYPE                                                    |         说明          |      | 文件后缀 |
+| :----------------------------------------------------------- | :-------------------: | :--: | :------: |
+| application/vnd.ms-excel                                     | Excel 97-2003文件版本 |      |  [.xls]  |
+| application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Excel 2007及以上版本  |      | [.xlsx]  |
+
+##### 3.2.1.1 构建文档读取器
 
 ```java
 // 使用静态方法获取Excel读取器（推荐）
@@ -75,7 +82,7 @@ AxolotlExcelReader<Object> excelInsReader = Axolotls.getExcelReader(inputStream)
 AxolotlExcelReader<Object> excelReader2 =new AxolotlExcelReader<>(excelFile);
 ```
 
-### 3.Excel类型读取内容
+##### 3.1.1.2 读取Excel内容
 
 ```java
 // 1.打开一个Excel文件
@@ -87,27 +94,119 @@ List<Object> data = excelReader.readSheetData();
 System.out.println(data);
 ```
 
-## 4.详细使用说明
+#### 3.2.2 写入Excel文件
 
-#### 1. 注解说明
+```
+// TODO 等待支持
+```
 
-| 注解（annotations）  | 用途                                            | 参数说明                                                     |
-| -------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
-| @IndexWorkSheet      | [Class]<br />指定具体索引的工作表               | [sheetIndex]工作表索引[默认值:0]                             |
-| @NamingWorkSheet     | [Class]<br />指定具体名称的工作表（区分大小写） | [sheetName]工作表名称                                        |
-| @ColumnBind（*）     | [Property]<br />实体绑定列位置                  | [columnIndex]列索引<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器 |
-| @SpecifyPositionBind | [Property]<br />实体绑定具体单元格位置          | [value]单元格位置[举例:A1,B2,C3]<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器 |
-| @KeepIntact          | [Property]<br />赋值字段时排除读取策略          | [excludePolicies]排除的读取策略                              |
+## Part.4 详细使用说明
 
-#### 2. 以读取配置为参数读取(推荐方案)
+### 4.1 Excel文档读取
 
+🔆框架支持读取Excel为List<T>或者为单个Object实例。
 
+```java
+// 将所有实体属性指定为@SpecifyPositionBind可以读取为一个Object
+POJO data = reader.readSheetDataAsObject(ReaderConfig readerConfig)
+// 读取excel为List数据
+List<POJO> data = reader.readSheetData(ReaderConfig readerConfig)
+```
 
-#### 3. 读取策略说明
+#### 4.1.1 注解说明
 
-在读取Excel文件数据时，读取到数据时会有默认的读取策略
+| 注解（annotations）                   | 用途                                            | 参数说明                                                     |
+| ------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| @IndexWorkSheet                       | [Class]<br />指定具体索引的工作表               | [readRowOffset]读取起始偏移行<br />[sheetIndex]工作表索引[默认值:0] |
+| @NamingWorkSheet                      | [Class]<br />指定具体名称的工作表（区分大小写） | [readRowOffset]读取起始偏移行<br />[sheetName]工作表名称     |
+| <font color='red'>@ColumnBind*</font> | [Property]<br />实体绑定列位置                  | [columnIndex]列索引<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器<br />[headerName]表头名称<br /> |
+| @SpecifyPositionBind                  | [Property]<br />实体绑定具体单元格位置          | [value]单元格位置[举例:A1,B2,C3]<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器 |
+| @KeepIntact                           | [Property]<br />赋值字段时排除读取策略          | [excludePolicies]排除的读取策略                              |
 
-在使用ReaderConfig时，可以使用以下方法指定读取策略
+🧭POJO示例：
+
+```java
+@Data
+// 指定索引工作表
+@IndexWorkSheet(sheetIndex=0)
+public class TestEntity {
+
+    // JSR-303支持
+    @NotBlank
+    // 读取第0列
+    @ColumnBind(columnIndex = 0)
+    private String name;
+
+    @Min(value = 1,message = "AAA")
+    // 排除特性
+    @KeepIntact(excludePolicies = ReadPolicy.CAST_NUMBER_TO_DATE)
+    private int age;
+    
+    // 可以指定列表头对应的列位置
+    @ColumnBind(headerName = "备注")
+    private String remark;
+    
+    // 指定具体的单元格位置
+    @SpecifyPositionBind("A1")
+    private String title;
+
+}
+```
+
+#### 4.1.2 迭代器支持
+
+​	读取数据量大时支持迭代器读取。
+
+```java
+AxolotlExcelReader<POJO> excelReader = Axolotls.getExcelReader(file, POJO.class);
+// 配置表级配置（一般不推荐配置，属于内部维护变量）
+excelReader.set_sheetLevelReaderConfig(readerConfig);
+while (excelReader.hasNext()){
+	List<POJO> next = excelReader.next();
+}
+```
+
+#### 4.1.3 [重要]以读取配置为参数读取
+
+​	一般读取来说，若无特殊读取需求，可以直接构造读取器。
+
+```java
+AxolotlExcelReader<TestEntity> reader = Axolotls.getExcelReader(file.getInputStream(), TestEntity.class);
+// 根据方法中不同形参读取
+List<TestEntity> list = reader.readSheetData(7);
+```
+
+​	🔆若是需要更灵活的配置需要构造ReaderConfig配置类。
+
+​	readSheetData的根读取方法为 **<font color="red">readSheetData(readerConfig)</font >**
+
+```java
+ReaderConfig<CastClass> readerConfig = new ReaderConfig<>(castClass);
+List<TestEntity> list = reader.readSheetData(readerConfig);
+```
+
+📖ReaderConfig可配置项：
+
+| 配置项                            | 说明                             | 必填 | 默认值       |
+| --------------------------------- | -------------------------------- | ---- | ------------ |
+| 构造器(Class<T> castClass)        | 设置读取类                       | 是   | 无           |
+| 构造器(boolean withDefaultConfig) | 是否使用默认配置                 | 是   | True         |
+| Class<T> castClass                | 设置读取类                       | 是   | 无           |
+| sheetIndex                        | 工作表索引                       | 否   | 0            |
+| sheetName                         | 工作表名称                       | 否   | 无           |
+| initialRowPositionOffset          | 初始行偏移量                     | 否   | 0            |
+| startIndex                        | 读取起始行                       | 否   | 0            |
+| endIndex                          | 读取结束行                       | 否   | -1（所有）   |
+| <del>indexMappingInfos</del>      | 索引映射<br />（一般不用指定）   | 否   | 无           |
+| <del>positionMappingInfos</del>   | 单元格映射<br />（一般不用指定） | 否   | 无           |
+| rowReadPolicyMap                  | 策略集合                         | 否   | 参考默认策略 |
+| searchHeaderMaxRows               | 搜索表头最大行                   | 否   | 10           |
+
+#### 4.1.4 读取策略说明
+
+​	在读取Excel文件数据时，读取到数据时会有默认的读取策略。
+
+​	在使用ReaderConfig时，可以使用以下方法指定读取策略。
 
 ```java
 // 使用 new ReaderConfig<>(false);可取消所有读取策略，基本上以异常抛出形式作为错误，默认为true，包含以下所有默认读取策略
@@ -116,6 +215,8 @@ ReaderConfig<T> readerConfig = new ReaderConfig<>(castClass);
 // 在此实例中，忽略空表异常（IGNORE_EMPTY_SHEET_ERROR）指定为true时，将返回一个空的读取列表，在指定为false时将抛出空表异常
 readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 ```
+
+📖读取策略说明：
 
 | 读取策略枚举                    | 中文说明                                                     | 策略类型 | 是否为默认策略 | 默认值 |
 | ------------------------------- | ------------------------------------------------------------ | -------- | -------------- | ------ |
@@ -128,14 +229,129 @@ readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | TRIM_CELL_VALUE                 | 修整单元格去掉单元格所有的空格和换行符                       | Boolean  | true           | true   |
 | USE_MAP_DEBUG                   | 使用Map接收数据时，打印调试信息                              | Boolean  | true           | true   |
 | FIELD_EXIST_OVERRIDE            | 如果字段存在值覆盖掉原值                                     | Boolean  | true           | true   |
-| VALIDATE_READ_ROW_DATA          | 读取数据后校验数据                                           | Boolean  | true           | true   |
+| **VALIDATE_READ_ROW_DATA**      | 读取数据后校验数据                                           | Boolean  | true           | true   |
 
-#### 4. JSR-303支持（数据校验）
+#### 4.1.5 JSR-303支持（数据校验）
+
+本框架支持Bean Validation,使用Hibernate-Validator进行实体属性校验。
+
+详情请参考 [📂【Hibernate-Validator 8.0.1.Final 使用手册】](docs.assets\hibernate_validator_reference.pdf) (Java8版本使用为6.2.5.Final)
+
+📖一般POJO类使用注解如下：
+
+| **注解**                    | 说明                                                         |
+| --------------------------- | ------------------------------------------------------------ |
+| @Nul                        | 被注释的元素必须为 Null                                      |
+| @NotNull                    | 被注释的元素必须不为 Null                                    |
+| @AssertTrue                 | 被注释的元素必须为 True                                      |
+| @AssertFalse                | 被注释的元素必须为 False                                     |
+| @Min(value)                 | 被注释的元素必须是一个数字，其值必须大于等于指定的最小值     |
+| @Max(value)                 | 被注释的元素必须是一个数字，其值必须小于等于指定的最大值     |
+| @DecimalMin(value)          | 被注释的元素必须是一个数字，其值必须大于等于指定的最小值     |
+| @DecimalMax(value)          | 被注释的元素必须是一个数字，其值必须小于等于指定的最大值     |
+| @Size(max, min)             | 被注释的元素的大小必须在指定的范围内，元素必须为集合，代表集合个数 |
+| @Pattern(regexp = )         | 正则表达式校验                                               |
+| @Digits (integer, fraction) | 被注释的元素必须是一个数字，其值必须在可接受的范围内         |
+| @Past                       | 被注释的元素必须是一个过去的日期                             |
+| @Future                     | 被注释的元素必须是一个将来的日期                             |
+| @Email                      | 被注释的元素必须是电子邮箱地址                               |
+| @Length(min=, max=)         | 被注释的字符串的大小必须在指定的范围内，必须为数组或者字符串，若微数组则表示为数组长度，字符串则表示为字符串长度 |
+| @NotEmpty                   | 被注释的字符串的必须非空                                     |
+| @Range(min=, max=)          | 被注释的元素必须在合适的范围内                               |
+| @NotBlank                   | 被注释的字符串的必须非空                                     |
+| @URI                        | 字符串是否是一个有效的URL                                    |
+
+#### 4.1.6 异常处理
+
+​	在读取文件时难免会有读取错误的情况，在发生读取异常时会抛出**AxolotlExcelReadException**来提示异常信息。
+
+**🔆推荐使用为在Web框架使用时向上层抛出异常，在全局异常处理器中统一返回错误信息**
+
+📖AxolotlExcelReadException异常中包含以下内容：
+
+| 可获取内容             | 说明                                   |      |
+| ---------------------- | -------------------------------------- | ---- |
+| message                | 错误信息                               |      |
+| currentReadRowIndex    | 当前读取行数                           |      |
+| currentReadColumnIndex | 当前读取列数                           |      |
+| humanReadablePosition  | 良好可读性的错误位置（示例：A5单元格） |      |
+| fieldName              | 错误的实体属性                         |      |
+| exceptionType          | 读取错误类型                           |      |
+
+📖AxolotlExcelReadException.ExceptionType错误类型说明：
+
+| 错误枚举             | 说明                        |
+| -------------------- | --------------------------- |
+| READ_EXCEL_ERROR     | 读取Excel文件时出现了异常   |
+| READ_EXCEL_ROW_ERROR | 读取Excel数据时，出现了异常 |
+| CONVERT_FIELD_ERROR  | 转换数据时出现异常          |
+| VALIDATION_ERROR     | 校验数据时出现异常          |
+
+### 4.2 Excel文档写入
+
+本框架仅支持XLSX文件写入，性能更优异兼容更好。
+
+> 写入Excel功能将在完整支持后完善
+
+## Part.5 疑难解答
+
+### 📛问题相关
+
+#### 日志框架冲突
+
+日志框架冲突,可将依赖中的日志框架移除。
+
+```basic
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+```
+
+📖官网引用：
+
+> This error is reported when the org.slf4j.impl.StaticLoggerBinder class could not be loaded into memory. This happens when no appropriate SLF4J binding could be found on the class path. Placing one (and only one) of slf4j-nop.jar, slf4j-simple.jar, slf4j-log4j12.jar, slf4j-jdk14.jar or logback-classic.jar on the class path should solve the problem.
+>
+
+```xml
+<dependency>
+	<groupId>org.apache.logging.log4j</groupId>
+	<artifactId>log4j-api</artifactId>
+	<version>2.17.1</version>
+</dependency>
+<dependency>
+	<groupId>cn.toutatis</groupId>
+	<artifactId>axolotl</artifactId>
+	<version>0.0.8-ALPHA-8</version>
+		<exclusions>
+            <exclusion>
+            	<groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+            </exclusion>
+        </exclusions>
+</dependency>
+```
+
+------
+
+#### 合并单元格内容读取
+
+​	读取<font color='red'>**合并单元格**</font>不同列时会读取到同样的内容，因为本框架**目前**采用的策略为散播策略，会将合并单元格的值散播到合并单元格中各个单元格上（原为合并单元格中第0行，第0列的值），未来如有需要将会把此项作为读取策略作为可配置项。
+
+### 🚸使用疑问
+
+#### @ColumnBind注解中headerName的使用
+
+​	该功能的是为了读取数据时直接按照表头名称读取对应列所设计，解决不同模板之间表头有差异造成读取列错位所设计的功能。
+​	指定注解中此参数，会去读取工作表中查找完全匹配的单元格字符串（例如：备注，地址）所对应的列位置转换为所对应的列索引作为读取列（如果有多个同名表头可指定sameHeaderIdx参数区分不同同名列），相当于转化为注解中的columnIndex参数。
+
+<div style="float:right;padding-right:15px">
+    提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>
+</div>
+
+------
 
 
 
-## 5. 相关链接
+## Part.6 相关链接
 
-[Apache POI官方网站](https://poi.apache.org/)
+[📂Apache POI官方网站](https://poi.apache.org/)
 
-[Hibernate Validator官方说明](https://docs.jboss.org/hibernate/stable/validator/reference/en-US/html_single)
+[📂Hibernate Validator官方网站](https://docs.jboss.org/hibernate/stable/validator/reference/en-US/html_single)
