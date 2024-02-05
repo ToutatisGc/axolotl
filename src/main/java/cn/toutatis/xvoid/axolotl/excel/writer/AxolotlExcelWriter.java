@@ -11,6 +11,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.WriteContext;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
+import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.HashBasedTable;
@@ -33,6 +34,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -153,10 +155,11 @@ public class AxolotlExcelWriter {
                 this.resolveTemplate(sheet);
                 HashBasedTable<Integer, String, CellAddress> singleReferenceData = this.writeContext.getSingleReferenceData();
                 Map<String, CellAddress> singleAddressMapping = singleReferenceData.row(sheetIndex);
+                this.injectCommonInfo(singleMap);
                 for (String singleKey : singleAddressMapping.keySet()) {
                     CellAddress cellAddress = singleAddressMapping.get(singleKey);
                     XSSFCell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
-                    if (singleMap!= null && singleMap.containsKey(singleKey)){
+                    if (singleMap.containsKey(singleKey)){
                         cell.setCellValue(cellAddress.replacePlaceholder(singleMap.get(singleKey).toString()));
                     }else {
                         cell.setCellValue(cellAddress.replacePlaceholder(""));
@@ -179,7 +182,7 @@ public class AxolotlExcelWriter {
      * 解析数据实体类型
      * @param data 数据集合
      */
-    private void resolveDataField(List<Object> data){
+    private void writeCircleData(Sheet sheet,List<Object> data,Map<String, CellAddress> circleReferenceData){
         // TODO 获取实体字段名
         if (data == null || data.isEmpty()){
             return;
@@ -189,6 +192,14 @@ public class AxolotlExcelWriter {
         if (dataTmp instanceof Map<?,?>){
 
         }
+    }
+
+    @SuppressWarnings({"rawtypes","unchecked"})
+    private void injectCommonInfo(Map singleMap){
+        if (singleMap == null){
+            singleMap = new HashMap<>();
+        }
+        singleMap.put("AXOLOTL_CREATE_TIME", Time.getCurrentTime());
     }
 
     /**
