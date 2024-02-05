@@ -21,6 +21,7 @@ public class WriteContext {
     /**
      * 当前写入的行数
      */
+    @Deprecated
     private int currentWrittenRow = 0;
 
     /**

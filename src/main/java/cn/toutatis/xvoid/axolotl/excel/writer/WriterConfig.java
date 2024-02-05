@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 写入配置
@@ -16,6 +18,26 @@ import java.util.List;
  */
 @Data
 public class WriterConfig {
+
+    /**
+     * 构造使用默认配置
+     */
+    public WriterConfig() {
+        this(true);
+    }
+
+    public WriterConfig(boolean withDefaultConfig) {
+    }
+
+
+
+    {
+        try {
+            styleRender = ExcelWriteThemes.$DEFAULT.getStyleRenderClass().getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * sheet索引
@@ -33,6 +55,11 @@ public class WriterConfig {
     private String sheetName;
 
     /**
+     * 写入策略
+     */
+    private Map<ExcelWritePolicy, Object> writePolicies;
+
+    /**
      * 样式渲染器
      */
     private ExcelStyleRender styleRender;
@@ -47,13 +74,7 @@ public class WriterConfig {
      */
     private OutputStream outputStream;
 
-    {
-        try {
-            styleRender = ExcelWriteThemes.$DEFAULT.getStyleRenderClass().getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
+
 
     private List<String> columnNames;
 

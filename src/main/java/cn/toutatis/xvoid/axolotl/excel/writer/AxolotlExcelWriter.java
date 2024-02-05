@@ -164,7 +164,7 @@ public class AxolotlExcelWriter {
                 }
                 // TODO 写入循环数据
                 Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
-                // TODO 列漂移写入
+                // TODO 列漂移写入特性
 //                Collections.max()
                 workbook.write(writerConfig.getOutputStream());
             }else{
@@ -180,12 +180,15 @@ public class AxolotlExcelWriter {
      * @param data 数据集合
      */
     private void resolveDataField(List<Object> data){
+        // TODO 获取实体字段名
         if (data == null || data.isEmpty()){
             return;
         }
         Object dataTmp = data.get(0);
         Class<?> dataClass = dataTmp.getClass();
+        if (dataTmp instanceof Map<?,?>){
 
+        }
     }
 
     /**
@@ -204,10 +207,11 @@ public class AxolotlExcelWriter {
                         String cellValue = cell.getStringCellValue();
                         int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
                         CellAddress cellAddress = new CellAddress(cellValue,rowIdx, cellIdx,cell.getCellStyle());
-                        findPlaceholderData(
+                        boolean findSinglePlaceholder = findPlaceholderData(
                                 writeContext.getSingleReferenceData(),
                                 TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress
                         );
+                        if (findSinglePlaceholder){continue;}
                         findPlaceholderData(
                                 writeContext.getCircleReferenceData(),
                                 TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress
@@ -226,12 +230,14 @@ public class AxolotlExcelWriter {
      * @param sheetIndex 工作簿索引
      * @param cellAddress 单元格地址
      */
-    private void findPlaceholderData(HashBasedTable<Integer, String, CellAddress> referenceData, Pattern pattern, int sheetIndex, CellAddress cellAddress) {
+    private boolean findPlaceholderData(HashBasedTable<Integer, String, CellAddress> referenceData, Pattern pattern, int sheetIndex, CellAddress cellAddress) {
         Matcher matcher = pattern.matcher(cellAddress.getCellValue());
         if (matcher.find()) {
             cellAddress.setPlaceholder(matcher.group());
             referenceData.put(sheetIndex, matcher.group(1), cellAddress);
+            return true;
         }
+        return false;
     }
 
     public static void main(String[] args) throws IOException {
