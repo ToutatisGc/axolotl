@@ -123,6 +123,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         this.workBookContext = new WorkBookContext(new ByteArrayInputStream(dataCacheOutputStream.toByteArray()),detectResult);
         this.loadFileDataToWorkBook();
         this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,true);
+        this.createAdditionalExtensions();
     }
 
     /**
@@ -147,6 +148,19 @@ public abstract class AxolotlAbstractExcelReader<T> {
         workBookContext = new WorkBookContext(excelFile,detectResult);
         this.loadFileDataToWorkBook();
         this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,withDefaultConfig);
+        this.createAdditionalExtensions();
+    }
+
+    /**
+     * [ROOT]
+     * 创建额外扩展
+     * 可能会计划出一些扩展功能
+     */
+    protected void createAdditionalExtensions() {
+        // 初始化数据校验器
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            this.validator = validatorFactory.getValidator();
+        }
     }
 
     /**
@@ -216,19 +230,26 @@ public abstract class AxolotlAbstractExcelReader<T> {
             LOGGER.error("加载文件失败",e);
             throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,e.getMessage());
         }
-        // 初始化校验器
-        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
-            this.validator = validatorFactory.getValidator();
-        }
+    }
+
+    /**
+     * 读取Excel工作表为一个实体
+     * @param readerConfigBuilder 读取配置构建器
+     * @param <RT>  读取类型
+     * @return 读取的数据
+     * @see cn.toutatis.xvoid.axolotl.excel.reader.annotations.SpecifyPositionBind 单元格绑定属性
+     */
+    public <RT> RT readSheetDataAsObject(ReadConfigBuilder<RT> readerConfigBuilder){
+        return this.readSheetDataAsObject(readerConfigBuilder.build());
     }
 
     /**
      * [ROOT]
-     * 读取Excel文件数据为一个实体
-     *
+     * 读取Excel工作表为一个实体
      * @param readerConfig 读取配置
      * @param <RT>  读取类型
      * @return 读取的数据
+     * @see cn.toutatis.xvoid.axolotl.excel.reader.annotations.SpecifyPositionBind 单元格绑定属性
      */
     public <RT> RT readSheetDataAsObject(ReaderConfig<RT> readerConfig){
         if (readerConfig != null){
