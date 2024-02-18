@@ -7,14 +7,21 @@ import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import com.alibaba.fastjson.JSON;
+import com.github.pjfanning.xlsx.StreamingReader;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import lombok.SneakyThrows;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.*;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,16 +137,48 @@ public class SimpleTest {
         System.err.println(oneFieldStringEntities2);
     }
 
+    @SneakyThrows
     @Test
     public void itTest(){
         File file = FileToolkit.getResourceFileAsFile("workbook/innerBig.xlsx");
         if (file!= null && file.exists()){
+//
             AxolotlExcelReader<OneFieldString3Entity> excelReader = Axolotls.getExcelReader(file, OneFieldString3Entity.class);
             while (excelReader.hasNext()){
                 List<OneFieldString3Entity> next = excelReader.next();
 //            System.err.println(next.size());
             }
         }
+    }
+
+    @Test
+    public void streamTest() throws IOException {
+        File file = FileToolkit.getResourceFileAsFile("workbook/innerBig.xlsx");
+        if (file!= null && file.exists()){
+            InputStream is = new FileInputStream(file);
+            Workbook workbook = StreamingReader.builder()
+                    .rowCacheSize(1000)
+                    .bufferSize(4096)
+                    .open(is);
+            Sheet sheet = workbook.getSheetAt(0);
+            System.err.println(sheet.getLastRowNum());
+            int start = 0;
+            int end = 1000;
+            Iterator<Row> rowIterator = sheet.rowIterator();
+            while (rowIterator.hasNext()){
+                Row row = rowIterator.next();
+                int rowNum = row.getRowNum();
+                if (rowNum >= start && rowNum <= end){
+                    Cell cell = row.getCell(3);
+                    System.err.println(rowNum+"-"+cell.getStringCellValue());
+                }
+                if (rowNum > end){
+                    break;
+                }
+            }
+            is.close();
+        }
+
     }
 
     @Test
