@@ -15,6 +15,11 @@ public enum ExcelWritePolicy {
     AUTO_CATCH_COLUMN_LENGTH(Type.BOOLEAN, true, true),
 
     /**
+     * 自动在第一列插入编号
+     */
+    AUTO_INSERT_SERIAL_NUMBER(Type.BOOLEAN, true, false),
+
+    /**
      * 将数据写入时，自动将数据写入到下一行
      * 不会影响原有模板数据的位置
      */

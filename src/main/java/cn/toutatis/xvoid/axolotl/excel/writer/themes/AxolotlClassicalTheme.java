@@ -14,7 +14,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import java.util.List;
 import java.util.Map;
 
-public class AxolotlTheme extends AbstractInnerStyleRender implements ExcelStyleRender {
+public class AxolotlClassicalTheme extends AbstractInnerStyleRender implements ExcelStyleRender {
 
     private SXSSFWorkbook workbook;
 

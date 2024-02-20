@@ -147,34 +147,45 @@ public class AxolotlExcelWriter {
      * @param data 循环数据
      */
     @SneakyThrows
-    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<Object> data){
+    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<?> data){
         XSSFSheet sheet;
         if (writeContext.isTemplateWrite()){
             sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
             if (sheet != null){
+                // 解析模板占位符到上下文
                 this.resolveTemplate(sheet);
-                HashBasedTable<Integer, String, CellAddress> singleReferenceData = this.writeContext.getSingleReferenceData();
-                Map<String, CellAddress> singleAddressMapping = singleReferenceData.row(sheetIndex);
-                this.injectCommonInfo(singleMap);
-                for (String singleKey : singleAddressMapping.keySet()) {
-                    CellAddress cellAddress = singleAddressMapping.get(singleKey);
-                    XSSFCell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
-                    if (singleMap.containsKey(singleKey)){
-                        cell.setCellValue(cellAddress.replacePlaceholder(singleMap.get(singleKey).toString()));
-                    }else {
-                        cell.setCellValue(cellAddress.replacePlaceholder(""));
-                    }
-                }
-                // TODO 写入循环数据
+                // 写入Map映射
+                this.writeSingleData(sheet,singleMap);
+                // 写入循环数据
                 Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
-                // TODO 列漂移写入特性
+                if (data != null && !data.isEmpty()){
+                    // TODO 写入循环数据
+
+                    // TODO 列漂移写入特性
 //                Collections.max()
+                }
                 workbook.write(writerConfig.getOutputStream());
             }else{
                 throw new AxolotlWriteException(LoggerHelper.format("工作表索引[%s]模板中不存在",sheetIndex));
             }
         }else{
             throw new AxolotlWriteException("非模板写入请使用write方法");
+        }
+    }
+
+    private void writeSingleData(XSSFSheet sheet,Map<String,?> singleMap){
+        HashBasedTable<Integer, String, CellAddress> singleReferenceData = this.writeContext.getSingleReferenceData();
+        Map<String, CellAddress> singleAddressMapping = singleReferenceData.row(workbook.getSheetIndex(sheet));
+        HashMap<String, Object> dataMapping = new HashMap<>(singleMap);
+        this.injectCommonInfo(dataMapping);
+        for (String singleKey : singleAddressMapping.keySet()) {
+            CellAddress cellAddress = singleAddressMapping.get(singleKey);
+            XSSFCell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
+            if (dataMapping.containsKey(singleKey)){
+                cell.setCellValue(cellAddress.replacePlaceholder(dataMapping.get(singleKey).toString()));
+            }else {
+                cell.setCellValue(cellAddress.replacePlaceholder(""));
+            }
         }
     }
 

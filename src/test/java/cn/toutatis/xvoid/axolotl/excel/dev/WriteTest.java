@@ -5,12 +5,14 @@ import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
+import com.alibaba.fastjson.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,15 +40,21 @@ public class WriteTest {
     public void testWritePlaceholders() throws Exception {
         File file = FileToolkit.getResourceFileAsFile("workbook/读取占位符测试.xlsx");
         WriterConfig writerConfig = new WriterConfig();
-        FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         writerConfig.setOutputStream(fileOutputStream);
         AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig);
         Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
-        axolotlExcelWriter.writeToTemplate(0, map, null);
-    }
-
-    public void testBoolean(){
-        System.err.println();
+        ArrayList<JSONObject> data = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            JSONObject json = new JSONObject(true);
+            json.put("name", "name" + i);
+            json.put("age", i);
+            json.put("sex", i % 2 == 0? "男" : "女");
+            json.put("card", 555444114);
+            json.put("address", null);
+            data.add(json);
+        }
+        axolotlExcelWriter.writeToTemplate(0, map, data);
     }
 
 }

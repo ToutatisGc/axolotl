@@ -28,12 +28,12 @@ public class CellAddress {
     private String cellValue;
 
     /**
-     * 模板单元格的行
+     * 模板单元格的行位置
      */
     private int rowPosition;
 
     /**
-     * 模板单元格的列
+     * 模板单元格的列位置
      */
     private int columnPosition;
 
