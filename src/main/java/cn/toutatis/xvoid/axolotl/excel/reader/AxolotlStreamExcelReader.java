@@ -1,11 +1,15 @@
 package cn.toutatis.xvoid.axolotl.excel.reader;
 
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.AxolotlAbstractExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.stream.AxolotlExcelStream;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import com.github.pjfanning.xlsx.StreamingReader;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.RecordFormatException;
 import org.slf4j.Logger;
@@ -93,4 +97,35 @@ public class AxolotlStreamExcelReader<T> extends AxolotlAbstractExcelReader<T> {
             throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,e.getMessage());
         }
     }
+
+    /**
+     * 读取行数据转换为对象
+     * @param row 行
+     * @param readerConfig 读取配置
+     * @return 对象
+     * @param <RT> 对象类型
+     */
+    public <RT> RT castRow2Instance(Row row, ReaderConfig<RT> readerConfig){
+        RT instance = readerConfig.getCastClassInstance();
+        if (ExcelToolkit.blankRowCheck(row)){
+            if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.INCLUDE_EMPTY_ROW)){
+                return instance;
+            }else{
+                return null;
+            }
+        }
+        this.convertCellToInstance(row,instance,readerConfig);
+        return instance;
+    }
+
+    /**
+     * 数据迭代器
+     * @param readerConfig 读取配置
+     * @param <RT> 对象类型
+     * @return 数据迭代器
+     */
+    public <RT> AxolotlExcelStream<RT> dataIterator(ReaderConfig<RT> readerConfig){
+        return new AxolotlExcelStream<>(this, readerConfig);
+    }
+
 }

@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.reader.support.adapters;
 
-import cn.toutatis.xvoid.axolotl.excel.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;

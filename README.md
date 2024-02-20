@@ -18,12 +18,11 @@
 
 ### 1.1 版本更新说明
 
-#### 🔝 0.0.8-ALPHA-8 更新说明
+#### 🔝 0.0.9-ALPHA-8 更新说明
 
-- 增加对application/octet-stream的兼容。
-- 使用@IndexWorkSheet和@NamingWorkSheet的起始读取偏移行支持。
-- ReaderConfig增加搜索表头最大行的可配置项。
-- 部分逻辑优化
+- 增加对流式读取的支持。**详情查看章节【4.1.7】**
+- 对读取器进行抽取方法，增加灵活性。
+- 计划支持PDF，添加相关依赖。
 
 #### 🧩历史版本更新说明
 
@@ -31,10 +30,10 @@
 
 ## Part.2 目前支持功能
 
-|  支持的文件格式   | 目前支持功能 |      |
-| :---------------: | :----------: | ---- |
-| Excel(.xlsx,.xls) |  导入/导出   |      |
-|     PDF(.pdf)     |  🔜计划支持   |      |
+|  支持的文件格式   | 目前支持功能 |
+| :---------------: | :----------: |
+| Excel(.xlsx,.xls) |  导入/导出   |
+|     PDF(.pdf)     |  🔜计划支持   |
 
 ## Part.3 如何开始使用
 
@@ -60,9 +59,9 @@
 </dependency>
 ```
 
-### 3.2 文档操作
+### 3.2 Excel 文档操作
 
-#### 3.2.1 读取Excel文件
+#### 3.2.1 读取 Excel文件
 
 📖Excel文件支持类型：
 
@@ -104,6 +103,10 @@ System.out.println(data);
 
 ### 4.1 Excel文档读取
 
+🔆在构建AxolotlExcelReader后，**使用readSheetData(args)读取数据**，readSheetData有多种形参方法，详情请查看readSheetData方法源代码，基本上均为readSheetData(ReaderConfig readerConfig)的变种使用。
+
+[📌点击跳转至对应章节](#Anchor-ConfigRead)
+
 🔆框架支持读取Excel为List<T>或者为单个Object实例。
 
 ```java
@@ -112,6 +115,8 @@ POJO data = reader.readSheetDataAsObject(ReaderConfig readerConfig)
 // 读取excel为List数据
 List<POJO> data = reader.readSheetData(ReaderConfig readerConfig)
 ```
+
+
 
 #### 4.1.1 注解说明
 
@@ -166,7 +171,7 @@ while (excelReader.hasNext()){
 }
 ```
 
-#### 4.1.3 [重要]以读取配置为参数读取
+#### 4.1.3 [重要]以读取配置为参数读取<span id="Anchor-ConfigRead"> </span>
 
 ​	一般读取来说，若无特殊读取需求，可以直接构造读取器。
 
@@ -269,14 +274,14 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 
 📖AxolotlExcelReadException异常中包含以下内容：
 
-| 可获取内容             | 说明                                   |      |
-| ---------------------- | -------------------------------------- | ---- |
-| message                | 错误信息                               |      |
-| currentReadRowIndex    | 当前读取行数                           |      |
-| currentReadColumnIndex | 当前读取列数                           |      |
-| humanReadablePosition  | 良好可读性的错误位置（示例：A5单元格） |      |
-| fieldName              | 错误的实体属性                         |      |
-| exceptionType          | 读取错误类型                           |      |
+| 可获取内容             | 说明                                   |
+| ---------------------- | -------------------------------------- |
+| message                | 错误信息                               |
+| currentReadRowIndex    | 当前读取行数                           |
+| currentReadColumnIndex | 当前读取列数                           |
+| humanReadablePosition  | 良好可读性的错误位置（示例：A5单元格） |
+| fieldName              | 错误的实体属性                         |
+| exceptionType          | 读取错误类型                           |
 
 📖AxolotlExcelReadException.ExceptionType错误类型说明：
 
@@ -286,6 +291,34 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | READ_EXCEL_ROW_ERROR | 读取Excel数据时，出现了异常 |
 | CONVERT_FIELD_ERROR  | 转换数据时出现异常          |
 | VALIDATION_ERROR     | 校验数据时出现异常          |
+
+#### 4.1.7 StreamReader流读取器支持
+
+​	在读取大的Excel文件（文件大小>=10-16M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据30w行数据左右时将占用10G内存,时间在1min左右。
+
+​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
+
+​	<font color='orange'>**在使用流读取器时只能使用迭代器获取表中数据，并且只能支持xlsx格式。**</font>
+
+```java
+// 获取流读取器
+AxolotlStreamExcelReader<Object> streamExcelReader = Axolotls.getStreamExcelReader(file);
+int recordRowNumber = streamExcelReader.getRecordRowNumber();
+System.err.println(recordRowNumber);
+// 构建配置（在流读取下表位置，开始位置，结束位置等设置均无用）
+ReaderConfig<TestEntity> readerConfig = new ReaderConfig<>(TestEntity.class);
+// 获取迭代器
+AxolotlExcelStream<TestEntity> dataIterator = streamExcelReader.dataIterator(readerConfig);
+int idx = 0;
+// 读取数据
+while (dataIterator.hasNext()){
+	TestEntity entity = dataIterator.next();
+	System.out.println(idx+"="+entity);
+	idx++;
+}
+```
+
+
 
 ### 4.2 Excel文档写入
 
@@ -309,6 +342,7 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
 > This error is reported when the org.slf4j.impl.StaticLoggerBinder class could not be loaded into memory. This happens when no appropriate SLF4J binding could be found on the class path. Placing one (and only one) of slf4j-nop.jar, slf4j-simple.jar, slf4j-log4j12.jar, slf4j-jdk14.jar or logback-classic.jar on the class path should solve the problem.
 >
+> 翻译：无法将org.slf4j.impl.StaticLoggerBinder类装入内存。当在类路径上找不到适当的SLF4J绑定时，就会发生这种情况。将slf4j-nop.jar、slf4j-simple.jar、slf4j-log4j12.jar、slf4j-jdk14.jar或logback-classic.jar中的一个(且只有一个)放在类路径上应该可以解决这个问题。
 
 ```xml
 <dependency>
@@ -340,11 +374,23 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 #### @ColumnBind注解中headerName的使用
 
 ​	该功能的是为了读取数据时直接按照表头名称读取对应列所设计，解决不同模板之间表头有差异造成读取列错位所设计的功能。
-​	指定注解中此参数，会去读取工作表中查找完全匹配的单元格字符串（例如：备注，地址）所对应的列位置转换为所对应的列索引作为读取列（如果有多个同名表头可指定sameHeaderIdx参数区分不同同名列），相当于转化为注解中的columnIndex参数。
+​	指定注解中此参数，会去读取工作表中查找<font color='orange'>**完全匹配**</font>的单元格字符串（例如：备注，地址）所对应的列位置转换为所对应的列索引作为读取列（如果有多个同名表头可指定**sameHeaderIdx**参数区分不同同名列），相当于转化为注解中的columnIndex参数。
 
 <div style="float:right;padding-right:15px">
     提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>
 </div>
+
+
+------
+
+#### IDEA 引入相关包后import中报错但编译正常
+
+​	出现该问题是由于XVOID包功能由其他语言支持，遇到此问题请升级IDEA到最新版。
+
+<div style="float:right;padding-right:15px">
+    提出人：<b>@zongzg</b> 提出时间：<b>2024-02-19</b>
+</div>
+
 
 ------
 
@@ -355,3 +401,6 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 [📂Apache POI官方网站](https://poi.apache.org/)
 
 [📂Hibernate Validator官方网站](https://docs.jboss.org/hibernate/stable/validator/reference/en-US/html_single)
+
+[📂Apache PDFBox官方网站](https://pdfbox.apache.org/)
+

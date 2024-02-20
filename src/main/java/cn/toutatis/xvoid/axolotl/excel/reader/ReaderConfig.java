@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel;
+package cn.toutatis.xvoid.axolotl.excel.reader;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
