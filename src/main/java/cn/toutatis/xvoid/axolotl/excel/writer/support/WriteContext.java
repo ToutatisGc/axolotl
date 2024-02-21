@@ -26,8 +26,13 @@ public class WriteContext {
 
     /**
      * 单次引用索引
+     * <p>单词引用数据仅能使用一次，重复写入相同字段将跳过</p>
      */
     private HashBasedTable<Integer,String,CellAddress> singleReferenceData = HashBasedTable.create();
+    /**
+     * 记录已使用引用索引
+     */
+    private HashBasedTable<Integer,String,Boolean> alreadyUsedReferenceData = HashBasedTable.create();
 
     /**
      * 循环引用索引

@@ -28,7 +28,7 @@ public enum ExcelWritePolicy {
     /**
      * 写入策略类型
      */
-    private enum Type {
+    public enum Type {
 
         /**
          * 布尔型策略

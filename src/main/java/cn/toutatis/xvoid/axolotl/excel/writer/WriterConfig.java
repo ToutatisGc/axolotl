@@ -9,6 +9,7 @@ import lombok.SneakyThrows;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,9 +28,16 @@ public class WriterConfig {
     }
 
     public WriterConfig(boolean withDefaultConfig) {
+        if (withDefaultConfig) {
+            Map<ExcelWritePolicy, Object> defaultReadPolicies = new HashMap<>();
+            for (ExcelWritePolicy policy : ExcelWritePolicy.values()) {
+                if (policy.isDefaultPolicy()){
+                    defaultReadPolicies.put(policy,policy.getValue());
+                }
+            }
+            writePolicies.putAll(defaultReadPolicies);
+        }
     }
-
-
 
     {
         try {
@@ -57,7 +65,7 @@ public class WriterConfig {
     /**
      * 写入策略
      */
-    private Map<ExcelWritePolicy, Object> writePolicies;
+    private Map<ExcelWritePolicy, Object> writePolicies = new HashMap<>();
 
     /**
      * 样式渲染器
@@ -89,6 +97,16 @@ public class WriterConfig {
 
     public void setStyleRender(String themeName) {
         this.setStyleRender(ExcelWriteThemes.valueOf(themeName.toUpperCase()));
+    }
+
+    /**
+     * 获取一个布尔值类型的读取策略
+     */
+    public boolean getWritePolicyAsBoolean(ExcelWritePolicy policy) {
+        if (policy.getType() != ExcelWritePolicy.Type.BOOLEAN){
+            throw new IllegalArgumentException("读取特性不是一个布尔类型");
+        }
+        return writePolicies.containsKey(policy) && (boolean) writePolicies.get(policy);
     }
 
     public String getSheetName() {
