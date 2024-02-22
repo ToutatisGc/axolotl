@@ -1,7 +1,10 @@
 package cn.toutatis.xvoid.axolotl.manage;
 
+import cn.toutatis.xvoid.axolotl.Meta;
+import cn.toutatis.xvoid.axolotl.manage.impl.MemoryProgressManager;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.RandomStringUtils;
 
 /**
  * 进度管理器,用来获取默认实现。
@@ -31,5 +34,12 @@ public class Progress {
     
     public static boolean isFinished(String progressId) {
         return defaultProgressManager.isFinished(progressId);
+    }
+
+    /**
+     * 生成一个随机的进度ID
+     */
+    public static String generateProgressId(){
+        return (Meta.MODULE_NAME + "-" + RandomStringUtils.randomAlphabetic(16)).toUpperCase();
     }
 }

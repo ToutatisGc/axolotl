@@ -9,10 +9,12 @@ import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.CellAddress;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.WriteContext;
+import cn.toutatis.xvoid.axolotl.manage.Progress;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.MapDifference;
@@ -38,7 +40,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.format;
 
 /**
  * 文档文件写入器
@@ -150,6 +153,9 @@ public class AxolotlExcelWriter implements Closeable {
                 this.resolveTemplate(sheet);
                 // 写入Map映射
                 this.writeSingleData(sheet,singleMap,false);
+                boolean dataIsEmpty = Validator.objNotNull(data);
+                String progressId = Progress.generateProgressId();
+                Progress.init(progressId,dataIsEmpty? 1 : data.size());
                 // 写入循环数据
 //                Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
 //                if (Validator.objNotNull(data)){

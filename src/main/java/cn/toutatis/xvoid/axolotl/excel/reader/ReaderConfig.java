@@ -173,7 +173,7 @@ public class ReaderConfig<T> {
         }
         IndexWorkSheet indexWorkSheet = castClass.getAnnotation(IndexWorkSheet.class);
         if (indexWorkSheet != null) {
-            this.setStartIndex(indexWorkSheet.sheetIndex());
+            this.setSheetIndex(indexWorkSheet.sheetIndex());
             this.setInitialRowPositionOffset(indexWorkSheet.readRowOffset());
             this.setReadClassAnnotation(true);
         }

@@ -47,7 +47,6 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                     }
                 }
                 return cellValueString;
-
             case NUMERIC:
                 if (!excludePolicies.containsKey(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
                     if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
@@ -62,11 +61,9 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 } else {
                     return String.format("%." + AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE + "f", (Double) cellValue);
                 }
-
             case BOOLEAN:
             case FORMULA:
                 return cellValue.toString();
-
             default:
                 return null;
         }
