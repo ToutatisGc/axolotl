@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -71,6 +72,19 @@ public class WriteTest {
 
         axolotlExcelWriter.writeToTemplate(0, map, LIST);
         axolotlExcelWriter.close();
+    }
+
+    @Test
+    public void testShift() throws IOException {
+        File file = FileToolkit.getResourceFileAsFile("workbook/write/漂移写入测试.xlsx");
+        WriterConfig writerConfig = new WriterConfig();
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        writerConfig.setOutputStream(fileOutputStream);
+        try (AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig)) {
+            Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
+            axolotlExcelWriter.writeToTemplate(0, map, null);
+            axolotlExcelWriter.writeToTemplate(0, Map.of("age",50), null);
+        }
     }
 
 }

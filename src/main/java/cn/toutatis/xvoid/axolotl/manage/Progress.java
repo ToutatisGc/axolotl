@@ -16,4 +16,20 @@ public class Progress {
     @Getter @Setter
     private static ProgressManager defaultProgressManager = new MemoryProgressManager();
 
+    
+    public static void init(String progressId, int totalRecords) {
+        defaultProgressManager.init(progressId, totalRecords);
+    }
+    
+    public static void updateProgress(String progressId, int currentRecords) {
+        defaultProgressManager.updateProgress(progressId, currentRecords);
+    }
+    
+    public static Double getProgress(String progressId) {
+        return defaultProgressManager.getProgress(progressId);
+    }
+    
+    public static boolean isFinished(String progressId) {
+        return defaultProgressManager.isFinished(progressId);
+    }
 }

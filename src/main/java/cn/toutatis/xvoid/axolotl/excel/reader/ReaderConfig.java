@@ -252,6 +252,9 @@ public class ReaderConfig<T> {
                 indexPositionMappingInfos.add(entityCellMappingInfo);
             }
         }
+        if (positionMappingInfos.isEmpty() && indexPositionMappingInfos.isEmpty()){
+            throw new IllegalArgumentException("没有找到任何单元格映射注解");
+        }
         this.positionMappingInfos = positionMappingInfos;
         this.indexMappingInfos = indexPositionMappingInfos;
     }

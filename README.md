@@ -127,7 +127,9 @@ System.out.println(data);
 
 ## Part.4 详细使用说明
 
-### 4.1 Excel文档读取
+### 4.1 Excel操作
+
+#### 4.1.1 Excel文档读取
 
 🔆在构建AxolotlExcelReader后，**使用readSheetData(args)读取数据**，readSheetData有多种形参方法，详情请查看readSheetData方法源代码，基本上均为readSheetData(ReaderConfig readerConfig)的变种使用[【📌点击跳转至对应章节】](#Anchor-ConfigRead)。
 
@@ -144,7 +146,7 @@ List<POJO> data = reader.readSheetData(ReaderConfig readerConfig)
 
 
 
-#### 4.1.1 注解说明
+##### 4.1.1.1 注解说明
 
 | 注解（annotations）                   | 用途                                            | 参数说明                                                     |
 | ------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
@@ -184,7 +186,7 @@ public class TestEntity {
 }
 ```
 
-#### 4.1.2 迭代器支持
+##### 4.1.1.2 迭代器支持
 
 ​	读取数据量大时支持迭代器读取。
 
@@ -197,7 +199,7 @@ while (excelReader.hasNext()){
 }
 ```
 
-#### 4.1.3 [重要]以读取配置为参数读取<span id="Anchor-ConfigRead"> </span>
+##### 4.1.1.3 [重要]以读取配置为参数读取<span id="Anchor-ConfigRead"> </span>
 
 ​	一般读取来说，若无特殊读取需求，可以直接构造读取器。
 
@@ -233,7 +235,7 @@ List<TestEntity> list = reader.readSheetData(readerConfig);
 | rowReadPolicyMap                  | 策略集合                         | 否   | 参考默认策略 |
 | searchHeaderMaxRows               | 搜索表头最大行                   | 否   | 10           |
 
-#### 4.1.4 读取策略说明
+##### 4.1.1.4 读取策略说明
 
 ​	在读取Excel文件数据时，读取到数据时会有默认的读取策略。
 
@@ -262,7 +264,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | FIELD_EXIST_OVERRIDE            | 如果字段存在值覆盖掉原值                                     | Boolean  | true           | true   |
 | **VALIDATE_READ_ROW_DATA**      | 读取数据后校验数据                                           | Boolean  | true           | true   |
 
-#### 4.1.5 JSR-303支持（数据校验）
+##### 4.1.1.5 JSR-303支持（数据校验）
 
 本框架支持Bean Validation,使用Hibernate-Validator进行实体属性校验。
 
@@ -292,7 +294,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | @NotBlank                   | 被注释的字符串的必须非空                                     |
 | @URI                        | 字符串是否是一个有效的URL                                    |
 
-#### 4.1.6 异常处理
+##### 4.1.1.6 异常处理
 
 ​	在读取文件时难免会有读取错误的情况，在发生读取异常时会抛出**AxolotlExcelReadException**来提示异常信息。
 
@@ -318,7 +320,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | CONVERT_FIELD_ERROR  | 转换数据时出现异常          |
 | VALIDATION_ERROR     | 校验数据时出现异常          |
 
-#### 4.1.7 StreamReader流读取器支持
+##### 4.1.1.7 StreamReader流读取器支持
 
 ​	在读取大的Excel文件（文件大小>=10-16M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据30w行数据左右时将占用10G内存,时间在1min左右。
 
@@ -346,13 +348,43 @@ while (dataIterator.hasNext()){
 
 
 
-### 4.2 Excel文档写入
+#### 4.1.2 Excel文档写入
 
 ​	<font color='orange'>**本框架仅支持XLSX文件写入，性能更优异兼容更好。**</font>
 
-#### 4.2.1 写入模板文件
+##### 4.1.2.1 写入模板文件
 
 ​	框架支持将写入模板文件
+
+### 4.2 PDF操作
+
+```
+// 等待Feature支持
+```
+
+### 4.3 通用支持
+
+#### 4.3.1 调试信息
+
+​	本框架将logging.level等级设置为<font color='RED'>**DEBUG**</font>可见调试信息。
+
+🧭示例 log4j.properties 配置如下：
+
+```ini
+# Set root logger level to DEBUG and its only appender to console.
+log4j.rootLogger=DEBUG, console
+
+# console is set to be a ConsoleAppender.
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+
+# console uses PatternLayout.
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.Target = System.out
+log4j.appender.console.Threshold = DEBUG
+log4j.appender.console.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
+```
+
+
 
 ## Part.5 疑难解答
 
@@ -407,8 +439,6 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 <div style="float:right;padding-right:15px">
     提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>
 </div>
-
-
 ------
 
 #### IDEA 引入相关包后import中报错但编译正常
@@ -418,17 +448,19 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 <div style="float:right;padding-right:15px">
     提出人：<b>@zongzg</b> 提出时间：<b>2024-02-19</b>
 </div>
-
-
 ------
 
 
 
 ## Part.6 相关链接
 
+[📂GitHub VOID框架支持库](https://github.com/ToutatisGc/VOID)
+
 [📂Apache POI官方网站](https://poi.apache.org/)
 
 [📂Hibernate Validator官方网站](https://docs.jboss.org/hibernate/stable/validator/reference/en-US/html_single)
 
 [📂Apache PDFBox官方网站](https://pdfbox.apache.org/)
+
+[📂Apache Tika官方网站](https://tika.apache.org/)
 

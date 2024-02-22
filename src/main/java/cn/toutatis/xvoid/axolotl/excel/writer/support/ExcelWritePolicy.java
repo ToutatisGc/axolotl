@@ -23,7 +23,12 @@ public enum ExcelWritePolicy {
      * 将数据写入时，自动将数据写入到下一行
      * 不会影响原有模板数据的位置
      */
-    SHIFT_WRITE_ROW(Type.BOOLEAN, true, true);
+    SHIFT_WRITE_ROW(Type.BOOLEAN, true, true),
+
+    /**
+     * 为没有指定的占位符填充默认值
+     */
+    PLACEHOLDER_FILL_DEFAULT(Type.BOOLEAN, true, true);
 
     /**
      * 写入策略类型
