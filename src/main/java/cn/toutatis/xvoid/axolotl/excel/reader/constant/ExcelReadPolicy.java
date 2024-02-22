@@ -6,7 +6,7 @@ import lombok.Getter;
  * 读取Excel的功能可配置特性
  */
 @Getter
-public enum ReadPolicy {
+public enum ExcelReadPolicy {
 
 
     /*表相关配置*/
@@ -92,7 +92,7 @@ public enum ReadPolicy {
     private final Object value;
 
 
-    ReadPolicy(Type type, boolean defaultPolicy, Object value) {
+    ExcelReadPolicy(Type type, boolean defaultPolicy, Object value) {
         this.type = type;
         this.defaultPolicy = defaultPolicy;
         this.value = value;

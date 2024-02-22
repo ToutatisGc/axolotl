@@ -67,9 +67,9 @@ public class EntityCellMappingInfo<FT> {
     /**
      * 排除的读取特性
      * @see cn.toutatis.xvoid.axolotl.excel.reader.annotations.KeepIntact
-     * @see ReadPolicy 读取特性
+     * @see ExcelReadPolicy 读取特性
      */
-    private Map<ReadPolicy,Object> excludePolicies = new HashMap<>();
+    private Map<ExcelReadPolicy,Object> excludePolicies = new HashMap<>();
 
     /**
      * 单元格映射类型

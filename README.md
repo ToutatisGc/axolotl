@@ -18,12 +18,11 @@
 
 ### 1.1 版本更新说明
 
-#### 🔝 0.0.8-ALPHA-8 更新说明
+#### 🔝 0.0.9-ALPHA-8 更新说明
 
-- 增加对application/octet-stream的兼容。
-- 使用@IndexWorkSheet和@NamingWorkSheet的起始读取偏移行支持。
-- ReaderConfig增加搜索表头最大行的可配置项。
-- 部分逻辑优化
+- 增加对流式读取的支持。**详情查看章节【4.1.7】**
+- 对读取器进行抽取方法，增加灵活性。
+- 计划支持PDF，添加相关依赖。
 
 #### 🧩历史版本更新说明
 
@@ -31,10 +30,10 @@
 
 ## Part.2 目前支持功能
 
-|  支持的文件格式   | 目前支持功能 |      |
-| :---------------: | :----------: | ---- |
-| Excel(.xlsx,.xls) |  导入/导出   |      |
-|     PDF(.pdf)     |  🔜计划支持   |      |
+|  支持的文件格式   | 目前支持功能 |
+| :---------------: | :----------: |
+| Excel(.xlsx,.xls) |  导入/导出   |
+|     PDF(.pdf)     |  🔜计划支持   |
 
 ## Part.3 如何开始使用
 
@@ -60,16 +59,16 @@
 </dependency>
 ```
 
-### 3.2 文档操作
+### 3.2 Excel 文档操作
 
 #### 3.2.1 读取Excel文件
 
 📖Excel文件支持类型：
 
-| MIME-TYPE                                                    |         说明          |      | 文件后缀 |
-| :----------------------------------------------------------- | :-------------------: | :--: | :------: |
-| application/vnd.ms-excel                                     | Excel 97-2003文件版本 |      |  [.xls]  |
-| application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Excel 2007及以上版本  |      | [.xlsx]  |
+| MIME-TYPE                                                    |         说明          | 文件后缀 |
+| :----------------------------------------------------------- | :-------------------: | :------: |
+| application/vnd.ms-excel                                     | Excel 97-2003文件版本 |  [.xls]  |
+| application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Excel 2007及以上版本  | [.xlsx]  |
 
 ##### 3.2.1.1 构建文档读取器
 
@@ -96,13 +95,45 @@ System.out.println(data);
 
 #### 3.2.2 写入Excel文件
 
+​	本框架支持写入XLSX文件。
+
+##### 3.2.2.1 构建文档写入器
+
+```
+//TODO 等待完善
+```
+
+##### 3.2.2.2 两种写入方式
+
+###### <1> 模板写入
+
+```
+
+```
+
+###### <2> 预设样式写入
+
+```
+
+```
+
+
+
+### 3.3 PDF 文档操作
+
 ```
 // TODO 等待支持
 ```
 
 ## Part.4 详细使用说明
 
-### 4.1 Excel文档读取
+### 4.1 Excel操作
+
+#### 4.1.1 Excel文档读取
+
+🔆在构建AxolotlExcelReader后，**使用readSheetData(args)读取数据**，readSheetData有多种形参方法，详情请查看readSheetData方法源代码，基本上均为readSheetData(ReaderConfig readerConfig)的变种使用[【📌点击跳转至对应章节】](#Anchor-ConfigRead)。
+
+
 
 🔆框架支持读取Excel为List<T>或者为单个Object实例。
 
@@ -113,7 +144,9 @@ POJO data = reader.readSheetDataAsObject(ReaderConfig readerConfig)
 List<POJO> data = reader.readSheetData(ReaderConfig readerConfig)
 ```
 
-#### 4.1.1 注解说明
+
+
+##### 4.1.1.1 注解说明
 
 | 注解（annotations）                   | 用途                                            | 参数说明                                                     |
 | ------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
@@ -153,20 +186,20 @@ public class TestEntity {
 }
 ```
 
-#### 4.1.2 迭代器支持
+##### 4.1.1.2 迭代器支持
 
 ​	读取数据量大时支持迭代器读取。
 
 ```java
 AxolotlExcelReader<POJO> excelReader = Axolotls.getExcelReader(file, POJO.class);
-// 配置表级配置（一般不推荐配置，shu'yu）
+// 配置表级配置（一般不推荐配置，属于内部维护变量）
 excelReader.set_sheetLevelReaderConfig(readerConfig);
 while (excelReader.hasNext()){
 	List<POJO> next = excelReader.next();
 }
 ```
 
-#### 4.1.3 [重要]以读取配置为参数读取
+##### 4.1.1.3 [重要]以读取配置为参数读取<span id="Anchor-ConfigRead"> </span>
 
 ​	一般读取来说，若无特殊读取需求，可以直接构造读取器。
 
@@ -202,7 +235,7 @@ List<TestEntity> list = reader.readSheetData(readerConfig);
 | rowReadPolicyMap                  | 策略集合                         | 否   | 参考默认策略 |
 | searchHeaderMaxRows               | 搜索表头最大行                   | 否   | 10           |
 
-#### 4.1.4 读取策略说明
+##### 4.1.1.4 读取策略说明
 
 ​	在读取Excel文件数据时，读取到数据时会有默认的读取策略。
 
@@ -211,9 +244,9 @@ List<TestEntity> list = reader.readSheetData(readerConfig);
 ```java
 // 使用 new ReaderConfig<>(false);可取消所有读取策略，基本上以异常抛出形式作为错误，默认为true，包含以下所有默认读取策略
 ReaderConfig<T> readerConfig = new ReaderConfig<>(castClass);
-// 使用setBooleanReadFeature方法可指定读取策略
+// 使用setBooleanReadPolicy方法可指定读取策略
 // 在此实例中，忽略空表异常（IGNORE_EMPTY_SHEET_ERROR）指定为true时，将返回一个空的读取列表，在指定为false时将抛出空表异常
-readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
+readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 ```
 
 📖读取策略说明：
@@ -231,7 +264,7 @@ readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | FIELD_EXIST_OVERRIDE            | 如果字段存在值覆盖掉原值                                     | Boolean  | true           | true   |
 | **VALIDATE_READ_ROW_DATA**      | 读取数据后校验数据                                           | Boolean  | true           | true   |
 
-#### 4.1.5 JSR-303支持（数据校验）
+##### 4.1.1.5 JSR-303支持（数据校验）
 
 本框架支持Bean Validation,使用Hibernate-Validator进行实体属性校验。
 
@@ -261,7 +294,7 @@ readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | @NotBlank                   | 被注释的字符串的必须非空                                     |
 | @URI                        | 字符串是否是一个有效的URL                                    |
 
-#### 4.1.6 异常处理
+##### 4.1.1.6 异常处理
 
 ​	在读取文件时难免会有读取错误的情况，在发生读取异常时会抛出**AxolotlExcelReadException**来提示异常信息。
 
@@ -269,14 +302,14 @@ readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 
 📖AxolotlExcelReadException异常中包含以下内容：
 
-| 可获取内容             | 说明                                   |      |
-| ---------------------- | -------------------------------------- | ---- |
-| message                | 错误信息                               |      |
-| currentReadRowIndex    | 当前读取行数                           |      |
-| currentReadColumnIndex | 当前读取列数                           |      |
-| humanReadablePosition  | 良好可读性的错误位置（示例：A5单元格） |      |
-| fieldName              | 错误的实体属性                         |      |
-| exceptionType          | 读取错误类型                           |      |
+| 可获取内容             | 说明                                   |
+| ---------------------- | -------------------------------------- |
+| message                | 错误信息                               |
+| currentReadRowIndex    | 当前读取行数                           |
+| currentReadColumnIndex | 当前读取列数                           |
+| humanReadablePosition  | 良好可读性的错误位置（示例：A5单元格） |
+| fieldName              | 错误的实体属性                         |
+| exceptionType          | 读取错误类型                           |
 
 📖AxolotlExcelReadException.ExceptionType错误类型说明：
 
@@ -287,11 +320,71 @@ readerConfig.setBooleanReadFeature(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | CONVERT_FIELD_ERROR  | 转换数据时出现异常          |
 | VALIDATION_ERROR     | 校验数据时出现异常          |
 
-### 4.2 Excel文档写入
+##### 4.1.1.7 StreamReader流读取器支持
 
-本框架仅支持XLSX文件写入，性能更优异兼容更好。
+​	在读取大的Excel文件（文件大小>=10-16M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据30w行数据左右时将占用10G内存,时间在1min左右。
 
-> 写入Excel功能将在完整支持后完善
+​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
+
+​	<font color='orange'>**在使用流读取器时只能使用迭代器获取表中数据，并且只能支持XLSX格式。**</font>
+
+```java
+// 获取流读取器
+AxolotlStreamExcelReader<Object> streamExcelReader = Axolotls.getStreamExcelReader(file);
+int recordRowNumber = streamExcelReader.getRecordRowNumber();
+System.err.println(recordRowNumber);
+// 构建配置（在流读取下表位置，开始位置，结束位置等设置均无用）
+ReaderConfig<TestEntity> readerConfig = new ReaderConfig<>(TestEntity.class);
+// 获取迭代器
+AxolotlExcelStream<TestEntity> dataIterator = streamExcelReader.dataIterator(readerConfig);
+int idx = 0;
+// 读取数据
+while (dataIterator.hasNext()){
+	TestEntity entity = dataIterator.next();
+	System.out.println(idx+"="+entity);
+	idx++;
+}
+```
+
+
+
+#### 4.1.2 Excel文档写入
+
+​	<font color='orange'>**本框架仅支持XLSX文件写入，性能更优异兼容更好。**</font>
+
+##### 4.1.2.1 写入模板文件
+
+​	框架支持将写入模板文件
+
+### 4.2 PDF操作
+
+```
+// 等待Feature支持
+```
+
+### 4.3 通用支持
+
+#### 4.3.1 调试信息
+
+​	本框架将logging.level等级设置为<font color='RED'>**DEBUG**</font>可见调试信息。
+
+🧭示例 log4j.properties 配置如下：
+
+```ini
+# Set root logger level to DEBUG and its only appender to console.
+log4j.rootLogger=DEBUG, console
+
+# console is set to be a ConsoleAppender.
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+
+# console uses PatternLayout.
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.Target = System.out
+log4j.appender.console.Threshold = DEBUG
+log4j.appender.console.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
+```
+
+
 
 ## Part.5 疑难解答
 
@@ -309,6 +402,7 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
 > This error is reported when the org.slf4j.impl.StaticLoggerBinder class could not be loaded into memory. This happens when no appropriate SLF4J binding could be found on the class path. Placing one (and only one) of slf4j-nop.jar, slf4j-simple.jar, slf4j-log4j12.jar, slf4j-jdk14.jar or logback-classic.jar on the class path should solve the problem.
 >
+> 翻译：无法将org.slf4j.impl.StaticLoggerBinder类装入内存。当在类路径上找不到适当的SLF4J绑定时，就会发生这种情况。将slf4j-nop.jar、slf4j-simple.jar、slf4j-log4j12.jar、slf4j-jdk14.jar或logback-classic.jar中的一个(且只有一个)放在类路径上应该可以解决这个问题。
 
 ```xml
 <dependency>
@@ -333,25 +427,40 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
 #### 合并单元格内容读取
 
-​	读取<font color='red'>**合并单元格**</font>不同列时会读取到同样的内容，因为本框架**目前**采用的策略为散播策略，会将合并单元格的值散播到合并单元格中各个单元格上（原为合并单元格中第0行，第0列的值），未来如有需要将会把此项作为读取策略作为可配置项。
+​	读取<font color='red'>**合并单元格**</font>不同列时会读取到同样的内容，因为本框架**目前**采用的策略为散播策略，会将合并单元格的值散播到合并单元格的各个单元格上（原为合并单元格中第0行，第0列的值），未来如有需要将会把此项作为读取策略作为可配置项。
 
 ### 🚸使用疑问
 
 #### @ColumnBind注解中headerName的使用
 
 ​	该功能的是为了读取数据时直接按照表头名称读取对应列所设计，解决不同模板之间表头有差异造成读取列错位所设计的功能。
-​	指定注解中此参数，会去读取工作表中查找完全匹配的单元格字符串（例如：备注，地址）所对应的列位置转换为所对应的列索引作为读取列（如果有多个同名表头可指定sameHeaderIdx参数区分不同同名列），相当于转化为注解中的columnIndex参数。
+​	指定注解中此参数，会去读取工作表中查找<font color='orange'>**完全匹配**</font>的单元格字符串（例如：备注，地址）所对应的列位置转换为所对应的列索引作为读取列（如果有多个同名表头可指定**sameHeaderIdx**参数区分不同同名列），相当于转化为注解中的columnIndex参数。
 
 <div style="float:right;padding-right:15px">
     提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>
 </div>
+------
 
+#### IDEA 引入相关包后import中报错但编译正常
+
+​	出现该问题是由于XVOID包功能由其他语言支持，遇到此问题请升级IDEA到最新版。
+
+<div style="float:right;padding-right:15px">
+    提出人：<b>@zongzg</b> 提出时间：<b>2024-02-19</b>
+</div>
 ------
 
 
 
 ## Part.6 相关链接
 
+[📂GitHub VOID框架支持库](https://github.com/ToutatisGc/VOID)
+
 [📂Apache POI官方网站](https://poi.apache.org/)
 
 [📂Hibernate Validator官方网站](https://docs.jboss.org/hibernate/stable/validator/reference/en-US/html_single)
+
+[📂Apache PDFBox官方网站](https://pdfbox.apache.org/)
+
+[📂Apache Tika官方网站](https://tika.apache.org/)
+

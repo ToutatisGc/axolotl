@@ -1,10 +1,12 @@
-package cn.toutatis.xvoid.axolotl.entities;
+package cn.toutatis.xvoid.axolotl.excel.entities;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.KeepIntact;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import lombok.Data;
 
 @Data
-public class OneFieldStringEntity {
+public class OneFieldStringKeepIntactEntity {
 
     @ColumnBind(columnIndex = 0)
     private String column1;
@@ -34,6 +36,7 @@ public class OneFieldStringEntity {
     private String column9;
 
     @ColumnBind(columnIndex = 9)
+    @KeepIntact(excludePolicies = ExcelReadPolicy.CAST_NUMBER_TO_DATE)
     private String column10;
 
     @ColumnBind(columnIndex = 10)
