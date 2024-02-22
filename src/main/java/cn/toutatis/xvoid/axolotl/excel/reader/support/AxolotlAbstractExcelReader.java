@@ -20,10 +20,6 @@ import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.io.ByteStreams;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -38,6 +34,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -576,7 +576,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
         if (adapter == null){
             throw new AxolotlExcelReadException(mappingInfo,String.format("未找到转换的类型:[%s->%s],字段:[%s]",info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
-        if (adapter instanceof AbstractDataCastAdapter<Object> abstractDataCastAdapter){
+        if (adapter instanceof AbstractDataCastAdapter){
+            AbstractDataCastAdapter<Object> abstractDataCastAdapter = (AbstractDataCastAdapter<Object>) adapter;
             abstractDataCastAdapter.setReaderConfig(readerConfig);
             abstractDataCastAdapter.setEntityCellMappingInfo(mappingInfo);
             return castValue(abstractDataCastAdapter, info, mappingInfo);

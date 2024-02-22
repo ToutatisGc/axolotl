@@ -4,6 +4,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
+import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Getter;
@@ -252,8 +253,9 @@ public class ReaderConfig<T> {
                 indexPositionMappingInfos.add(entityCellMappingInfo);
             }
         }
-        if (positionMappingInfos.isEmpty() && indexPositionMappingInfos.isEmpty()){
-            throw new IllegalArgumentException("没有找到任何单元格映射注解");
+        if ((castClass != Object.class && castClass != Map.class) &&
+                (positionMappingInfos.isEmpty() && indexPositionMappingInfos.isEmpty())){
+            throw new IllegalArgumentException(LoggerHelper.format("类[%s]没有找到任何单元格映射注解", castClass.getSimpleName()));
         }
         this.positionMappingInfos = positionMappingInfos;
         this.indexMappingInfos = indexPositionMappingInfos;
