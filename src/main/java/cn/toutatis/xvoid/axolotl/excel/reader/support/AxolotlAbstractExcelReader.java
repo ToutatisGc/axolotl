@@ -623,7 +623,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
      *
      * @param row 行次
      * @param mappingInfo 映射信息
-     * @see #getIndexCellValue(Row, int, EntityCellMappingInfo)
+     * @see #getIndexCellValue(Row, int, EntityCellMappingInfo,ReaderConfig)
      * @return 单元格值
      */
     protected CellGetInfo getCellOriginalValue(Row row,int index, EntityCellMappingInfo<?> mappingInfo,ReaderConfig<?> readerConfig){
@@ -651,7 +651,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         }
         // 不在表有效索引范围中
         if (readerConfig != null){
-            if(readerConfig.getSheetColumnEffectiveRange()[0] > index && readerConfig.getSheetColumnEffectiveRange()[1] < index){
+            if(readerConfig.getSheetColumnEffectiveRange()[0] > index || readerConfig.getSheetColumnEffectiveRange()[1] < index){
                 return this.getBlankCellValue(mappingInfo);
             }
         }
