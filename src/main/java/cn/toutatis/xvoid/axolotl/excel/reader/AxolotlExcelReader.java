@@ -101,7 +101,7 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
     public List<T> readSheetData(int start){
         return this.readSheetData(
                 _sheetLevelReaderConfig.getSheetName(),_sheetLevelReaderConfig.getSheetIndex(),
-                0, this.getRecordRowNumber(),start
+                start, this.getRecordRowNumber(),_sheetLevelReaderConfig.getInitialRowPositionOffset()
         );
     }
 
