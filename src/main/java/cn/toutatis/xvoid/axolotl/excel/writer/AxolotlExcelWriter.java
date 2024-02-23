@@ -157,9 +157,9 @@ public class AxolotlExcelWriter implements Closeable {
                 String progressId = Progress.generateProgressId();
                 Progress.init(progressId,dataIsEmpty? 1 : data.size());
                 // 写入循环数据
-//                Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
-//                if (Validator.objNotNull(data)){
-//                    // TODO 列漂移写入特性
+                Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
+                if (dataIsEmpty){
+                    // TODO 列漂移写入特性
 //                    boolean shiftWrite = writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW);
 //                    if (shiftWrite){
 //                        int maxRowPosition = Integer.MIN_VALUE;
@@ -185,8 +185,8 @@ public class AxolotlExcelWriter implements Closeable {
 //                            System.err.println(field);
 //                        }
 //                    }
-//
-//                }
+
+                }
             }else{
                 throw new AxolotlWriteException(format("工作表索引[%s]模板中不存在",sheetIndex));
             }

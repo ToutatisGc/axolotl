@@ -18,11 +18,10 @@
 
 ### 1.1 版本更新说明
 
-#### 🔝 0.0.9-ALPHA-8 更新说明
+#### 🔝 0.0.10-ALPHA-8 更新说明
 
-- 增加对流式读取的支持。**详情查看章节【4.1.7】**
-- 对读取器进行抽取方法，增加灵活性。
-- 计划支持PDF，添加相关依赖。
+- 修复部分API错误
+- 增加指定列范围（sheetColumnEffectiveRange）的ReaderConfig支持
 
 #### 🧩历史版本更新说明
 
@@ -220,20 +219,21 @@ List<TestEntity> list = reader.readSheetData(readerConfig);
 
 📖ReaderConfig可配置项：
 
-| 配置项                            | 说明                             | 必填 | 默认值       |
-| --------------------------------- | -------------------------------- | ---- | ------------ |
-| 构造器(Class<T> castClass)        | 设置读取类                       | 是   | 无           |
-| 构造器(boolean withDefaultConfig) | 是否使用默认配置                 | 是   | True         |
-| Class<T> castClass                | 设置读取类                       | 是   | 无           |
-| sheetIndex                        | 工作表索引                       | 否   | 0            |
-| sheetName                         | 工作表名称                       | 否   | 无           |
-| initialRowPositionOffset          | 初始行偏移量                     | 否   | 0            |
-| startIndex                        | 读取起始行                       | 否   | 0            |
-| endIndex                          | 读取结束行                       | 否   | -1（所有）   |
-| <del>indexMappingInfos</del>      | 索引映射<br />（一般不用指定）   | 否   | 无           |
-| <del>positionMappingInfos</del>   | 单元格映射<br />（一般不用指定） | 否   | 无           |
-| rowReadPolicyMap                  | 策略集合                         | 否   | 参考默认策略 |
-| searchHeaderMaxRows               | 搜索表头最大行                   | 否   | 10           |
+| 配置项                            | 说明                                             | 必填 | 默认值       |
+| --------------------------------- | ------------------------------------------------ | ---- | ------------ |
+| 构造器(Class<T> castClass)        | 设置读取类                                       | 是   | 无           |
+| 构造器(boolean withDefaultConfig) | 是否使用默认配置                                 | 是   | True         |
+| Class<T> castClass                | 设置读取类                                       | 是   | 无           |
+| sheetIndex                        | 工作表索引                                       | 否   | 0            |
+| sheetName                         | 工作表名称                                       | 否   | 无           |
+| initialRowPositionOffset          | 初始行偏移量                                     | 否   | 0            |
+| startIndex                        | 读取起始行                                       | 否   | 0            |
+| endIndex                          | 读取结束行                                       | 否   | -1（所有）   |
+| <del>indexMappingInfos</del>      | 索引映射<br />（一般不用指定）                   | 否   | 无           |
+| <del>positionMappingInfos</del>   | 单元格映射<br />（一般不用指定）                 | 否   | 无           |
+| rowReadPolicyMap                  | 策略集合                                         | 否   | 参考默认策略 |
+| searchHeaderMaxRows               | 搜索表头最大行                                   | 否   | 10           |
+| sheetColumnEffectiveRange         | 工作表有效列范围<br />arr[1] = -1表示该Row所有列 | 否   | {0,-1}       |
 
 ##### 4.1.1.4 读取策略说明
 

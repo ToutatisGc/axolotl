@@ -388,9 +388,10 @@ public abstract class AxolotlAbstractExcelReader<T> {
                 notAlreadyRecordKeys.putAll(headerKeys);
             }
             if (!notAlreadyRecordKeys.isEmpty()){
+                int[] sheetColumnEffectiveRange = readerConfig.getSheetColumnEffectiveRange();
                 for (int i = 0; i < readHeadRows; i++) {
                     Row row = sheet.getRow(i);
-                    if (ExcelToolkit.notBlankRowCheck(row)){
+                    if (ExcelToolkit.notBlankRowCheck(row, sheetColumnEffectiveRange[0], sheetColumnEffectiveRange[1])){
                         Iterator<Cell> cellIterator = row.cellIterator();
                         while (cellIterator.hasNext()){
                             Cell cell = cellIterator.next();
@@ -457,7 +458,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
     protected <RT> RT readRow(Sheet sheet,int rowNumber,ReaderConfig<RT> readerConfig){
         RT instance = readerConfig.getCastClassInstance();
         Row row = sheet.getRow(rowNumber);
-        if (ExcelToolkit.blankRowCheck(row)){
+        if (ExcelToolkit.blankRowCheck(row,readerConfig)){
             if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.INCLUDE_EMPTY_ROW)){
                 return instance;
             }else{
@@ -495,7 +496,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         for (EntityCellMappingInfo<?> indexMappingInfo : indexMappingInfos) {
             workBookContext.setCurrentReadRowIndex(row.getRowNum());
             workBookContext.setCurrentReadColumnIndex(indexMappingInfo.getColumnPosition());
-            CellGetInfo cellValue = this.getCellOriginalValue(row,indexMappingInfo.getColumnPosition(), indexMappingInfo);
+            CellGetInfo cellValue = this.getCellOriginalValue(row,indexMappingInfo.getColumnPosition(), indexMappingInfo,readerConfig);
             Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, indexMappingInfo, readerConfig);
             this.assignValueToField(instance,adaptiveValue,indexMappingInfo,readerConfig);
         }
@@ -614,7 +615,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         if (cell == null){
             return this.getBlankCellValue(mappingInfo);
         }
-        return this.getCellOriginalValue(row,mappingInfo.getColumnPosition(), mappingInfo);
+        return this.getCellOriginalValue(row,mappingInfo.getColumnPosition(), mappingInfo,null);
     }
 
     /**
@@ -625,13 +626,13 @@ public abstract class AxolotlAbstractExcelReader<T> {
      * @see #getIndexCellValue(Row, int, EntityCellMappingInfo)
      * @return 单元格值
      */
-    protected CellGetInfo getCellOriginalValue(Row row,int index, EntityCellMappingInfo<?> mappingInfo){
+    protected CellGetInfo getCellOriginalValue(Row row,int index, EntityCellMappingInfo<?> mappingInfo,ReaderConfig<?> readerConfig){
         // 一般不为null，由map类型传入时，默认使用索引映射
         if (mappingInfo == null){
             mappingInfo = new EntityCellMappingInfo<>(String.class);
             mappingInfo.setColumnPosition(index);
         }
-        return this.getIndexCellValue(row,index, mappingInfo);
+        return this.getIndexCellValue(row,index, mappingInfo,readerConfig);
     }
 
     /**
@@ -643,9 +644,16 @@ public abstract class AxolotlAbstractExcelReader<T> {
      * @return 单元格值
      * @see #getFormulaCellValue(Cell)
      */
-    protected CellGetInfo getIndexCellValue(Row row,int index, EntityCellMappingInfo<?> mappingInfo){
+    protected CellGetInfo getIndexCellValue(Row row,int index, EntityCellMappingInfo<?> mappingInfo,ReaderConfig<?> readerConfig){
+        // 未找到映射返回空值
         if (index < 0){
             return this.getBlankCellValue(mappingInfo);
+        }
+        // 不在表有效索引范围中
+        if (readerConfig != null){
+            if(readerConfig.getSheetColumnEffectiveRange()[0] > index && readerConfig.getSheetColumnEffectiveRange()[1] < index){
+                return this.getBlankCellValue(mappingInfo);
+            }
         }
         Cell cell = row.getCell(index);
         if (mappingInfo.getColumnPosition() == -1 || cell == null){
@@ -706,11 +714,14 @@ public abstract class AxolotlAbstractExcelReader<T> {
      */
     protected <RT> void row2MapInstance(Map<String,Object> instance, Row row,ReaderConfig<RT> readerConfig){
         workBookContext.setCurrentReadRowIndex(row.getRowNum());
-        row.cellIterator().forEachRemaining(cell -> {
+        int[] sheetColumnEffectiveRange = readerConfig.getSheetColumnEffectiveRange();
+        short lastCellRangeNum = sheetColumnEffectiveRange[1] < 0 ? row.getLastCellNum() : (short) sheetColumnEffectiveRange[1];
+        for (int i = sheetColumnEffectiveRange[0]; i < lastCellRangeNum; i++) {
+            Cell cell = row.getCell(i);
             workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
             int idx = cell.getColumnIndex() + 1;
             String key = "CELL_" + idx;
-            instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null).getCellValue());
+            instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null,readerConfig).getCellValue());
             if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
                 instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 if (cell.getCellType() == CellType.NUMERIC){
@@ -724,7 +735,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
                     instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 }
             }
-        });
+        }
     }
 
     /**
