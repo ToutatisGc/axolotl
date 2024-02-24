@@ -21,8 +21,18 @@ public class LoggerHelper {
         /*JDK8*/
         /*return String.format(message,args);*/
     }
+
+    /**
+     * 调试输出
+     * @param logger 日志对象
+     * @param message 消息内容
+     */
     public static void debug(Logger logger,String message) {
         LoggerToolkitKt.debugWithModule(logger, Meta.MODULE_NAME,message);
+    }
+
+    public static void debug(Logger logger,String message,Object... args) {
+        LoggerToolkitKt.debugWithModule(logger, Meta.MODULE_NAME,format(message, args));
     }
 
     public static void info(Logger logger,String message){

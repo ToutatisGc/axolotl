@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.dev;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
 import cn.toutatis.xvoid.toolkit.constant.Time;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -83,7 +85,15 @@ public class WriteTest {
         try (AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig)) {
             Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
             axolotlExcelWriter.writeToTemplate(0, map, null);
-            axolotlExcelWriter.writeToTemplate(0, Map.of("age",50), null);
+            ArrayList<JSONObject> datas = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                JSONObject sch = new JSONObject();
+                sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
+                sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+                sch.put("graduate", true);
+                datas.add(sch);
+            }
+            axolotlExcelWriter.writeToTemplate(0, Map.of("age",50), datas);
         }
     }
 
