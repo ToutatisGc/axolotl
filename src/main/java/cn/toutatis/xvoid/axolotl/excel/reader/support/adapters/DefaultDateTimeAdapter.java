@@ -145,8 +145,11 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
 
     @Override
     public boolean support(CellType cellType, Class<NT> clazz) {
-        return clazz == Date.class ||
-               clazz == LocalDateTime.class ||
-               clazz == LocalDate.class;
+        return  (cellType == CellType.STRING ||
+                cellType == CellType.NUMERIC ||
+                cellType == CellType.BLANK) &&
+                (clazz == Date.class ||
+                clazz == LocalDateTime.class ||
+                clazz == LocalDate.class) ;
     }
 }

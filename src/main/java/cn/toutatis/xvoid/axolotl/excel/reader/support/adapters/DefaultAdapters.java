@@ -18,22 +18,22 @@ public class DefaultAdapters {
     /**
      * 默认数据类型适配器
      */
-    private static final Map<Class<?>,DataCastAdapter<?>> defaultAdapters = new HashMap<>();
+    private static final Map<Class<?>,DataCastAdapter<?>> DEFAULT_ADAPTERS = new HashMap<>();
 
     static {
-        defaultAdapters.put(String.class, new DefaultStringAdapter());
-        defaultAdapters.put(Integer.class, new DefaultNumericAdapter<>(Integer.class));
-        defaultAdapters.put(int.class, new DefaultNumericAdapter<>(Integer.class));
-        defaultAdapters.put(Long.class, new DefaultNumericAdapter<>(Long.class));
-        defaultAdapters.put(long.class, new DefaultNumericAdapter<>(Long.class));
-        defaultAdapters.put(Double.class, new DefaultNumericAdapter<>(Double.class));
-        defaultAdapters.put(double.class, new DefaultNumericAdapter<>(Double.class));
-        defaultAdapters.put(BigDecimal.class, new DefaultNumericAdapter<>(BigDecimal.class));
-        defaultAdapters.put(Boolean.class, new DefaultBooleanAdapter());
-        defaultAdapters.put(boolean.class, new DefaultBooleanAdapter());
-        defaultAdapters.put(Date.class, new DefaultDateTimeAdapter<>(Date.class));
-        defaultAdapters.put(LocalDate.class, new DefaultDateTimeAdapter<>(LocalDate.class));
-        defaultAdapters.put(LocalDateTime.class, new DefaultDateTimeAdapter<>(LocalDateTime.class));
+        DEFAULT_ADAPTERS.put(String.class, new DefaultStringAdapter());
+        DEFAULT_ADAPTERS.put(Integer.class, new DefaultNumericAdapter<>(Integer.class));
+        DEFAULT_ADAPTERS.put(int.class, new DefaultNumericAdapter<>(Integer.class));
+        DEFAULT_ADAPTERS.put(Long.class, new DefaultNumericAdapter<>(Long.class));
+        DEFAULT_ADAPTERS.put(long.class, new DefaultNumericAdapter<>(Long.class));
+        DEFAULT_ADAPTERS.put(Double.class, new DefaultNumericAdapter<>(Double.class));
+        DEFAULT_ADAPTERS.put(double.class, new DefaultNumericAdapter<>(Double.class));
+        DEFAULT_ADAPTERS.put(BigDecimal.class, new DefaultNumericAdapter<>(BigDecimal.class));
+        DEFAULT_ADAPTERS.put(Boolean.class, new DefaultBooleanAdapter());
+        DEFAULT_ADAPTERS.put(boolean.class, new DefaultBooleanAdapter());
+        DEFAULT_ADAPTERS.put(Date.class, new DefaultDateTimeAdapter<>(Date.class));
+        DEFAULT_ADAPTERS.put(LocalDate.class, new DefaultDateTimeAdapter<>(LocalDate.class));
+        DEFAULT_ADAPTERS.put(LocalDateTime.class, new DefaultDateTimeAdapter<>(LocalDateTime.class));
     }
 
     /**
@@ -42,7 +42,7 @@ public class DefaultAdapters {
      * @return 数据转换适配器
      */
     public static DataCastAdapter<?> getAdapter(Class<?> clazz) {
-        return defaultAdapters.get(clazz);
+        return DEFAULT_ADAPTERS.get(clazz);
     }
 
     /**
@@ -52,7 +52,7 @@ public class DefaultAdapters {
      * @param adapter 数据转换适配器
      */
     public static void registerDefaultAdapter(Class<?> clazz, DataCastAdapter<?> adapter) {
-        defaultAdapters.put(clazz, adapter);
+        DEFAULT_ADAPTERS.put(clazz, adapter);
     }
 
     /**
@@ -77,6 +77,6 @@ public class DefaultAdapters {
         ){
             throw new IllegalArgumentException("基础类型不可移除适配器");
         }
-        defaultAdapters.remove(clazz);
+        DEFAULT_ADAPTERS.remove(clazz);
     }
 }

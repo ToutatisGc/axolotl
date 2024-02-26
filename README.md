@@ -255,6 +255,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | ------------------------------- | ------------------------------------------------------------ | -------- | -------------- | ------ |
 | IGNORE_EMPTY_SHEET_ERROR        | 忽略空表异常                                                 | Boolean  | true           | true   |
 | IGNORE_EMPTY_SHEET_HEADER_ERROR | 忽略空表头的错误                                             | Boolean  | true           | true   |
+| SPREAD_MERGING_REGION           | 将合并的单元格展开到合并单元格的各个单元格                   | Boolean  | true           | true   |
 | INCLUDE_EMPTY_ROW               | 空行也视为有效数据                                           | Boolean  | true           | false  |
 | SORTED_READ_SHEET_DATA          | 在使用Map接收时，使用LinkedHashMap                           | Boolean  | true           | true   |
 | CAST_NUMBER_TO_DATE             | 判断数字为日期类型将转换为日期格式                           | Boolean  | true           | true   |
@@ -346,7 +347,11 @@ while (dataIterator.hasNext()){
 }
 ```
 
+##### 4.1.1.8 数据适配器的介绍与使用
 
+​	数据适配器 **DataCastAdapter** 是用于将Excel的单元格类型（）
+
+​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
 
 #### 4.1.2 Excel文档写入
 
@@ -427,7 +432,7 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
 #### 合并单元格内容读取
 
-​	读取<font color='red'>**合并单元格**</font>不同列时会读取到同样的内容，因为本框架**目前**采用的策略为散播策略，会将合并单元格的值散播到合并单元格的各个单元格上（原为合并单元格中第0行，第0列的值），未来如有需要将会把此项作为读取策略作为可配置项。
+​	读取<font color='red'>**合并单元格**</font>不同列时会读取到同样的内容，因为本框架**默认**采用的策略为散播策略（**SPREAD_MERGING_REGION** 可配置，默认开启），会将合并单元格的值散播到合并单元格的各个单元格上（原为合并单元格中第0行，第0列的值）。
 
 ### 🚸使用疑问
 
