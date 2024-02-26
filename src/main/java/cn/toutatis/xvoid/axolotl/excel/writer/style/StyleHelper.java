@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,6 +84,24 @@ public class StyleHelper {
         font.setFontHeightInPoints(fontSize);
         commonCellStyle.setFont(font);
         return commonCellStyle;
+    }
+
+    /**
+     * 渲染合并单元格样式
+     * @param sheet 工作表
+     * @param cellRangeAddress 合并单元格区域
+     * @param style 单元格样式
+     */
+    public static void renderMergeRegionStyle(Sheet sheet,CellRangeAddress cellRangeAddress, CellStyle style){
+        for (int rowNum = cellRangeAddress.getFirstRow(); rowNum <= cellRangeAddress.getLastRow(); rowNum++) {
+            Row currentRow = sheet.getRow(rowNum);
+            if (currentRow == null) {currentRow = sheet.createRow(rowNum);}
+            for (int colNum = cellRangeAddress.getFirstColumn(); colNum <= cellRangeAddress.getLastColumn(); colNum++) {
+                Cell currentCell = currentRow.getCell(colNum);
+                if (currentCell == null) {currentCell = currentRow.createCell(colNum);}
+                currentCell.setCellStyle(style);
+            }
+        }
     }
 
 }

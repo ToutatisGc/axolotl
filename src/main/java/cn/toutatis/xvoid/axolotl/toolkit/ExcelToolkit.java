@@ -5,6 +5,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
 
 import java.util.Iterator;
@@ -80,6 +81,25 @@ public class ExcelToolkit {
      */
     public static boolean notBlankRowCheck(Row row){
         return !blankRowCheck(row,0,-1);
+    }
+
+    /**
+     * 判断当前单元格是否是合并单元格
+     * @param sheet 工作表
+     * @param rowIndex 行号
+     * @param colIndex 列号
+     * @return 当前单元格是否是合并单元格
+     */
+    public static CellRangeAddress isCellMerged(Sheet sheet, int rowIndex, int colIndex) {
+        int numMergedRegions = sheet.getNumMergedRegions();
+        for(int i = 0; i < numMergedRegions; i++) {
+            CellRangeAddress mergedRegion = sheet.getMergedRegion(i);
+            if(rowIndex >= mergedRegion.getFirstRow() && rowIndex <= mergedRegion.getLastRow() &&
+                    colIndex >= mergedRegion.getFirstColumn() && colIndex <= mergedRegion.getLastColumn()) {
+                return mergedRegion;
+            }
+        }
+        return null;
     }
 
     public static void cloneOldWorkbook2NewWorkbook(Workbook newWorkbook, Workbook oldWorkBook){

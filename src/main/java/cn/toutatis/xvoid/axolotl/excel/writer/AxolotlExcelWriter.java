@@ -6,10 +6,13 @@ import cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPatter
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractInnerStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.CellAddress;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.PlaceholderType;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.WriteContext;
 import cn.toutatis.xvoid.axolotl.manage.Progress;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -27,6 +30,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -217,26 +221,33 @@ public class AxolotlExcelWriter implements Closeable {
                                 Map<String, Object> map = (Map<String, Object>) data;
                                 value = map.get(fieldMapping.getKey());
                             }
-                            System.err.println("写入数据:"+value);
                             int rowPosition = cellAddress.getRowPosition();
-                            XSSFRow row = sheet.getRow(rowPosition);
-                            if (row == null){
-                                row = sheet.createRow(rowPosition);
+                            boolean mergeCell = cellAddress.isMergeCell();
+                            XSSFRow writableRow = sheet.getRow(rowPosition);
+                            if (writableRow == null){
+                                writableRow = sheet.createRow(rowPosition);
                             }
-                            XSSFCell cell = row.getCell(cellAddress.getColumnPosition());
-                            if (cell == null){
-                                cell = row.createCell(cellAddress.getColumnPosition());
+                            XSSFCell writableCell = writableRow.getCell(cellAddress.getColumnPosition());
+                            if (writableCell == null){
+                                writableCell = writableRow.createCell(cellAddress.getColumnPosition());
                             }
-                            cell.setCellStyle(cellAddress.getCellStyle());
-                            if (value == null){
-                                cell.setBlank();
+                            writableCell.setCellStyle(cellAddress.getCellStyle());
+                            if (Validator.strIsBlank(value)){
+                                writableCell.setBlank();
                             }else {
                                 // 暂时只适配String类型
-                                cell.setCellValue(value.toString());
+                                writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
                             }
+                            if (mergeCell && !cellAddress.isInitializedWrite()){
+                                CellRangeAddress mergeRegion = cellAddress.getMergeRegion();
+                                mergeRegion.setFirstRow(rowPosition);
+                                mergeRegion.setLastRow(rowPosition);
+                                StyleHelper.renderMergeRegionStyle(sheet,mergeRegion,cellAddress.getCellStyle());
+                                sheet.addMergedRegion(mergeRegion);
+                            }
+                            cellAddress.setRowPosition(++rowPosition);
                         }
                     }
-
                 }
             }else{
                 throw new AxolotlWriteException(format("工作表索引[%s]模板中不存在",sheetIndex));
@@ -280,7 +291,7 @@ public class AxolotlExcelWriter implements Closeable {
     /**
      * 未使用的占位符填充默认值
      */
-    private void gatherUnusedReferenceData() {
+    private void gatherUnusedSingleReferenceDataAndFillDefault() {
         if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
             int sheetIndex = writerConfig.getSheetIndex();
             Sheet sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
@@ -296,6 +307,13 @@ public class AxolotlExcelWriter implements Closeable {
             this.writeSingleData(sheet,unusedMap,true);
 
         }
+    }
+
+    private void gatherUnusedCircleReferenceDataAndFillDefault() {
+        int sheetIndex = writerConfig.getSheetIndex();
+        Map<String, CellAddress> singleReferenceMapping =  writeContext.getCircleReferenceData().row(sheetIndex);
+        System.err.println(singleReferenceMapping);
+        // TODO 采集未使用循环实体
     }
 
     /**
@@ -330,25 +348,35 @@ public class AxolotlExcelWriter implements Closeable {
      */
     private void resolveTemplate(Sheet sheet){
         int lastRowNum = sheet.getLastRowNum();
+        List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
         for (int rowIdx = 0; rowIdx <= lastRowNum; rowIdx++) {
             Row row = sheet.getRow(rowIdx);
             if (row != null){
                 short lastCellNum = row.getLastCellNum();
-                for (int cellIdx = 0; cellIdx < lastCellNum; cellIdx++) {
-                    Cell cell = row.getCell(cellIdx);
+                for (int colIdx = 0; colIdx < lastCellNum; colIdx++) {
+                    Cell cell = row.getCell(colIdx);
                     if (cell != null && CellType.STRING.equals(cell.getCellType())){
                         String cellValue = cell.getStringCellValue();
                         int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
-                        CellAddress cellAddress = new CellAddress(cellValue,rowIdx, cellIdx,cell.getCellStyle());
-                        boolean findSinglePlaceholder = findPlaceholderData(
+                        CellAddress cellAddress = new CellAddress(cellValue,rowIdx, colIdx,cell.getCellStyle());
+                        Boolean foundPlaceholder = findPlaceholderData(
                                 writeContext.getSingleReferenceData(),
                                 TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress
                         );
-                        if (findSinglePlaceholder){continue;}
-                        findPlaceholderData(
-                                writeContext.getCircleReferenceData(),
-                                TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress
-                        );
+
+                        if (foundPlaceholder == null){
+                            foundPlaceholder = findPlaceholderData(
+                                    writeContext.getCircleReferenceData(),
+                                    TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress
+                            );
+                        }
+                        if (foundPlaceholder != null && foundPlaceholder){
+                            CellRangeAddress cellMerged = ExcelToolkit.isCellMerged(sheet, rowIdx, colIdx);
+                            if (cellMerged != null){
+                                LoggerHelper.debug(LOGGER, format("解析到占位符[%s]为合并单元格[%s]",cellAddress.getPlaceholder(),cellMerged.formatAsString()));
+                                cellAddress.setMergeRegion(cellMerged);
+                            }
+                        }
                     }
                 }
             }
@@ -363,14 +391,19 @@ public class AxolotlExcelWriter implements Closeable {
      * @param sheetIndex 工作簿索引
      * @param cellAddress 单元格地址
      */
-    private boolean findPlaceholderData(HashBasedTable<Integer, String, CellAddress> referenceData, Pattern pattern, int sheetIndex, CellAddress cellAddress) {
+    private Boolean findPlaceholderData(HashBasedTable<Integer, String, CellAddress> referenceData, Pattern pattern, int sheetIndex, CellAddress cellAddress) {
         Matcher matcher = pattern.matcher(cellAddress.getCellValue());
         if (matcher.find()) {
             cellAddress.setPlaceholder(matcher.group());
+            if (pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN)){
+                cellAddress.setPlaceholderType(PlaceholderType.CIRCLE);
+            }else {
+                cellAddress.setPlaceholderType(PlaceholderType.MAPPING);
+            }
             referenceData.put(sheetIndex, matcher.group(1), cellAddress);
             return true;
         }
-        return false;
+        return null;
     }
 
     public static void main(String[] args) throws IOException {
@@ -405,11 +438,24 @@ public class AxolotlExcelWriter implements Closeable {
     }
 
     /**
-     * 写入器进入写入剩余内容进入关闭流前的收尾工作
+     * 写入器刷新内容
+     * 进入写入剩余内容进入关闭流前的收尾工作
+     * @param isFinal 是否是最终刷新，关闭写入前的最后一次刷新
      */
+    public void flush(boolean isFinal) {
+        // 采集未映射数据
+        // 暂时没有false的情况
+        if (isFinal || true){
+            this.writeContext.getSingleReferenceData().row(this.writerConfig.getSheetIndex()).clear();
+            this.gatherUnusedSingleReferenceDataAndFillDefault();
+            this.gatherUnusedCircleReferenceDataAndFillDefault();
+        }
+    }
+
+
     public void flush() {
         // 采集未映射数据
-        this.gatherUnusedReferenceData();
+        this.flush(false);
     }
 
     /**
@@ -419,7 +465,7 @@ public class AxolotlExcelWriter implements Closeable {
     @Override
     public void close() throws IOException {
         LoggerHelper.debug(LOGGER, "工作薄写入进入关闭阶段");
-        this.flush();
+        this.flush(true);
         workbook.write(writerConfig.getOutputStream());
         workbook.close();
         writerConfig.getOutputStream().close();

@@ -239,7 +239,7 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
             return readResult;
         }
         // 处理合并单元格
-        this.spreadMergedCells(sheet);
+        this.spreadMergedCells(sheet,readerConfig);
         this.readSheetData(sheet,readerConfig,readResult);
         return readResult;
     }

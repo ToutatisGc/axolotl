@@ -258,7 +258,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         assert readerConfig != null;
         Sheet sheet = this.searchSheet(readerConfig);
         this.preCheckAndFixReadConfig(readerConfig);
-        this.spreadMergedCells(sheet);
+        this.spreadMergedCells(sheet,readerConfig);
         RT instance = readerConfig.getCastClassInstance();
         this.convertPositionCellToInstance(instance, readerConfig,sheet);
         this.validateConvertEntity(instance, readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.VALIDATE_READ_ROW_DATA));
@@ -299,43 +299,45 @@ public abstract class AxolotlAbstractExcelReader<T> {
 
     /**
      * 处理合并单元格
-     *
+     * @see ExcelReadPolicy#SPREAD_MERGING_REGION
      * @param sheet 工作表
      */
-    protected void spreadMergedCells(Sheet sheet) {
-        // TODO 合并单元格散播策略
-        List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
-        LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "开始处理工作表合并单元格");
-        for (CellRangeAddress mergedRegion : mergedRegions) {
-            int firstRow = mergedRegion.getFirstRow();
-            int lastRow = mergedRegion.getLastRow();
-            int firstColumn = mergedRegion.getFirstColumn();
-            int lastColumn = mergedRegion.getLastColumn();
-            Cell leftTopCell = sheet.getRow(firstRow).getCell(firstColumn);
-            LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, String.format("处理合并单元格[%s]",mergedRegion.formatAsString()));
-            for (int rowIndex = firstRow; rowIndex <= lastRow; rowIndex++) {
-                for (int columnIndex = firstColumn; columnIndex <= lastColumn; columnIndex++) {
-                    Row row = sheet.getRow(rowIndex);
-                    Cell cell =row.getCell(columnIndex);
-                    if (cell == null){
-                        cell = row.createCell(columnIndex, leftTopCell.getCellType());
-                    }
-                    switch (leftTopCell.getCellType()){
-                        case STRING:
-                            cell.setCellValue(leftTopCell.getStringCellValue());
-                            break;
-                        case NUMERIC:
-                            cell.setCellValue(leftTopCell.getNumericCellValue());
-                            break;
-                        case BOOLEAN:
-                            cell.setCellValue(leftTopCell.getBooleanCellValue());
-                            break;
-                        case FORMULA:
-                            cell.setCellValue(leftTopCell.getCellFormula());
+    protected void spreadMergedCells(Sheet sheet,ReaderConfig<?> readerConfig) {
+        if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.SPREAD_MERGING_REGION)){
+            List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
+            LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, "开始处理工作表合并单元格");
+            for (CellRangeAddress mergedRegion : mergedRegions) {
+                int firstRow = mergedRegion.getFirstRow();
+                int lastRow = mergedRegion.getLastRow();
+                int firstColumn = mergedRegion.getFirstColumn();
+                int lastColumn = mergedRegion.getLastColumn();
+                Cell leftTopCell = sheet.getRow(firstRow).getCell(firstColumn);
+                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, String.format("处理合并单元格[%s]",mergedRegion.formatAsString()));
+                for (int rowIndex = firstRow; rowIndex <= lastRow; rowIndex++) {
+                    for (int columnIndex = firstColumn; columnIndex <= lastColumn; columnIndex++) {
+                        Row row = sheet.getRow(rowIndex);
+                        Cell cell =row.getCell(columnIndex);
+                        if (cell == null){
+                            cell = row.createCell(columnIndex, leftTopCell.getCellType());
+                        }
+                        switch (leftTopCell.getCellType()){
+                            case STRING:
+                                cell.setCellValue(leftTopCell.getStringCellValue());
+                                break;
+                            case NUMERIC:
+                                cell.setCellValue(leftTopCell.getNumericCellValue());
+                                break;
+                            case BOOLEAN:
+                                cell.setCellValue(leftTopCell.getBooleanCellValue());
+                                break;
+                            case FORMULA:
+                                cell.setCellValue(leftTopCell.getCellFormula());
+                        }
                     }
                 }
             }
         }
+
     }
 
     /**
@@ -552,7 +554,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
     @SuppressWarnings({"unchecked","rawtypes"})
     protected Object adaptiveCellValue2EntityClass(CellGetInfo info, EntityCellMappingInfo<?> mappingInfo, ReaderConfig<?> readerConfig){
         if (mappingInfo.getDataCastAdapter() == AutoAdapter.class){
-            DataCastAdapter<Object> autoAdapter = AutoAdapter.instance();
+            DataCastAdapter<Object> autoAdapter = AutoAdapter.INSTANCE();
             return this.adaptiveValue(autoAdapter,info, (EntityCellMappingInfo<Object>) mappingInfo, (ReaderConfig<Object>) readerConfig);
         }
         Class<? extends DataCastAdapter<?>> dataCastAdapterClass = mappingInfo.getDataCastAdapter();

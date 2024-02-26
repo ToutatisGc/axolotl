@@ -12,11 +12,18 @@ import org.apache.poi.ss.usermodel.CellType;
  */
 public class AutoAdapter extends AbstractDataCastAdapter<Object> {
 
+    private AutoAdapter() {}
+
+    /**
+     * 自动转换器实例
+     */
+    private static final AutoAdapter INSTANCE = new AutoAdapter();
+
     /**
      * 获取自动转换器实例
      */
-    public static AutoAdapter instance() {
-        return new AutoAdapter();
+    public static AutoAdapter INSTANCE() {
+        return INSTANCE;
     }
     @Override
     @SuppressWarnings({"unchecked","rawtypes"})

@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
 import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 /**
  * 用于存放模板占位符单元格的行和列
@@ -16,6 +17,8 @@ public class CellAddress {
         this.columnPosition = columnPosition;
         this.cellStyle = cellStyle;
     }
+
+    private PlaceholderType placeholderType;
 
     /**
      * 模板单元格的占位符
@@ -48,6 +51,12 @@ public class CellAddress {
      */
     private int writtenRow = -1;
 
+    /**
+     * 合并单元格的区域
+     * 需要特殊处理
+     */
+    private CellRangeAddress mergeRegion;
+
     public void setRowPosition(int rowPosition) {
         writtenRow++;
         this.rowPosition = rowPosition;
@@ -62,6 +71,14 @@ public class CellAddress {
 
     public String replacePlaceholder(String value) {
         return cellValue.replace(this.placeholder, value);
+    }
+
+    /**
+     * 判断是否是合并单元格
+     * @return 是否合并单元格
+     */
+    public boolean isMergeCell() {
+        return mergeRegion != null;
     }
 
 }

@@ -9,6 +9,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
+import cn.toutatis.xvoid.common.standard.StringPool;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -56,7 +57,7 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
                         localDateTime = LocalDateTime.parse((CharSequence) cellValue, formatter);
                     }catch (DateTimeParseException timeParseException){
                         if (timeParseException.getMessage().contains("Unable to obtain LocalDateTime from")){
-                            localDateTime = LocalDate.parse(cellValue.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay();
+                            localDateTime = LocalDate.parse(cellValue.toString(), DateTimeFormatter.ofPattern(Time.YMD_HORIZONTAL_FORMAT_REGEX)).atStartOfDay();
                         }else {
                             throw throwTimeParseException(context,cellValue,timeParseException);
                         }
@@ -108,9 +109,9 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
 
     /**
      * 日期转换异常处理
-     * @param context
-     * @param cellValue
-     * @param exception
+     * @param context cast上下文信息
+     * @param cellValue 单元格数据
+     * @param exception 转换异常
      */
     private AxolotlExcelReadException throwTimeParseException(CastContext<?> context, Object cellValue, Exception exception){
         exception.printStackTrace();
@@ -125,18 +126,17 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
      * @param readerConfig 已配置的特性
      * @param context cast相关的上下文信息
      * @param cellValue 单元格数据
-     * @return
+     * @return 处理后的单元格数据
      */
     private Object checkTrimFeature2NewString(Map<ExcelReadPolicy, Object> excelPolicies, ReaderConfig<?> readerConfig, CastContext<?> context, Object cellValue){
+        if(context.getDataFormat().contains(StringPool.SPACE)){
+            //format存在空格，不进行去空格处理
+            LoggerHelper.debug(LOGGER,LoggerHelper.format("日期格式化:[%s] 带有空格,不进行 [TRIM_CELL_VALUE] 特性处理",context.getDataFormat()));
+            return cellValue;
+        }
         if (!excelPolicies.containsKey(ExcelReadPolicy.TRIM_CELL_VALUE)) {
             if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.TRIM_CELL_VALUE)) {
-                if(context.getDataFormat().contains(" ")){
-                    //format存在空格，不进行去空格处理
-                    LoggerHelper.debug(LOGGER,LoggerHelper.format("日期格式化:[%s] 带有空格,不进行 [TRIM_CELL_VALUE] 特性处理",context.getDataFormat()));
-                    return cellValue;
-                }else{
-                    return Regex.convertSingleLine(cellValue.toString());
-                }
+                return Regex.convertSingleLine(cellValue.toString());
             }
         }
         return cellValue;
@@ -146,7 +146,7 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
     @Override
     public boolean support(CellType cellType, Class<NT> clazz) {
         return clazz == Date.class ||
-                clazz == LocalDateTime.class ||
-                clazz == LocalDate.class;
+               clazz == LocalDateTime.class ||
+               clazz == LocalDate.class;
     }
 }

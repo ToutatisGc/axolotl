@@ -72,15 +72,7 @@ public class AxolotlClassicalTheme extends AbstractInnerStyleRender implements E
         CellStyle titleCellStyle = StyleHelper.createCommonCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TITLE_FONT_SIZE);
         startPositionCell.setCellStyle(titleCellStyle);
         CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, writerConfig.getColumnNames().size() - 1);
-        for (int rowNum = cellAddresses.getFirstRow(); rowNum <= cellAddresses.getLastRow(); rowNum++) {
-            Row currentRow = sheet.getRow(rowNum);
-            if (currentRow == null) {currentRow = sheet.createRow(rowNum);}
-            for (int colNum = cellAddresses.getFirstColumn(); colNum <= cellAddresses.getLastColumn(); colNum++) {
-                Cell currentCell = currentRow.getCell(colNum);
-                if (currentCell == null) {currentCell = currentRow.createCell(colNum);}
-                currentCell.setCellStyle(titleCellStyle);
-            }
-        }
+        StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleCellStyle);
         sheet.addMergedRegion(cellAddresses);
     }
 

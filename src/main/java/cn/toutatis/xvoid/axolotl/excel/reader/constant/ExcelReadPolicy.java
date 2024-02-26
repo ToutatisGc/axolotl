@@ -12,16 +12,23 @@ public enum ExcelReadPolicy {
     /*表相关配置*/
 
     /**
-     * 忽略空sheet的错误
-     * 空sheet将返回null
+     * <p>忽略空sheet的错误</p>
+     * <p>空sheet将返回null</p>
      */
     IGNORE_EMPTY_SHEET_ERROR(Type.BOOLEAN, true,true),
 
     /**
-     * 忽略空表头的错误
-     * 若取消此项配置，在没有读取到指定表头时，将抛出异常
+     * <p>忽略空表头的错误</p>
+     * <p>若取消此项配置，在没有读取到指定表头时，将抛出异常</p>
      */
     IGNORE_EMPTY_SHEET_HEADER_ERROR(Type.BOOLEAN, true,true),
+
+    /**
+     * <p>将合并的单元格展开到合并单元格的各个单元格</p>
+     * <p>配置此策略，可以随意指定合并单元格的位置而读取到值</p>
+     * <p>不配置此策略将只能获取合并单元格中左上角单元格才能获取到单元格值</p>
+     */
+    SPREAD_MERGING_REGION(Type.BOOLEAN, true,true),
 
     /*行数据配置*/
     /**
