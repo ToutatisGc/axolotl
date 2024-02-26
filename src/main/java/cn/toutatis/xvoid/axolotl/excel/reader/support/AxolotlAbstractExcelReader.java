@@ -559,7 +559,13 @@ public abstract class AxolotlAbstractExcelReader<T> {
         if (dataCastAdapterClass != null && !dataCastAdapterClass.isInterface()){
             DataCastAdapter adapter;
             try {
-                adapter = dataCastAdapterClass.getDeclaredConstructor().newInstance();
+                Map<Class<?>, DataCastAdapter<?>> castAdapterCache = this.workBookContext.getCastAdapterCache();
+                if (castAdapterCache.containsKey(dataCastAdapterClass)){
+                    adapter = castAdapterCache.get(dataCastAdapterClass);
+                }else {
+                    adapter = dataCastAdapterClass.getDeclaredConstructor().newInstance();
+                    castAdapterCache.put(dataCastAdapterClass,adapter);
+                }
                 return this.adaptiveValue(adapter,info, (EntityCellMappingInfo<Object>) mappingInfo, (ReaderConfig<Object>) readerConfig);
             } catch (InstantiationException | IllegalAccessException |
                      InvocationTargetException | NoSuchMethodException e) {
