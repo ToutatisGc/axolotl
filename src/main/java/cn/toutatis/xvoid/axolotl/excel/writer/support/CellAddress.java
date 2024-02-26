@@ -48,6 +48,18 @@ public class CellAddress {
      */
     private int writtenRow = -1;
 
+    public void setRowPosition(int rowPosition) {
+        writtenRow++;
+        this.rowPosition = rowPosition;
+    }
+
+    /**
+     * 判断是否已经写入
+     */
+    public boolean isInitializedWrite() {
+        return writtenRow == -1;
+    }
+
     public String replacePlaceholder(String value) {
         return cellValue.replace(this.placeholder, value);
     }

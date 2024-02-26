@@ -10,6 +10,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.CellAddress;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.WriteContext;
 import cn.toutatis.xvoid.axolotl.manage.Progress;
+import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.constant.Time;
@@ -28,17 +29,21 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.slf4j.Logger;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.format;
@@ -123,6 +128,7 @@ public class AxolotlExcelWriter implements Closeable {
 
     @SneakyThrows
     public void write(){
+        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
         SXSSFSheet sheet = workbook.createSheet();
         workbook.setSheetName(writerConfig.getSheetIndex(),writerConfig.getSheetName());
         ExcelStyleRender styleRender = writerConfig.getStyleRender();
@@ -140,11 +146,12 @@ public class AxolotlExcelWriter implements Closeable {
      * 写入数据到模板
      * @param sheetIndex 工作簿索引
      * @param singleMap 固定值映射
-     * @param data 循环数据
+     * @param circleDataList 循环数据
      */
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<?> data){
+    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<?> circleDataList){
+        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
         XSSFSheet sheet;
         if (writeContext.isTemplateWrite()){
             sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
@@ -153,38 +160,82 @@ public class AxolotlExcelWriter implements Closeable {
                 this.resolveTemplate(sheet);
                 // 写入Map映射
                 this.writeSingleData(sheet,singleMap,false);
-                boolean dataIsEmpty = Validator.objNotNull(data);
+                boolean dataNotEmpty = Validator.objNotNull(circleDataList);
                 String progressId = Progress.generateProgressId();
-                Progress.init(progressId,dataIsEmpty? 1 : data.size());
+                Progress.init(progressId,dataNotEmpty? circleDataList.size() : 1);
                 // 写入循环数据
                 Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
-                if (dataIsEmpty){
-                    // TODO 列漂移写入特性
-//                    boolean shiftWrite = writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW);
-//                    if (shiftWrite){
-//                        int maxRowPosition = Integer.MIN_VALUE;
-//                        for (CellAddress cellAddress : circleReferenceData.values()) {
-//                            maxRowPosition = Math.max(maxRowPosition, cellAddress.getRowPosition());
-//                        }
-//                        sheet.shiftRows(maxRowPosition+1,sheet.getLastRowNum(),maxRowPosition+data.size());
-//                    }
-//                    List<String> writeFieldNames = new ArrayList<>();
-//                    for (int idx = 0; idx < data.size(); idx++) {
-//                        Object rowObjInstance = data.get(idx);
-//                        if (rowObjInstance instanceof Map){
-//                            Map<String, Object> rowObjInstanceMap = (Map<String, Object>) rowObjInstance;
-//                            circleReferenceData.get(key);
-//                        }else {
-//                            Class<?> instanceClass = rowObjInstance.getClass();
-//                            Field field;
-//                            try {
-//                                field = instanceClass.getDeclaredField("aa");
-//                            }catch(NoSuchFieldException noSuchFieldException){
-//                                field = null;
-//                            }
-//                            System.err.println(field);
-//                        }
-//                    }
+                if (dataNotEmpty){
+                    boolean isSimplePOJO;
+                    // 获取写入类字段数据
+                    Map<String,Integer> writeFieldNames = new HashMap<>();
+                    Object rowObjInstance = circleDataList.get(0);
+                    if (rowObjInstance instanceof Map){
+                        isSimplePOJO = false;
+                        Map<String, Object> rowObjInstanceMap = (Map<String, Object>) rowObjInstance;
+                        if (!rowObjInstanceMap.isEmpty()){
+                            writeFieldNames = rowObjInstanceMap.keySet()
+                                    .stream()
+                                    .collect(Collectors.toMap(key -> key, key -> 1));
+                        }
+                    }else {
+                        isSimplePOJO = true;
+                        Class<?> instanceClass = rowObjInstance.getClass();
+                        for (String key : circleReferenceData.keySet()) {
+                            Field field;
+                            try {
+                                field = instanceClass.getDeclaredField(key);
+                            }catch(NoSuchFieldException noSuchFieldException){
+                                field = null;
+                            }
+                            if (field != null){
+                                writeFieldNames.put(key, 1);
+                            }
+                        }
+                    }
+                    LoggerHelper.debug(LOGGER,"本次写入字段为:%s",writeFieldNames.keySet());
+                    // 漂移写入特性
+                    if (circleDataList.size() > 1 && writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
+                        int maxRowPosition = Integer.MIN_VALUE;
+                        for (Map.Entry<String, CellAddress> addressEntry : circleReferenceData.entrySet()) {
+                            if (writeFieldNames.containsKey(addressEntry.getKey())){
+                                maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());
+                            }
+                        }
+                        sheet.shiftRows(maxRowPosition+1,sheet.getLastRowNum(),circleDataList.size()-1,true,true);
+                    }
+                    // 写入数据
+                    for (Object data : circleDataList) {
+                        for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
+                            CellAddress cellAddress = circleReferenceData.get(fieldMapping.getKey());
+                            Object value;
+                            if (isSimplePOJO){
+                                Field field = data.getClass().getDeclaredField(fieldMapping.getKey());
+                                field.setAccessible(true);
+                                value = field.get(data);
+                            }else{
+                                Map<String, Object> map = (Map<String, Object>) data;
+                                value = map.get(fieldMapping.getKey());
+                            }
+                            System.err.println("写入数据:"+value);
+                            int rowPosition = cellAddress.getRowPosition();
+                            XSSFRow row = sheet.getRow(rowPosition);
+                            if (row == null){
+                                row = sheet.createRow(rowPosition);
+                            }
+                            XSSFCell cell = row.getCell(cellAddress.getColumnPosition());
+                            if (cell == null){
+                                cell = row.createCell(cellAddress.getColumnPosition());
+                            }
+                            cell.setCellStyle(cellAddress.getCellStyle());
+                            if (value == null){
+                                cell.setBlank();
+                            }else {
+                                // 暂时只适配String类型
+                                cell.setCellValue(value.toString());
+                            }
+                        }
+                    }
 
                 }
             }else{
@@ -232,11 +283,12 @@ public class AxolotlExcelWriter implements Closeable {
     private void gatherUnusedReferenceData() {
         if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
             int sheetIndex = writerConfig.getSheetIndex();
+            Sheet sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
+            this.resolveTemplate(sheet);
             Map<String, CellAddress> singleReferenceMapping =  writeContext.getSingleReferenceData().row(sheetIndex);
             Map<String, Boolean> alreadyUsedDataMapping =  writeContext.getAlreadyUsedReferenceData().row(sheetIndex);
             MapDifference<String, Object> difference = Maps.difference(singleReferenceMapping, alreadyUsedDataMapping);
             Map<String, Object> onlyOnLeft = difference.entriesOnlyOnLeft();
-            Sheet sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
             HashMap<String, Object> unusedMap = new HashMap<>();
             for (String singleKey : onlyOnLeft.keySet()) {
                 unusedMap.put(singleKey,null);
@@ -347,7 +399,7 @@ public class AxolotlExcelWriter implements Closeable {
         writerConfig.setOutputStream(fileOutputStream);
         AxolotlExcelWriter writer = new AxolotlExcelWriter(writerConfig);
         // TODO 写入
-//        writer.write();
+        writer.write();
         writer.close();
 
     }
@@ -355,7 +407,8 @@ public class AxolotlExcelWriter implements Closeable {
     /**
      * 写入器进入写入剩余内容进入关闭流前的收尾工作
      */
-    public void flush() throws IOException {
+    public void flush() {
+        // 采集未映射数据
         this.gatherUnusedReferenceData();
     }
 
@@ -365,6 +418,7 @@ public class AxolotlExcelWriter implements Closeable {
      */
     @Override
     public void close() throws IOException {
+        LoggerHelper.debug(LOGGER, "工作薄写入进入关闭阶段");
         this.flush();
         workbook.write(writerConfig.getOutputStream());
         workbook.close();
