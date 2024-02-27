@@ -3,8 +3,10 @@ package cn.toutatis.xvoid.axolotl.excel.reader;
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.AxolotlAbstractExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException.ExceptionType;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -12,6 +14,7 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -262,6 +265,19 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
         this.searchHeaderCellPosition(readerConfig);
         for (int i = startIndex; i < endIndex; i++) {
             RT instance = this.readRow(sheet, i, readerConfig);
+            String needRecordInfo = readerConfig.getNeedRecordInfo();
+            if (instance != null && needRecordInfo != null ){
+                try {
+                    Field field = readerConfig.getCastClass().getDeclaredField(needRecordInfo);
+                    AxolotlReadInfo axolotlReadInfo = new AxolotlReadInfo();
+                    axolotlReadInfo.setSheetIndex(readerConfig.getSheetIndex());
+                    axolotlReadInfo.setSheetName(sheet.getSheetName());
+                    axolotlReadInfo.setRowNumber(i);
+                    ReflectToolkit.setObjectField(instance,field,axolotlReadInfo);
+                } catch (NoSuchFieldException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             if (instance!= null){list.add(instance);}
         }
     }

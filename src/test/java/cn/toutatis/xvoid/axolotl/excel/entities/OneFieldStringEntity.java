@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.entities;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import lombok.Data;
 
 @Data
@@ -41,5 +42,7 @@ public class OneFieldStringEntity {
 
     @ColumnBind(columnIndex = 11)
     private String column12;
+
+    private AxolotlReadInfo readInfo;
 
 }
