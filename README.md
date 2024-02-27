@@ -21,7 +21,11 @@
 #### 🔝 0.0.10-ALPHA-8 更新说明
 
 - 修复部分API错误
-- 增加指定列范围（sheetColumnEffectiveRange）的ReaderConfig支持
+- 增加指定列范围[sheetColumnEffectiveRange]的ReaderConfig支持
+- 增加默认转换器[support方法]约束
+- 完善读取说明
+- 增加散播策略的读取策略[SPREAD_MERGING_REGION]
+- Excel写入进入支持阶段
 
 #### 🧩历史版本更新说明
 
@@ -98,8 +102,14 @@ System.out.println(data);
 
 ##### 3.2.2.1 构建文档写入器
 
-```
-//TODO 等待完善
+```java
+// 最重要的是需要创建写入配置
+WriterConfig writerConfig = new WriterConfig();
+// 创建模板Excel写入器
+File file = FileToolkit.getResourceFileAsFile("写入模板.xlsx");
+AxolotlExcelWriter axolotlExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig);
+// 创建普通Excel写入器
+AxolotlExcelWriter axolotlExcelWriter = Axolotls.getExcelWriter(writerConfig);
 ```
 
 ##### 3.2.2.2 两种写入方式
@@ -107,16 +117,18 @@ System.out.println(data);
 ###### <1> 模板写入
 
 ```
-
+// 获取数据
+Map<String, Object> map = Map.of("name", "Toutatis");
+List<TestEntity> datas = new ArrayList<>();
+// 调用模板写入方法
+axolotlExcelWriter.writeToTemplate(0, map, datas);
 ```
 
 ###### <2> 预设样式写入
 
 ```
-
+// 等待支持
 ```
-
-
 
 ### 3.3 PDF 文档操作
 
@@ -323,7 +335,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 
 ##### 4.1.1.7 StreamReader流读取器支持
 
-​	在读取大的Excel文件（文件大小>=10-16M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据30w行数据左右时将占用10G内存,时间在1min左右。
+​	在读取大的Excel文件（文件大小>=15M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据40w行数据左右时将占用10G内存,时间在1min左右。
 
 ​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
 
@@ -347,21 +359,104 @@ while (dataIterator.hasNext()){
 }
 ```
 
-##### 4.1.1.8 数据适配器的介绍与使用
+##### 4.1.1.8 数据适配器
 
 ​	数据适配器 **DataCastAdapter** 是用于将Excel的单元格类型（）
 
 ​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
 
+##### 4.1.1.9 实体读取相关信息
+
+​	在实体中指定字段类型为**AxolotlReadInfo**时候，读取表中数据将自动赋值该字段，该类中包含以下内容。
+
+📖AxolotlReadInfo字段：
+
+|  字段名称  |        说明        |
+| :--------: | :----------------: |
+| sheetIndex |     工作表索引     |
+| sheetName  |     工作表名称     |
+| rowNumber  | 工作表中该实体行号 |
+
+​	<font color='red'>**每个实体中仅支持一个该字段属性，其余相同类型字段将被覆盖。**</font>
+
 #### 4.1.2 Excel文档写入
 
 ​	<font color='orange'>**本框架仅支持XLSX文件写入，性能更优异兼容更好。**</font>
 
+📖一般使用：
+
+```
+
+```
+
 ##### 4.1.2.1 模板文件写入
 
-​	模板写入是
+​	确保你已经准备好一个模板文件，该文件包含了你希望在其中填充数据的格式，例如，包含了表头、样式等。
 
-​	框架支持将写入模板文件
+​	模板写入将根据模板中占位符替换数据。
+
+📖使用方法如下：
+
+```java
+// 添加一个模板文件
+File file = FileToolkit.getResourceFileAsFile("workbook/write/.xlsx");
+//创建写入配置
+WriterConfig writerConfig = new WriterConfig();
+FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+writerConfig.setOutputStream(fileOutputStream);
+// 创建写入器
+try (AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig)) {
+    // 获取数据
+    Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
+    axolotlExcelWriter.writeToTemplate(0, map, null);
+    ArrayList<JSONObject> datas = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+        JSONObject sch = new JSONObject();
+        sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
+        sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+        sch.put("graduate", true);
+        datas.add(sch);
+    }
+    // 调用写入模板方法
+    axolotlExcelWriter.writeToTemplate(0, Map.of("age",50), datas);
+}
+```
+
+📖支持占位符(占位符区分大小写)：
+
+| 占位符 |                      说明                      |     示例      |
+| :----: | :--------------------------------------------: | :-----------: |
+|  ${}   |       映射占位符<br />占位符只能使用一次       |    ${name}    |
+|  #{}   | 列表数据占位符<br />写入多条数据时指定该占位符 | #{schoolName} |
+
+​	写入模板数据时,框架拥有一些内置常量。
+
+📖内置常量：
+
+|      常量名称       |                  说明                   |
+| :-----------------: | :-------------------------------------: |
+| AXOLOTL_CREATE_TIME | 当前写入时间[格式：yyyy-MM-dd hh:MM:ss] |
+
+​	🧭示例表格:
+
+![模板表格示例](./README.assets/image-20240227153425342.png)
+
+##### 4.1.2.2 自动写入
+
+```
+// 等待完善
+```
+
+##### 4.1.2.3 写入策略
+
+在写入数据时，支持写入策略来对数据进行处理。
+
+| 策略名称                  | 使用范围 | 说明                           |
+| ------------------------- | -------- | ------------------------------ |
+| AUTO_CATCH_COLUMN_LENGTH  | 自动写入 | 自动计算列长度                 |
+| AUTO_INSERT_SERIAL_NUMBER | 自动写入 | 自动在第一列插入编号           |
+| SHIFT_WRITE_ROW           | 模板写入 | 数据写入自动将数据写入到下一行 |
+| PLACEHOLDER_FILL_DEFAULT  | 模板写入 | 为没有指定的占位符填充默认值   |
 
 ### 4.2 PDF操作
 
@@ -443,17 +538,24 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 ​	该功能的是为了读取数据时直接按照表头名称读取对应列所设计，解决不同模板之间表头有差异造成读取列错位所设计的功能。
 ​	指定注解中此参数，会去读取工作表中查找<font color='orange'>**完全匹配**</font>的单元格字符串（例如：备注，地址）所对应的列位置转换为所对应的列索引作为读取列（如果有多个同名表头可指定**sameHeaderIdx**参数区分不同同名列），相当于转化为注解中的columnIndex参数。
 
-具体规则介绍：
+📖<font color='orange'>**具体规则如下：**</font>
 
-​	**列**与**实体类属性**的绑定：程序会根据实体类属性上**@ColumnBind**注解中配置的**headerName**的值到工作表中进行检索从而绑定对应的列，查找规则为按行从上至下依次检索（默认为10行，可通过配置**ReaderConfig**中的**searchHeaderMaxRows**属性进行修改），每一行从左至右依次检索所有列/单元格（此时每列仅存在一个单元格），如果这些单元格中存在值与配置的**headerName**的值**相同**的情况，那么该单元格会进入**备选区**，直至所有行**检索完毕**，如果备选区中**只有1个**单元格，那么该**单元格所处的列**与该实体类属性绑定，如果备选区存在**多个单元格**，可通过**@ColumnBind**注解的**sameHeaderIdx**参数（起始值为0）进行指定，被指定的**单元格所处的列**会与该实体类属性绑定，**若不进行指定**，则按实体类**该属性所处位置**（在实体类中**headerName**参数**相同**的属性为一组，按属性声明的先后顺序**正序**排列，**属性所处位置**就是属性**在该组中的位置**，这个位置与**单元格在备选区的位置**对应）选择单元格进行列绑定。
+​	**列与实体类属性的绑定**：
 
-使用建议：
+​	**@ColumnBind**注解会根据属性中的**headerName**的值到工作表中进行单元格数据检索并绑定对应的列位置。
+​	查找规则为按行从上至下依次检索<font color='grey' size='2'>[配置**searchHeaderMaxRows**进行修改]</font>该行每一列上的单元格，如果这些单元格中的值与配置的**headerName**的值完全匹配的情况下，那么该单元格的列位置会被判定为表头。
 
-​	在使用**headerName**参数进行列绑定时，应首先配置**ReaderConfig**中的**searchHeaderMaxRows**属性确认表头范围，减少检索范围以提高效率。应检查检索范围内是否存在多个相同的表头名称，如存在说明备选区一定出现多个单元格（**备选区单元格的产生以及列的绑定看上文**），建议**推演**出这些单元格然后对它们进行评估，在需要时可通过配置**@ColumnBind**注解的**sameHeaderIdx**参数**指定**备选单元格进行**列绑定**。
+​	如果表头中只匹配到一个单元格的列，那么该**单元格所处的列**与该实体类属性绑定，如果备选区存在**多个同名表头**，可通过**@ColumnBind**注解的<font color='red'>**sameHeaderIdx参数**</font><font color='grey' size='2'>[默认为0]</font>指定同名表头索引，被指定的**单元格所处的列**会与该实体类属性绑定，**若不进行指定**，则按实体类**该属性所处位置**（在实体类中**headerName**参数**相同**的属性为一组，按属性声明的先后顺序**升序**排列，**属性所处位置**就是属性**在该组中的位置**，这个位置与**单元格在备选区的位置**对应）选择单元格进行列绑定。
+
+🧭<font color='orange'>**使用建议：**</font>
+
+1. 在使用**headerName**参数进行列绑定时，应首先配置**ReaderConfig**中的**searchHeaderMaxRows**属性确认表头范围，减少检索范围以提高效率并提高精准度。
+2. 在使用headerName指定列位置时，应检查工作表范围内是否存在多个相同表头，建议在工作表为动态时应对工作表表头位置进行判断，在需要时可通过配置**@ColumnBind**注解的**sameHeaderIdx**参数**手动指定**备选表头索引进行列绑定。
 
 <div style="float:right;padding-right:15px">
-    提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>
+    提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>  最后更新时间：<b>2024-02-26</b>
 </div>
+
 ------
 
 #### IDEA 引入相关包后import中报错但编译正常

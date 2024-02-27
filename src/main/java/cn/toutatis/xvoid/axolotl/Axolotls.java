@@ -2,6 +2,8 @@ package cn.toutatis.xvoid.axolotl;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlStreamExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
+import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
 
 import java.io.File;
 import java.io.InputStream;
@@ -59,5 +61,24 @@ public class Axolotls {
      */
     public static AxolotlStreamExcelReader<Object> getStreamExcelReader(File excelFile){
         return new AxolotlStreamExcelReader<>(excelFile);
+    }
+
+    /**
+     * 获取模板Excel写入器
+     * @param template 模板文件
+     * @param writerConfig 写入器配置
+     * @return Excel写入器
+     */
+    public static AxolotlExcelWriter getTemplateExcelWriter(File template, WriterConfig writerConfig){
+        return new AxolotlExcelWriter(template, writerConfig);
+    }
+
+    /**
+     * 获取Excel写入器
+     * @param writerConfig 写入器配置
+     * @return Excel写入器
+     */
+    public static AxolotlExcelWriter getExcelWriter(WriterConfig writerConfig){
+        return new AxolotlExcelWriter(writerConfig);
     }
 }

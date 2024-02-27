@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.dev;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
 import cn.toutatis.xvoid.toolkit.constant.Time;
@@ -82,7 +83,7 @@ public class WriteTest {
         WriterConfig writerConfig = new WriterConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         writerConfig.setOutputStream(fileOutputStream);
-        try (AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig)) {
+        try (AxolotlExcelWriter axolotlExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig)) {
             Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
             axolotlExcelWriter.writeToTemplate(0, map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
