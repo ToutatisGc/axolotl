@@ -58,7 +58,7 @@
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>0.0.8-ALPHA-8</version>
+    <version>0.0.10-ALPHA-8</version>
 </dependency>
 ```
 
@@ -161,7 +161,7 @@ List<POJO> data = reader.readSheetData(ReaderConfig readerConfig)
 
 | 注解（annotations）                   | 用途                                            | 参数说明                                                     |
 | ------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
-| @IndexWorkSheet                       | [Class]<br />指定具体索引的工作表               | [readRowOffset]读取起始偏移行<br />[sheetIndex]工作表索引[默认值:0] |
+| @IndexWorkSheet                       | [Class]<br />指定具体索引的工作表               | [readRowOffset]读取起始偏移行<br />[sheetIndex]工作表索引[默认值:0]<br />[sheetColumnEffectiveRange]工作表列有效范围[默认范围:{0,-1}] |
 | @NamingWorkSheet                      | [Class]<br />指定具体名称的工作表（区分大小写） | [readRowOffset]读取起始偏移行<br />[sheetName]工作表名称     |
 | <font color='red'>@ColumnBind*</font> | [Property]<br />实体绑定列位置                  | [columnIndex]列索引<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器<br />[headerName]表头名称<br /> |
 | @SpecifyPositionBind                  | [Property]<br />实体绑定具体单元格位置          | [value]单元格位置[举例:A1,B2,C3]<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器 |
@@ -359,11 +359,174 @@ while (dataIterator.hasNext()){
 }
 ```
 
+​        在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
+
 ##### 4.1.1.8 数据适配器
 
-​	数据适配器 **DataCastAdapter** 是用于将Excel的单元格类型（）
+​	数据适配器 **DataCastAdapter** 用于将Excel的单元格类型（**NUMERIC STRING FORMULA BLANK BOOLEAN   基于POI**）转换为实体类对应**属性**的**Java类型**的一种处理器。
 
-​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
+**DataCastAdapter**
+
+```java
+public interface DataCastAdapter<FT> {
+
+    /**
+     * 类型转换
+     * @param cellGetInfo 单元格信息
+     * @param context 类型转换所需的上下文
+     * @return 转换后的值
+     */
+    FT cast(CellGetInfo cellGetInfo, CastContext<FT> context);
+
+    /**
+     * 是否支持该类型进行转换
+     * @param cellType 单元格类型
+     * @param clazz 需要转换的类型
+     * @return 是否支持该类型进行转换
+     */
+    boolean support(CellType cellType, Class<FT> clazz);
+
+}
+```
+
+**DataCastAdapter** 是一个接口，所有适配器都为这个接口的实现类。接口中有两个方法**cast**与**support**。
+
+**cast**方法: 将**Excel的单元格类型**转换为**Java类型**的方法，转换逻辑在此方法中。**cellGetInfo** 为单元格相关信息，**context **为类型转换所需的上下文信息
+
+**support**方法：判断该适配器是否支持转换，**cellType **为单元格类型，**clazz **为Java类型，返回值为**true**说明该适配器支持转换，反之不支持。
+
+
+
+适配器基类 **AbstractDataCastAdapter**
+
+```
+public abstract class AbstractDataCastAdapter<FT> implements DataCastAdapter<FT> {
+
+    /**
+     * 读取配置
+     */
+    private ReaderConfig<?> readerConfig;
+
+    /**
+     * 实体映射信息
+     */
+    private EntityCellMappingInfo<?> entityCellMappingInfo;
+
+}
+```
+
+**AbstractDataCastAdapter** 提供了读取配置**readerConfig**与实体映射信息**entityCellMappingInfo**两种**配置信息**供开发者在编写适配器时使用。
+
+读取配置**readerConfig**：为读取表格时的相关配置信息，包括已启用的读取特性、读取的sheet表相关信息、读取表头的范围信息（当以表头名称绑定列时可用）、实体类属性与表格的映射信息（所有属性）以及读取的行次、列次范围信息等等。
+
+实体映射信息**entityCellMappingInfo**：主要为当前属性的相关映射信息，如属性类型、属性名称、对应单元格的行次列次、单元格映射类型以及该属性排除的读取特性等等。
+
+
+
+默认适配器：
+
+默认适配器是框架为**基本数据类型以及常用Java类**所预设的数据适配器，分为 **DefaultBooleanAdapter**（处理布尔类型）,**DefaultDateTimeAdapter**（处理时间类类型），**DefaultNumericAdapter**（处理数字/浮点类型），**DefaultStringAdapter**（处理字符串类型），这些默认适配器已经被部署到全局中，将会在转换对应的Java类型时被调用并完成转换，这些转换器可以被替换但不能被直接移除。
+
+
+
+全局适配器配置类 **DefaultAdapters**：
+
+```
+public class DefaultAdapters {
+
+    /**
+     * 默认数据类型适配器
+     */
+    private static final Map<Class<?>,DataCastAdapter<?>> DEFAULT_ADAPTERS = new HashMap<>();
+
+    static {
+        DEFAULT_ADAPTERS.put(String.class, new DefaultStringAdapter());
+        DEFAULT_ADAPTERS.put(Integer.class, new DefaultNumericAdapter<>(Integer.class));
+        DEFAULT_ADAPTERS.put(int.class, new DefaultNumericAdapter<>(Integer.class));
+        DEFAULT_ADAPTERS.put(Long.class, new DefaultNumericAdapter<>(Long.class));
+        DEFAULT_ADAPTERS.put(long.class, new DefaultNumericAdapter<>(Long.class));
+        DEFAULT_ADAPTERS.put(Double.class, new DefaultNumericAdapter<>(Double.class));
+        DEFAULT_ADAPTERS.put(double.class, new DefaultNumericAdapter<>(Double.class));
+        DEFAULT_ADAPTERS.put(BigDecimal.class, new DefaultNumericAdapter<>(BigDecimal.class));
+        DEFAULT_ADAPTERS.put(Boolean.class, new DefaultBooleanAdapter());
+        DEFAULT_ADAPTERS.put(boolean.class, new DefaultBooleanAdapter());
+        DEFAULT_ADAPTERS.put(Date.class, new DefaultDateTimeAdapter<>(Date.class));
+        DEFAULT_ADAPTERS.put(LocalDate.class, new DefaultDateTimeAdapter<>(LocalDate.class));
+        DEFAULT_ADAPTERS.put(LocalDateTime.class, new DefaultDateTimeAdapter<>(LocalDateTime.class));
+    }
+
+    /**
+     * 注册全局适配器
+     * 注意：注册后，会覆盖已有的适配器
+     * @param clazz 需要转换的类型
+     * @param adapter 数据转换适配器
+     */
+    public static void registerDefaultAdapter(Class<?> clazz, DataCastAdapter<?> adapter) {
+        DEFAULT_ADAPTERS.put(clazz, adapter);
+    }
+
+    /**
+     * 移除默认适配器
+     * @param clazz 需要移除的类型
+     */
+    public static void removeDefaultAdapter(Class<?> clazz) {
+        // 基础类型不允许移除
+        if (
+                clazz.equals(String.class) ||
+                clazz.equals(Integer.class) ||
+                clazz.equals(int.class) ||
+                clazz.equals(Long.class) ||
+                clazz.equals(long.class) ||
+                clazz.equals(Double.class) ||
+                clazz.equals(double.class) ||
+                clazz.equals(Boolean.class) ||
+                clazz.equals(boolean.class) ||
+                clazz.equals(Date.class) ||
+                clazz.equals(LocalDate.class) ||
+                clazz.equals(LocalDateTime.class)
+        ){
+            throw new IllegalArgumentException("基础类型不可移除适配器");
+        }
+        DEFAULT_ADAPTERS.remove(clazz);
+    }
+}
+```
+
+通过该类提供的方法可完成全局适配器的配置，可通过**registerDefaultAdapter**方法注册全局适配器，通过**removeDefaultAdapter**方法移除全局适配器（**默认适配器不能移除**）。
+
+
+
+全局适配器的匹配方式：
+
+全局适配器是根据**实体类属性的Java类型**获取的，并不支持根据**单元格类型**获取，所以在配置全局适配器前请确认注册的适配器已经兼容**所有单元格类型的处理**，否则在转换时可能**抛出异常**。
+
+
+
+自定义适配器的编写：
+
+创建一个自定义类并实现 **DataCastAdapter** 接口或继承 **AbstractDataCastAdapter** 抽象类（建议），重写**cast**与**support**方法。
+
+
+
+适配器的配置：
+
+1、通过注解指定
+
+```
+@ColumnBind(headerName = "工程名称",adapter = DefaultStringAdapter.class)
+private String a1;
+
+@SpecifyPositionBind(value = "A1",adapter = DefaultStringAdapter.class)
+private String a2;
+```
+
+可在注解 **@ColumnBind** ，**@SpecifyPositionBind **中直接指定该属性使用的适配器，需注意适配器是否支持该属性类型与单元格类型的转换。
+
+2、全局指定
+
+全局指定时可通过配置**DefaultAdapters**类实现，调用该类静态方法**registerDefaultAdapter**注册全局适配器，通过**removeDefaultAdapter**方法移除全局适配器（有关全局适配器的信息看上文），**注解指定优先级高于全局指定**。
+
+
 
 ##### 4.1.1.9 实体读取相关信息
 
