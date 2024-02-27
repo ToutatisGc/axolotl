@@ -146,7 +146,7 @@ public class SimpleTest {
             AxolotlExcelReader<OneFieldString3Entity> excelReader = Axolotls.getExcelReader(file, OneFieldString3Entity.class);
             while (excelReader.hasNext()){
                 List<OneFieldString3Entity> next = excelReader.next();
-//                System.err.println(next);
+                System.err.println(next);
 //            System.err.println(next.size());
             }
         }
