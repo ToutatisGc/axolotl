@@ -41,14 +41,12 @@ import org.slf4j.Logger;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static cn.toutatis.xvoid.axolotl.Meta.CONST_PREFIX;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.format;
 
@@ -59,11 +57,13 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.format;
 public class AxolotlExcelWriter implements Closeable {
 
     /**
+     * 日志工具
      * 日志记录器
      */
     private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlExcelWriter.class);
 
     /**
+     * 由文件加载而来的工作簿文件信息
      * 写入工作簿
      */
     private final SXSSFWorkbook workbook;
@@ -80,6 +80,7 @@ public class AxolotlExcelWriter implements Closeable {
 
     /**
      * 主构造函数
+     *
      * @param writerConfig 写入配置
      */
     public AxolotlExcelWriter(WriterConfig writerConfig) {
@@ -90,6 +91,7 @@ public class AxolotlExcelWriter implements Closeable {
     /**
      * 构造函数
      * 可以写入一个模板文件
+     *
      * @param templateFile 模板文件
      * @param writerConfig 写入配置
      */
@@ -101,6 +103,7 @@ public class AxolotlExcelWriter implements Closeable {
 
     /**
      * 初始化工作簿
+     *
      * @param templateFile 模板文件
      * @return 工作簿
      */
@@ -130,6 +133,9 @@ public class AxolotlExcelWriter implements Closeable {
 
 
 
+    /**
+     *
+     */
     @SneakyThrows
     public void write(){
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
@@ -148,121 +154,44 @@ public class AxolotlExcelWriter implements Closeable {
 
     /**
      * 写入数据到模板
+     *
      * @param sheetIndex 工作簿索引
      * @param singleMap 固定值映射
      * @param circleDataList 循环数据
      */
     @SneakyThrows
-    @SuppressWarnings("unchecked")
     public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<?> circleDataList){
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
         XSSFSheet sheet;
         if (writeContext.isTemplateWrite()){
-            sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
-            if (sheet != null){
+            sheet = this.getWorkbookSheet(sheetIndex);
+            // 只有第一次写入时解析模板占位符
+            if (1 == writeContext.getCurrentWrittenBatch()){
                 // 解析模板占位符到上下文
                 this.resolveTemplate(sheet);
-                // 写入Map映射
-                this.writeSingleData(sheet,singleMap,false);
-                boolean dataNotEmpty = Validator.objNotNull(circleDataList);
-                String progressId = Progress.generateProgressId();
-                Progress.init(progressId,dataNotEmpty? circleDataList.size() : 1);
-                // 写入循环数据
-                Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(sheetIndex);
-                if (dataNotEmpty){
-                    boolean isSimplePOJO;
-                    // 获取写入类字段数据
-                    Map<String,Integer> writeFieldNames = new HashMap<>();
-                    Object rowObjInstance = circleDataList.get(0);
-                    if (rowObjInstance instanceof Map){
-                        isSimplePOJO = false;
-                        Map<String, Object> rowObjInstanceMap = (Map<String, Object>) rowObjInstance;
-                        if (!rowObjInstanceMap.isEmpty()){
-                            writeFieldNames = rowObjInstanceMap.keySet()
-                                    .stream()
-                                    .collect(Collectors.toMap(key -> key, key -> 1));
-                        }
-                    }else {
-                        isSimplePOJO = true;
-                        Class<?> instanceClass = rowObjInstance.getClass();
-                        for (String key : circleReferenceData.keySet()) {
-                            Field field;
-                            try {
-                                field = instanceClass.getDeclaredField(key);
-                            }catch(NoSuchFieldException noSuchFieldException){
-                                field = null;
-                            }
-                            if (field != null){
-                                writeFieldNames.put(key, 1);
-                            }
-                        }
-                    }
-                    LoggerHelper.debug(LOGGER,"本次写入字段为:%s",writeFieldNames.keySet());
-                    // 漂移写入特性
-                    if (circleDataList.size() > 1 && writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
-                        int maxRowPosition = Integer.MIN_VALUE;
-                        for (Map.Entry<String, CellAddress> addressEntry : circleReferenceData.entrySet()) {
-                            if (writeFieldNames.containsKey(addressEntry.getKey())){
-                                maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());
-                            }
-                        }
-                        sheet.shiftRows(maxRowPosition+1,sheet.getLastRowNum(),circleDataList.size()-1,true,true);
-                    }
-                    // 写入数据
-                    for (Object data : circleDataList) {
-                        for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
-                            CellAddress cellAddress = circleReferenceData.get(fieldMapping.getKey());
-                            Object value;
-                            if (isSimplePOJO){
-                                Field field = data.getClass().getDeclaredField(fieldMapping.getKey());
-                                field.setAccessible(true);
-                                value = field.get(data);
-                            }else{
-                                Map<String, Object> map = (Map<String, Object>) data;
-                                value = map.get(fieldMapping.getKey());
-                            }
-                            int rowPosition = cellAddress.getRowPosition();
-                            boolean mergeCell = cellAddress.isMergeCell();
-                            XSSFRow writableRow = sheet.getRow(rowPosition);
-                            if (writableRow == null){
-                                writableRow = sheet.createRow(rowPosition);
-                            }
-                            XSSFCell writableCell = writableRow.getCell(cellAddress.getColumnPosition());
-                            if (writableCell == null){
-                                writableCell = writableRow.createCell(cellAddress.getColumnPosition());
-                            }
-                            writableCell.setCellStyle(cellAddress.getCellStyle());
-                            if (Validator.strIsBlank(value)){
-                                writableCell.setBlank();
-                            }else {
-                                // 暂时只适配String类型
-                                writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
-                            }
-                            if (mergeCell && !cellAddress.isInitializedWrite()){
-                                CellRangeAddress mergeRegion = cellAddress.getMergeRegion();
-                                mergeRegion.setFirstRow(rowPosition);
-                                mergeRegion.setLastRow(rowPosition);
-                                StyleHelper.renderMergeRegionStyle(sheet,mergeRegion,cellAddress.getCellStyle());
-                                sheet.addMergedRegion(mergeRegion);
-                            }
-                            cellAddress.setRowPosition(++rowPosition);
-                        }
-                    }
-                }
-            }else{
-                throw new AxolotlWriteException(format("工作表索引[%s]模板中不存在",sheetIndex));
             }
+            // 写入Map映射
+            this.writeSingleData(sheet,singleMap,writeContext.getSingleReferenceData(),false);
+            // 写入循环数据
+            this.writeCircleData(sheet,circleDataList);
         }else{
             throw new AxolotlWriteException("非模板写入请使用write方法");
         }
     }
 
-    private void writeSingleData(Sheet sheet,Map<String,?> singleMap,boolean gatherUnusedStage){
-        HashBasedTable<Integer, String, CellAddress> singleReferenceData = this.writeContext.getSingleReferenceData();
+    /**
+     * 写入单次引用数据
+     *
+     * @param sheet 工作表
+     * @param singleMap 单次引用数据
+     * @param referenceData 数据源
+     * @param gatherUnusedStage 是否收集未使用的数据
+     */
+    private void writeSingleData(Sheet sheet,Map<String,?> singleMap,HashBasedTable<Integer, String, CellAddress> referenceData,boolean gatherUnusedStage){
         int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
-        Map<String, CellAddress> singleAddressMapping = singleReferenceData.row(sheetIndex);
+        Map<String, CellAddress> singleAddressMapping = referenceData.row(sheetIndex);
         HashMap<String, Object> dataMapping = new HashMap<>(singleMap);
-        this.injectCommonInfo(dataMapping,gatherUnusedStage);
+        this.injectCommonConstInfo(dataMapping,gatherUnusedStage);
         HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
         Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(sheetIndex);
         for (String singleKey : singleAddressMapping.keySet()) {
@@ -273,6 +202,8 @@ public class AxolotlExcelWriter implements Closeable {
                 Object info = dataMapping.get(singleKey);
                 if(info == null){
                     if(gatherUnusedStage){
+                        debug(LOGGER, format("[收尾阶段]设置模板占位符[%s]为空值",singleKey));
+                    }else {
                         debug(LOGGER, format("设置模板占位符[%s]为空值",singleKey));
                     }
                     cell.setBlank();
@@ -289,66 +220,184 @@ public class AxolotlExcelWriter implements Closeable {
     }
 
     /**
-     * 未使用的占位符填充默认值
+     * 未使用的单次占位符填充默认值
      */
     private void gatherUnusedSingleReferenceDataAndFillDefault() {
         if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
             int sheetIndex = writerConfig.getSheetIndex();
-            Sheet sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
-            this.resolveTemplate(sheet);
+            Sheet sheet = this.getConfigBoundSheet();
             Map<String, CellAddress> singleReferenceMapping =  writeContext.getSingleReferenceData().row(sheetIndex);
-            Map<String, Boolean> alreadyUsedDataMapping =  writeContext.getAlreadyUsedReferenceData().row(sheetIndex);
-            MapDifference<String, Object> difference = Maps.difference(singleReferenceMapping, alreadyUsedDataMapping);
-            Map<String, Object> onlyOnLeft = difference.entriesOnlyOnLeft();
-            HashMap<String, Object> unusedMap = new HashMap<>();
-            for (String singleKey : onlyOnLeft.keySet()) {
-                unusedMap.put(singleKey,null);
-            }
-            this.writeSingleData(sheet,unusedMap,true);
-
+            HashMap<String, Object> unusedMap = gatherUnusedField(sheetIndex, singleReferenceMapping);
+            this.writeSingleData(sheet,unusedMap,writeContext.getSingleReferenceData(),true);
         }
-    }
-
-    private void gatherUnusedCircleReferenceDataAndFillDefault() {
-        int sheetIndex = writerConfig.getSheetIndex();
-        Map<String, CellAddress> singleReferenceMapping =  writeContext.getCircleReferenceData().row(sheetIndex);
-        System.err.println(singleReferenceMapping);
-        // TODO 采集未使用循环实体
     }
 
     /**
-     * 解析数据实体类型
-     * @param data 数据集合
+     * 未使用的列表占位符填充默认值
      */
-    private void writeCircleData(Sheet sheet,List<Object> data,Map<String, CellAddress> circleReferenceData){
-        // TODO 获取实体字段名
-        if (data == null || data.isEmpty()){
-            return;
-        }
-        Object dataTmp = data.get(0);
-        Class<?> dataClass = dataTmp.getClass();
-        if (dataTmp instanceof Map<?,?>){
-
+    private void gatherUnusedCircleReferenceDataAndFillDefault() {
+        if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
+            int sheetIndex = writerConfig.getSheetIndex();
+            Map<String, CellAddress> circleReferenceData =  writeContext.getCircleReferenceData().row(sheetIndex);
+            HashMap<String, Object> map = gatherUnusedField(sheetIndex, circleReferenceData);
+            this.writeSingleData(this.getConfigBoundSheet(),map,writeContext.getCircleReferenceData(),true);
         }
     }
 
+    /**
+     * 采集未使用的占位符
+     *
+     * @param sheetIndex 工作表索引
+     * @param referenceMapping 数据源
+     * @return 未使用的占位符
+     */
+    private HashMap<String, Object> gatherUnusedField(int sheetIndex, Map<String, CellAddress> referenceMapping) {
+        Map<String, Boolean> alreadyUsedDataMapping =  writeContext.getAlreadyUsedReferenceData().row(sheetIndex);
+        MapDifference<String, Object> difference = Maps.difference(referenceMapping, alreadyUsedDataMapping);
+        Map<String, Object> onlyOnLeft = difference.entriesOnlyOnLeft();
+        HashMap<String, Object> unusedMap = new HashMap<>();
+        for (String singleKey : onlyOnLeft.keySet()) {
+            unusedMap.put(singleKey,null);
+        }
+        return unusedMap;
+    }
+
+    /**
+     * 写入占位符列表数据到工作表
+     *
+     * @param sheet 工作表
+     * @param circleDataList 循环列表数据
+     */
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    private void writeCircleData(XSSFSheet sheet, List<?> circleDataList){
+        boolean dataNotEmpty = Validator.objNotNull(circleDataList);
+        String progressId = Progress.generateProgressId();
+        Progress.init(progressId,dataNotEmpty? circleDataList.size() : 1);
+        Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(writerConfig.getSheetIndex());
+        if (dataNotEmpty){
+            boolean isSimplePOJO;
+            // 获取写入类字段数据
+            Map<String,Integer> writeFieldNames = new HashMap<>();
+            Object rowObjInstance = circleDataList.get(0);
+            List<String> writeFieldNamesList;
+            if (rowObjInstance instanceof Map){
+                isSimplePOJO = false;
+                Map<String, Object> rowObjInstanceMap = (Map<String, Object>) rowObjInstance;
+                if (!rowObjInstanceMap.isEmpty()){
+                    writeFieldNames = rowObjInstanceMap.keySet()
+                            .stream()
+                            .collect(Collectors.toMap(key -> key, key -> 1));
+                }
+            }else {
+                isSimplePOJO = true;
+                Class<?> instanceClass = rowObjInstance.getClass();
+                for (String key : circleReferenceData.keySet()) {
+                    Field field;
+                    try {
+                        field = instanceClass.getDeclaredField(key);
+                    }catch(NoSuchFieldException noSuchFieldException){
+                        field = null;
+                    }
+                    if (field != null){
+                        writeFieldNames.put(key, 1);
+                    }
+                }
+            }
+            writeFieldNamesList = new ArrayList<>(writeFieldNames.keySet());
+            System.err.println(writeContext.getSameFields());
+            for (Map.Entry<String, CellAddress> stringCellAddressEntry : circleReferenceData.entrySet()) {
+                System.err.println(stringCellAddressEntry);
+            }
+            LoggerHelper.debug(LOGGER,"本次写入字段为:%s",writeFieldNames.keySet());
+            // 漂移写入特性
+            boolean initialWriting = writeContext.isInitialWriting(writeFieldNamesList);
+            writeContext.addFieldRecords(writeFieldNamesList,writeContext.getCurrentWrittenBatch());
+            if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
+                    writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
+                int maxRowPosition = Integer.MIN_VALUE;
+                for (Map.Entry<String, CellAddress> addressEntry : circleReferenceData.entrySet()) {
+                    if (writeFieldNames.containsKey(addressEntry.getKey())){
+                        maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());
+                    }
+                }
+                System.err.println("maxRowPosition:%s"+maxRowPosition);
+                sheet.shiftRows(initialWriting?maxRowPosition+1 : maxRowPosition,
+                        sheet.getLastRowNum(),
+                        initialWriting?circleDataList.size()-1 : circleDataList.size(),
+                        true,true);
+            }
+            // 写入列表数据
+            HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
+            Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writerConfig.getSheetIndex());
+            for (Object data : circleDataList) {
+                System.err.println("写入"+data);
+                for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
+                    CellAddress cellAddress = circleReferenceData.get(fieldMapping.getKey());
+                    Object value;
+                    if (isSimplePOJO){
+                        Field field = data.getClass().getDeclaredField(fieldMapping.getKey());
+                        field.setAccessible(true);
+                        value = field.get(data);
+                    }else{
+                        Map<String, Object> map = (Map<String, Object>) data;
+                        value = map.get(fieldMapping.getKey());
+                    }
+                    int rowPosition = cellAddress.getRowPosition();
+                    XSSFRow writableRow = sheet.getRow(rowPosition);
+                    if (writableRow == null){
+                        writableRow = sheet.createRow(rowPosition);
+                    }
+                    XSSFCell writableCell = writableRow.getCell(cellAddress.getColumnPosition());
+                    if (writableCell == null){
+                        writableCell = writableRow.createCell(cellAddress.getColumnPosition());
+                    }
+                    writableCell.setCellStyle(cellAddress.getCellStyle());
+                    if (Validator.strIsBlank(value)){
+                        writableCell.setBlank();
+                    }else {
+                        // 暂时只适配String类型
+                        writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
+                    }
+                    if (cellAddress.isMergeCell() && !cellAddress.isInitializedWrite()){
+                        CellRangeAddress mergeRegion = cellAddress.getMergeRegion();
+                        mergeRegion.setFirstRow(rowPosition);
+                        mergeRegion.setLastRow(rowPosition);
+                        StyleHelper.renderMergeRegionStyle(sheet,mergeRegion,cellAddress.getCellStyle());
+                        sheet.addMergedRegion(mergeRegion);
+                    }
+                    cellAddress.setRowPosition(++rowPosition);
+                    alreadyUsedDataMapping.put(fieldMapping.getKey(),true);
+                }
+            }
+        }
+    }
+
+    /**
+     * 注入内置变量
+     *
+     * @param singleMap 单条数据
+     * @param gatherUnusedStage 是否收集未使用的占位符
+     */
     @SuppressWarnings({"rawtypes","unchecked"})
-    private void injectCommonInfo(Map singleMap,boolean gatherUnusedStage){
-        if(!gatherUnusedStage){
+    private void injectCommonConstInfo(Map singleMap, boolean gatherUnusedStage){
+        if(!gatherUnusedStage && 1 == writeContext.getCurrentWrittenBatch()){
             if (singleMap == null){
                 singleMap = new HashMap<>();
             }
-            singleMap.put("AXOLOTL_CREATE_TIME", Time.getCurrentTime());
+            singleMap.put(CONST_PREFIX+"_CREATE_TIME", Time.getCurrentTime());
+            singleMap.put(CONST_PREFIX+"_CREATE_DATE", Time.regexTime(Time.YMD_HORIZONTAL_FORMAT_REGEX,new Date()));
+            LoggerHelper.debug(LOGGER, "注入内置常量");
         }
     }
 
     /**
-     * 解析模板
+     * 解析模板占位符
+     *
      * @param sheet 工作表
      */
     private void resolveTemplate(Sheet sheet){
         int lastRowNum = sheet.getLastRowNum();
-        List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
         for (int rowIdx = 0; rowIdx <= lastRowNum; rowIdx++) {
             Row row = sheet.getRow(rowIdx);
             if (row != null){
@@ -386,6 +435,7 @@ public class AxolotlExcelWriter implements Closeable {
 
     /**
      * 解析模板值到变量
+     *
      * @param referenceData 引用数据
      * @param pattern 模板匹配正则
      * @param sheetIndex 工作簿索引
@@ -406,6 +456,9 @@ public class AxolotlExcelWriter implements Closeable {
         return null;
     }
 
+    /**
+     *
+     */
     public static void main(String[] args) throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
 
@@ -440,19 +493,24 @@ public class AxolotlExcelWriter implements Closeable {
     /**
      * 写入器刷新内容
      * 进入写入剩余内容进入关闭流前的收尾工作
+     *
      * @param isFinal 是否是最终刷新，关闭写入前的最后一次刷新
      */
     public void flush(boolean isFinal) {
         // 采集未映射数据
         // 暂时没有false的情况
-        if (isFinal || true){
-            this.writeContext.getSingleReferenceData().row(this.writerConfig.getSheetIndex()).clear();
+        XSSFSheet sheet = this.getConfigBoundSheet();
+        this.resolveTemplate(sheet);
+        if (isFinal){
             this.gatherUnusedSingleReferenceDataAndFillDefault();
             this.gatherUnusedCircleReferenceDataAndFillDefault();
         }
     }
 
 
+    /**
+     *
+     */
     public void flush() {
         // 采集未映射数据
         this.flush(false);
@@ -460,7 +518,6 @@ public class AxolotlExcelWriter implements Closeable {
 
     /**
      * 关闭工作簿所对应输出流
-     * @throws IOException IO异常
      */
     @Override
     public void close() throws IOException {
@@ -469,6 +526,27 @@ public class AxolotlExcelWriter implements Closeable {
         workbook.write(writerConfig.getOutputStream());
         workbook.close();
         writerConfig.getOutputStream().close();
+    }
+
+    /**
+     * 获取配置绑定索引
+     */
+    private XSSFSheet getConfigBoundSheet() {
+        return this.getWorkbookSheet(this.writerConfig.getSheetIndex());
+    }
+
+    /**
+     * 获取工作簿对应的工作表
+     *
+     * @param sheetIndex 工作表索引
+     * @return 工作表
+     */
+    private XSSFSheet getWorkbookSheet(int sheetIndex) {
+        XSSFSheet sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
+        if (sheet == null){
+            throw new AxolotlWriteException(LoggerHelper.format("工作簿索引[%s]对应的工作表不存在",this.writerConfig.getSheetIndex()));
+        }
+        return sheet;
     }
 
 }

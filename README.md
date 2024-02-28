@@ -16,6 +16,8 @@
 
 ​	无论是数据导入、导出，还是对内容进行复杂的编辑和分析，此框架都为用户提供了便捷而强大的解决方案，使得文档的处理变得更加高效、灵活。
 
+> Axolotl意为美西螈（ˈæksəˌlɒtəl），总的来说，美西螈以其独特的外观、再生能力和生活习性而备受关注。
+
 ### 1.1 版本更新说明
 
 #### 🔝 0.0.10-ALPHA-8 更新说明
@@ -116,7 +118,7 @@ AxolotlExcelWriter axolotlExcelWriter = Axolotls.getExcelWriter(writerConfig);
 
 ###### <1> 模板写入
 
-```
+```java
 // 获取数据
 Map<String, Object> map = Map.of("name", "Toutatis");
 List<TestEntity> datas = new ArrayList<>();
@@ -363,9 +365,65 @@ while (dataIterator.hasNext()){
 
 ##### 4.1.1.8 数据适配器
 
-​	数据适配器 **DataCastAdapter** 用于将Excel的单元格类型（**NUMERIC STRING FORMULA BLANK BOOLEAN   基于POI**）转换为实体类对应**属性**的**Java类型**的一种处理器。
+​	**数据适配器（DataCastAdapter）**用于将Excel单元格转换为Java实体对应属性的的处理器，在获取到单元格数据时适配为转换类实例对象中对应字段类型并赋值。
 
-**DataCastAdapter**
+**📖适配器的配置：**
+
+1. 通过注解指定adapter:
+
+```
+@ColumnBind(headerName = "工程名称",adapter = DefaultStringAdapter.class)
+private String a1;
+
+@SpecifyPositionBind(value = "A1",adapter = DefaultStringAdapter.class)
+private String a2;
+```
+
+​	可在注解 **@ColumnBind与@SpecifyPositionBind** 中直接指定该属性使用的适配器，需注意适配器是否支持该属性类型与单元格类型的转换。
+
+------
+
+2. 全局指定
+
+全局指定时可通过配置**DefaultAdapters**类实现，**注解指定优先级高于全局指定**。
+
+（有关默认适配器信息请看下一小节）
+
+------
+
+📖DefaultAdapters[默认适配器]：
+
+​	默认数据适配器，框架为**基本数据类型以及常用Java类**提供预设数据适配器。
+
+- **DefaultBooleanAdapter**（布尔类处理器）-> STRING,BOOLEAN,NUMERIC -> Boolean
+- **DefaultDateTimeAdapter**（时间类适配器）-> STRING,NUMERIC -> LocalDateTime等
+- **DefaultNumericAdapter**（数字类适配器）-> STRING,NUMERIC -> Interger等
+- **DefaultStringAdapter**（字符串类处理器）-> ALL -> String
+
+> 通过DefaultAdapters该类方法可完成全局适配器的配置，使用**registerDefaultAdapter**方法注册全局适配器，使用**removeDefaultAdapter**方法移除全局适配器（**基础类型适配器不能被移除**）。
+
+添加其他适配器为默认适配器：
+
+```java
+// 调用registerDefaultAdapter方法注册一个适配器为全局适配器
+// clazz为需要转换的Java类型
+DefaultAdapters.registerDefaultAdapter(clazz,adapter);
+```
+
+移除默认适配器：
+
+```java
+// clazz为需要转换的Java类型
+DefaultAdapters.removeDefaultAdapter(clazz);
+```
+
+------
+
+<font color='red'>**📖自定义适配器：** </font>
+
+所有适配器都为**DataCastAdapter** 接口实现类。
+
+**DataCastAdapter接口：**
 
 ```java
 public interface DataCastAdapter<FT> {
@@ -389,17 +447,38 @@ public interface DataCastAdapter<FT> {
 }
 ```
 
-**DataCastAdapter** 是一个接口，所有适配器都为这个接口的实现类。接口中有两个方法**cast**与**support**。
+接口中有两个方法**cast（转换）**与**support（是否支持转换）**。
 
-**cast**方法: 将**Excel的单元格类型**转换为**Java类型**的方法，转换逻辑在此方法中。**cellGetInfo** 为单元格相关信息，**context **为类型转换所需的上下文信息
+------
 
-**support**方法：判断该适配器是否支持转换，**cellType **为单元格类型，**clazz **为Java类型，返回值为**true**说明该适配器支持转换，反之不支持。
+<font color='orange'>cast方法: </font>
 
+​	将**Excel的单元格类型**转换为**Java类型**的方法，转换逻辑在此方法中实现。
 
+方法形参:
 
-适配器基类 **AbstractDataCastAdapter**
+| 参数                    | 说明                             |
+| ----------------------- | -------------------------------- |
+| CellGetInfo cellGetInfo | 单元格信息:包含数据,单元格类型等 |
+| CastContext context     | 转换上下文:包含转换字段类型等    |
 
-```
+**cellGetInfo** 为单元格相关信息，**context **为类型转换所需的上下文信息
+
+------
+
+<font color='orange'>support方法：</font>
+
+​	判断该适配器是否支持从单元格类型转换为Java字段类型。
+
+​	**cellType** 为单元格类型，**clazz** 为Java类型，返回**true**说明该适配器支持转换，反之不支持转换并抛出异常。
+
+------
+
+适配器抽象基类 **AbstractDataCastAdapter(推荐使用)**
+
+框架中的默认实现皆由此类实现：
+
+```java
 public abstract class AbstractDataCastAdapter<FT> implements DataCastAdapter<FT> {
 
     /**
@@ -415,118 +494,12 @@ public abstract class AbstractDataCastAdapter<FT> implements DataCastAdapter<FT>
 }
 ```
 
-**AbstractDataCastAdapter** 提供了读取配置**readerConfig**与实体映射信息**entityCellMappingInfo**两种**配置信息**供开发者在编写适配器时使用。
+​	**AbstractDataCastAdapter** 提供了读取配置**readerConfig**与实体映射信息**entityCellMappingInfo**两种**配置信息**供开发者在编写适配器时使用。
 
-读取配置**readerConfig**：为读取表格时的相关配置信息，包括已启用的读取特性、读取的sheet表相关信息、读取表头的范围信息（当以表头名称绑定列时可用）、实体类属性与表格的映射信息（所有属性）以及读取的行次、列次范围信息等等。
-
-实体映射信息**entityCellMappingInfo**：主要为当前属性的相关映射信息，如属性类型、属性名称、对应单元格的行次列次、单元格映射类型以及该属性排除的读取特性等等。
-
-
-
-默认适配器：
-
-默认适配器是框架为**基本数据类型以及常用Java类**所预设的数据适配器，分为 **DefaultBooleanAdapter**（处理布尔类型）,**DefaultDateTimeAdapter**（处理时间类类型），**DefaultNumericAdapter**（处理数字/浮点类型），**DefaultStringAdapter**（处理字符串类型），这些默认适配器已经被部署到全局中，将会在转换对应的Java类型时被调用并完成转换，这些转换器可以被替换但不能被直接移除。
-
-
-
-全局适配器配置类 **DefaultAdapters**：
-
-```
-public class DefaultAdapters {
-
-    /**
-     * 默认数据类型适配器
-     */
-    private static final Map<Class<?>,DataCastAdapter<?>> DEFAULT_ADAPTERS = new HashMap<>();
-
-    static {
-        DEFAULT_ADAPTERS.put(String.class, new DefaultStringAdapter());
-        DEFAULT_ADAPTERS.put(Integer.class, new DefaultNumericAdapter<>(Integer.class));
-        DEFAULT_ADAPTERS.put(int.class, new DefaultNumericAdapter<>(Integer.class));
-        DEFAULT_ADAPTERS.put(Long.class, new DefaultNumericAdapter<>(Long.class));
-        DEFAULT_ADAPTERS.put(long.class, new DefaultNumericAdapter<>(Long.class));
-        DEFAULT_ADAPTERS.put(Double.class, new DefaultNumericAdapter<>(Double.class));
-        DEFAULT_ADAPTERS.put(double.class, new DefaultNumericAdapter<>(Double.class));
-        DEFAULT_ADAPTERS.put(BigDecimal.class, new DefaultNumericAdapter<>(BigDecimal.class));
-        DEFAULT_ADAPTERS.put(Boolean.class, new DefaultBooleanAdapter());
-        DEFAULT_ADAPTERS.put(boolean.class, new DefaultBooleanAdapter());
-        DEFAULT_ADAPTERS.put(Date.class, new DefaultDateTimeAdapter<>(Date.class));
-        DEFAULT_ADAPTERS.put(LocalDate.class, new DefaultDateTimeAdapter<>(LocalDate.class));
-        DEFAULT_ADAPTERS.put(LocalDateTime.class, new DefaultDateTimeAdapter<>(LocalDateTime.class));
-    }
-
-    /**
-     * 注册全局适配器
-     * 注意：注册后，会覆盖已有的适配器
-     * @param clazz 需要转换的类型
-     * @param adapter 数据转换适配器
-     */
-    public static void registerDefaultAdapter(Class<?> clazz, DataCastAdapter<?> adapter) {
-        DEFAULT_ADAPTERS.put(clazz, adapter);
-    }
-
-    /**
-     * 移除默认适配器
-     * @param clazz 需要移除的类型
-     */
-    public static void removeDefaultAdapter(Class<?> clazz) {
-        // 基础类型不允许移除
-        if (
-                clazz.equals(String.class) ||
-                clazz.equals(Integer.class) ||
-                clazz.equals(int.class) ||
-                clazz.equals(Long.class) ||
-                clazz.equals(long.class) ||
-                clazz.equals(Double.class) ||
-                clazz.equals(double.class) ||
-                clazz.equals(Boolean.class) ||
-                clazz.equals(boolean.class) ||
-                clazz.equals(Date.class) ||
-                clazz.equals(LocalDate.class) ||
-                clazz.equals(LocalDateTime.class)
-        ){
-            throw new IllegalArgumentException("基础类型不可移除适配器");
-        }
-        DEFAULT_ADAPTERS.remove(clazz);
-    }
-}
-```
-
-通过该类提供的方法可完成全局适配器的配置，可通过**registerDefaultAdapter**方法注册全局适配器，通过**removeDefaultAdapter**方法移除全局适配器（**默认适配器不能移除**）。
-
-
-
-全局适配器的匹配方式：
-
-全局适配器是根据**实体类属性的Java类型**获取的，并不支持根据**单元格类型**获取，所以在配置全局适配器前请确认注册的适配器已经兼容**所有单元格类型的处理**，否则在转换时可能**抛出异常**。
-
-
-
-自定义适配器的编写：
-
-创建一个自定义类并实现 **DataCastAdapter** 接口或继承 **AbstractDataCastAdapter** 抽象类（建议），重写**cast**与**support**方法。
-
-
-
-适配器的配置：
-
-1、通过注解指定
-
-```
-@ColumnBind(headerName = "工程名称",adapter = DefaultStringAdapter.class)
-private String a1;
-
-@SpecifyPositionBind(value = "A1",adapter = DefaultStringAdapter.class)
-private String a2;
-```
-
-可在注解 **@ColumnBind** ，**@SpecifyPositionBind **中直接指定该属性使用的适配器，需注意适配器是否支持该属性类型与单元格类型的转换。
-
-2、全局指定
-
-全局指定时可通过配置**DefaultAdapters**类实现，调用该类静态方法**registerDefaultAdapter**注册全局适配器，通过**removeDefaultAdapter**方法移除全局适配器（有关全局适配器的信息看上文），**注解指定优先级高于全局指定**。
-
-
+| 参数                                           | 说明                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------ |
+| ReaderConfig<?> readerConfig                   | 为读取表格时的相关配置信息，包括已启用的读取特性、读取的sheet表相关信息、读取表头的范围信息（当以表头名称绑定列时可用）、实体类属性与表格的映射信息（所有属性）以及读取的行次、列次范围信息等等。 |
+| EntityCellMappingInfo<?> entityCellMappingInfo | 主要为当前属性的相关映射信息，如属性类型、属性名称、对应单元格的行次列次、单元格映射类型以及该属性排除的读取特性等等。 |
 
 ##### 4.1.1.9 实体读取相关信息
 
@@ -545,12 +518,6 @@ private String a2;
 #### 4.1.2 Excel文档写入
 
 ​	<font color='orange'>**本框架仅支持XLSX文件写入，性能更优异兼容更好。**</font>
-
-📖一般使用：
-
-```
-
-```
 
 ##### 4.1.2.1 模板文件写入
 
@@ -599,6 +566,7 @@ try (AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writer
 |      常量名称       |                  说明                   |
 | :-----------------: | :-------------------------------------: |
 | AXOLOTL_CREATE_TIME | 当前写入时间[格式：yyyy-MM-dd hh:MM:ss] |
+| AXOLOTL_CREATE_DATE |     当前写入日期[格式：yyyy-MM-dd]      |
 
 ​	🧭示例表格:
 
@@ -708,12 +676,12 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 ​	**@ColumnBind**注解会根据属性中的**headerName**的值到工作表中进行单元格数据检索并绑定对应的列位置。
 ​	查找规则为按行从上至下依次检索<font color='grey' size='2'>[配置**searchHeaderMaxRows**进行修改]</font>该行每一列上的单元格，如果这些单元格中的值与配置的**headerName**的值完全匹配的情况下，那么该单元格的列位置会被判定为表头。
 
-​	如果表头中只匹配到一个单元格的列，那么该**单元格所处的列**与该实体类属性绑定，如果备选区存在**多个同名表头**，可通过**@ColumnBind**注解的<font color='red'>**sameHeaderIdx参数**</font><font color='grey' size='2'>[默认为0]</font>指定同名表头索引，被指定的**单元格所处的列**会与该实体类属性绑定，**若不进行指定**，则按实体类**该属性所处位置**（在实体类中**headerName**参数**相同**的属性为一组，按属性声明的先后顺序**升序**排列，**属性所处位置**就是属性**在该组中的位置**，这个位置与**单元格在备选区的位置**对应）选择单元格进行列绑定。
+​	如果表头中只匹配到一个单元格的列，那么该**单元格所处的列**与该实体类属性绑定，如果备选区存在**多个同名表头**，可通过@ColumnBind注解的<font color='red'>sameHeaderIdx参数</font><font color='grey' size='2'>[默认为0]</font>指定同名表头索引，被指定的**单元格所处的列**会与该实体类属性绑定，**若不进行指定**，则按实体类**该属性所处位置**（在实体类中**headerName**参数**相同**的属性为一组，按属性声明的先后顺序**升序**排列，**属性所处位置**就是属性**在该组中的位置**，这个位置与**单元格在备选区的位置**对应）选择单元格进行列绑定。
 
 🧭<font color='orange'>**使用建议：**</font>
 
 1. 在使用**headerName**参数进行列绑定时，应首先配置**ReaderConfig**中的**searchHeaderMaxRows**属性确认表头范围，减少检索范围以提高效率并提高精准度。
-2. 在使用headerName指定列位置时，应检查工作表范围内是否存在多个相同表头，建议在工作表为动态时应对工作表表头位置进行判断，在需要时可通过配置**@ColumnBind**注解的**sameHeaderIdx**参数**手动指定**备选表头索引进行列绑定。
+2. 在使用**headerName**指定列位置时，应检查工作表范围内是否存在多个相同表头，建议在工作表为动态时应对工作表表头位置进行判断，在需要时可通过配置@ColumnBind注解的**sameHeaderIdx**参数手动指定备选表头索引进行列绑定。
 
 <div style="float:right;padding-right:15px">
     提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>  最后更新时间：<b>2024-02-26</b>
@@ -726,8 +694,9 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 ​	出现该问题是由于XVOID包功能由其他语言支持，遇到此问题请升级IDEA到最新版。
 
 <div style="float:right;padding-right:15px">
-    提出人：<b>@zongzg</b> 提出时间：<b>2024-02-19</b>
-</div>
+    提出人：<b>@zongzg</b> 提出时间：<b>2024-02-19</b> 
+</div> 
+
 ------
 
 

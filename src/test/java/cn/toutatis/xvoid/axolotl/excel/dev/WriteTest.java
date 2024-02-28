@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,6 +96,15 @@ public class WriteTest {
                 datas.add(sch);
             }
             axolotlExcelWriter.writeToTemplate(0, Map.of("age",50), datas);
+            datas.clear();
+            for (int i = 0; i < 5; i++) {
+                JSONObject sch = new JSONObject();
+                sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
+                sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+                sch.put("graduate", true);
+                datas.add(sch);
+            }
+            axolotlExcelWriter.writeToTemplate(0,new HashMap<>(), datas);
         }
     }
 

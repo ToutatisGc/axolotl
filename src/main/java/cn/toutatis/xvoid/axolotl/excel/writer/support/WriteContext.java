@@ -5,6 +5,9 @@ import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 写入上下文
@@ -29,6 +32,8 @@ public class WriteContext {
      * 当前写入批次
      */
     private int currentWrittenBatch = 0;
+
+    private Map<List<String>,Integer> sameFields = new HashMap<>();
 
     /**
      * 单次引用索引
@@ -55,5 +60,13 @@ public class WriteContext {
 
     public String getCurrentWrittenBatchAndIncrement(){
         return LoggerHelper.format("当前写入第[%s]批次",++currentWrittenBatch);
+    }
+
+    public void addFieldRecords(List<String> fields,int batch){
+        sameFields.put(fields,batch);
+    }
+
+    public boolean isInitialWriting(List<String> fields) {
+        return !sameFields.containsKey(fields);
     }
 }
