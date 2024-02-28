@@ -117,7 +117,7 @@ public class AxolotlExcelWriter implements Closeable {
             if (!detect.isWantedMimeType()){
                 throw new AxolotlWriteException("请使用xlsx文件作为写入模板");
             }
-            this.writeContext.setTemplateFile(templateFile);
+            this.writeContext.setFile(templateFile);
             try (FileInputStream fis = new FileInputStream(templateFile)){
                 OPCPackage opcPackage = OPCPackage.open(fis);
                 workbook = new SXSSFWorkbook(XSSFWorkbookFactory.createWorkbook(opcPackage));
@@ -190,7 +190,12 @@ public class AxolotlExcelWriter implements Closeable {
     private void writeSingleData(Sheet sheet,Map<String,?> singleMap,HashBasedTable<Integer, String, CellAddress> referenceData,boolean gatherUnusedStage){
         int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
         Map<String, CellAddress> singleAddressMapping = referenceData.row(sheetIndex);
-        HashMap<String, Object> dataMapping = new HashMap<>(singleMap);
+        HashMap<String, Object> dataMapping;
+        if (singleMap != null){
+            dataMapping = new HashMap<>(singleMap);
+        }else{
+            dataMapping = new HashMap<>();
+        }
         this.injectCommonConstInfo(dataMapping,gatherUnusedStage);
         HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
         Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(sheetIndex);
@@ -305,10 +310,6 @@ public class AxolotlExcelWriter implements Closeable {
                 }
             }
             writeFieldNamesList = new ArrayList<>(writeFieldNames.keySet());
-            System.err.println(writeContext.getSameFields());
-            for (Map.Entry<String, CellAddress> stringCellAddressEntry : circleReferenceData.entrySet()) {
-                System.err.println(stringCellAddressEntry);
-            }
             LoggerHelper.debug(LOGGER,"本次写入字段为:%s",writeFieldNames.keySet());
             // 漂移写入特性
             boolean initialWriting = writeContext.isInitialWriting(writeFieldNamesList);
@@ -321,11 +322,11 @@ public class AxolotlExcelWriter implements Closeable {
                         maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());
                     }
                 }
-                System.err.println("maxRowPosition:%s"+maxRowPosition);
-                sheet.shiftRows(initialWriting?maxRowPosition+1 : maxRowPosition,
-                        sheet.getLastRowNum(),
-                        initialWriting?circleDataList.size()-1 : circleDataList.size(),
-                        true,true);
+                // 第一次写入需要跳过占位符那一行，所以移动需要少一行
+                int startShiftRow = initialWriting ? maxRowPosition + 1 : maxRowPosition;
+                int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
+                LoggerHelper.debug(LOGGER,"当前写入起始行次[%s],下移行次:[%s],",startShiftRow,shiftRowNumber);
+                sheet.shiftRows(startShiftRow, sheet.getLastRowNum(), shiftRowNumber, true,true);
             }
             // 写入列表数据
             HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();

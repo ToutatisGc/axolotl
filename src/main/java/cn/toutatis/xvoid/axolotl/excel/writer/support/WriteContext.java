@@ -1,10 +1,11 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
+import cn.toutatis.xvoid.axolotl.common.AbstractContext;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,8 @@ import java.util.Map;
  * @author Toutatis_Gc
  */
 @Data
-public class WriteContext {
-
-    /**
-     * 模板文件
-     */
-    private File templateFile;
+@EqualsAndHashCode(callSuper = true)
+public class WriteContext extends AbstractContext {
 
     /**
      * 当前写入的行数
@@ -55,7 +52,7 @@ public class WriteContext {
      * @return true:是模板写入 false:不是模板写入
      */
     public boolean isTemplateWrite(){
-        return templateFile != null;
+        return super.getFile() != null;
     }
 
     public String getCurrentWrittenBatchAndIncrement(){

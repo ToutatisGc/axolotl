@@ -21,7 +21,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,7 +103,7 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            axolotlExcelWriter.writeToTemplate(0,new HashMap<>(), datas);
+            axolotlExcelWriter.writeToTemplate(0,null, datas);
         }
     }
 
