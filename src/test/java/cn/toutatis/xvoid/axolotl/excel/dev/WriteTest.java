@@ -73,7 +73,7 @@ public class WriteTest {
             LIST.add(dmsRegReceivables);
         }
 
-        axolotlExcelWriter.writeToTemplate(0, map, LIST);
+        axolotlExcelWriter.writeToTemplate(map, LIST);
         axolotlExcelWriter.close();
     }
 
@@ -85,7 +85,7 @@ public class WriteTest {
         writerConfig.setOutputStream(fileOutputStream);
         try (AxolotlExcelWriter axolotlExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig)) {
             Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
-            axolotlExcelWriter.writeToTemplate(0, map, null);
+            axolotlExcelWriter.writeToTemplate(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
                 JSONObject sch = new JSONObject();
@@ -94,7 +94,7 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            axolotlExcelWriter.writeToTemplate(0, Map.of("age",50), datas);
+            axolotlExcelWriter.writeToTemplate(Map.of("age",50), datas);
             datas.clear();
             for (int i = 0; i < 5; i++) {
                 JSONObject sch = new JSONObject();
@@ -103,7 +103,7 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            axolotlExcelWriter.writeToTemplate(0,null, datas);
+            axolotlExcelWriter.writeToTemplate(null, datas);
         }
     }
 

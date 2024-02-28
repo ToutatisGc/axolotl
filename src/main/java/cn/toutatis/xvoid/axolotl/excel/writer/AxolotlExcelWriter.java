@@ -154,17 +154,15 @@ public class AxolotlExcelWriter implements Closeable {
 
     /**
      * 写入数据到模板
-     *
-     * @param sheetIndex 工作簿索引
      * @param singleMap 固定值映射
      * @param circleDataList 循环数据
      */
     @SneakyThrows
-    public void writeToTemplate(int sheetIndex, Map<String,?> singleMap, List<?> circleDataList){
+    public void writeToTemplate(Map<String,?> singleMap, List<?> circleDataList){
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
         XSSFSheet sheet;
         if (writeContext.isTemplateWrite()){
-            sheet = this.getWorkbookSheet(sheetIndex);
+            sheet = this.getConfigBoundSheet();
             // 只有第一次写入时解析模板占位符
             if (1 == writeContext.getCurrentWrittenBatch()){
                 // 解析模板占位符到上下文

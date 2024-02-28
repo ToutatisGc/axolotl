@@ -84,7 +84,7 @@ public class ExcelToolkit {
     }
 
     /**
-     * 判断当前单元格是否是合并单元格
+     * 判断当前单元格是否在合并单元格中
      * @param sheet 工作表
      * @param rowIndex 行号
      * @param colIndex 列号
