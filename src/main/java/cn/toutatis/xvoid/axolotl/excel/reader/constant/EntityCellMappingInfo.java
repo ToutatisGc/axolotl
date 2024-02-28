@@ -127,6 +127,10 @@ public class EntityCellMappingInfo<FT> {
         return value;
     }
 
+    /**
+     * 判断字段是否是基本类型
+     * @return 字段为基本类型
+     */
     public boolean fieldIsPrimitive(){
         if (fieldType == null){return false;}
         return fieldType.isPrimitive();

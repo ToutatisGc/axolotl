@@ -133,7 +133,7 @@ public class SimpleTest {
 //        System.err.println(oneFieldStringEntities);
 //        List<OneFieldStringEntity> oneFieldStringEntities1 = excelReader.readSheetData(0, 3);
 //        System.err.println(oneFieldStringEntities1);
-        List<OneFieldStringEntity> oneFieldStringEntities2 = excelReader.readSheetData(1, 3);
+        List<OneFieldStringEntity> oneFieldStringEntities2 = excelReader.readSheetData(0, 3);
         System.err.println(oneFieldStringEntities2);
     }
 

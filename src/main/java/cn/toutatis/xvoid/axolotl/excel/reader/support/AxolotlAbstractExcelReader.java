@@ -393,7 +393,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
                 int[] sheetColumnEffectiveRange = readerConfig.getSheetColumnEffectiveRange();
                 for (int i = 0; i < readHeadRows; i++) {
                     Row row = sheet.getRow(i);
-                    if (ExcelToolkit.notBlankRowCheck(row, sheetColumnEffectiveRange[0], sheetColumnEffectiveRange[1])){
+                    int endColumnRange = sheetColumnEffectiveRange[1] == -1 ? row.getLastCellNum() : sheetColumnEffectiveRange[1];
+                    if (ExcelToolkit.notBlankRowCheck(row, sheetColumnEffectiveRange[0], endColumnRange)){
                         Iterator<Cell> cellIterator = row.cellIterator();
                         while (cellIterator.hasNext()){
                             Cell cell = cellIterator.next();
@@ -513,8 +514,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
         for (EntityCellMappingInfo<?> positionMappingInfo : positionMappingInfos) {
             workBookContext.setCurrentReadRowIndex(positionMappingInfo.getRowPosition());
             workBookContext.setCurrentReadColumnIndex(positionMappingInfo.getColumnPosition());
-            CellGetInfo cellValue = this.getPositionCellOriginalValue(sheet, positionMappingInfo);
-            Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, positionMappingInfo, readerConfig);
+            CellGetInfo cellGetInfo = this.getPositionCellOriginalValue(sheet, positionMappingInfo);
+            Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellGetInfo, positionMappingInfo, readerConfig);
             this.assignValueToField(instance,adaptiveValue,positionMappingInfo,readerConfig);
         }
     }
@@ -671,7 +672,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
         }
         // 不在表有效索引范围中
         if (readerConfig != null){
-            if(readerConfig.getSheetColumnEffectiveRange()[0] > index || readerConfig.getSheetColumnEffectiveRange()[1] < index){
+            int endColumnRange = readerConfig.getSheetColumnEffectiveRange()[1] == -1 ? row.getLastCellNum() : readerConfig.getSheetColumnEffectiveRange()[1];
+            if(readerConfig.getSheetColumnEffectiveRange()[0] > index || endColumnRange < index){
                 return this.getBlankCellValue(mappingInfo);
             }
         }
@@ -720,6 +722,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
      */
     protected CellGetInfo getBlankCellValue(EntityCellMappingInfo<?> mappingInfo){
         CellGetInfo cellGetInfo = new CellGetInfo();
+        cellGetInfo.setCellType(CellType.BLANK);
         if (mappingInfo.fieldIsPrimitive()){
             cellGetInfo.setCellValue(mappingInfo.fillDefaultPrimitiveValue(null));
         }
@@ -735,8 +738,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
     protected <RT> void row2MapInstance(Map<String,Object> instance, Row row,ReaderConfig<RT> readerConfig){
         workBookContext.setCurrentReadRowIndex(row.getRowNum());
         int[] sheetColumnEffectiveRange = readerConfig.getSheetColumnEffectiveRange();
-        short lastCellRangeNum = sheetColumnEffectiveRange[1] < 0 ? row.getLastCellNum() : (short) sheetColumnEffectiveRange[1];
-        for (int i = sheetColumnEffectiveRange[0]; i < lastCellRangeNum; i++) {
+        short endColumnRange = sheetColumnEffectiveRange[1] < 0 ? row.getLastCellNum() : (short) sheetColumnEffectiveRange[1];
+        for (int i = sheetColumnEffectiveRange[0]; i < endColumnRange; i++) {
             Cell cell = row.getCell(i);
             workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
             int idx = cell.getColumnIndex() + 1;
