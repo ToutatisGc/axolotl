@@ -30,6 +30,9 @@ public class WriteContext extends AbstractContext {
      */
     private int currentWrittenBatch = 0;
 
+    /**
+     * 同字段引用索引
+     */
     private Map<List<String>,Integer> sameFields = new HashMap<>();
 
     /**
@@ -55,6 +58,15 @@ public class WriteContext extends AbstractContext {
         return super.getFile() != null;
     }
 
+    /**
+     * 是否是第一批次
+     * 此方法影响读取模板
+     * @return 是否第一批次写入
+     */
+    public boolean isFirstBatch(){
+        return currentWrittenBatch == 1;
+    }
+
     public String getCurrentWrittenBatchAndIncrement(){
         return LoggerHelper.format("当前写入第[%s]批次",++currentWrittenBatch);
     }
@@ -63,7 +75,7 @@ public class WriteContext extends AbstractContext {
         sameFields.put(fields,batch);
     }
 
-    public boolean isInitialWriting(List<String> fields) {
+    public boolean fieldsIsInitialWriting(List<String> fields) {
         return !sameFields.containsKey(fields);
     }
 }

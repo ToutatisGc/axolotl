@@ -109,9 +109,9 @@ System.out.println(data);
 WriterConfig writerConfig = new WriterConfig();
 // 创建模板Excel写入器
 File file = FileToolkit.getResourceFileAsFile("写入模板.xlsx");
-AxolotlExcelWriter axolotlExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig);
+AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig);
 // 创建普通Excel写入器
-AxolotlExcelWriter axolotlExcelWriter = Axolotls.getExcelWriter(writerConfig);
+AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getExcelWriter(writerConfig);
 ```
 
 ##### 3.2.2.2 两种写入方式
@@ -123,7 +123,7 @@ AxolotlExcelWriter axolotlExcelWriter = Axolotls.getExcelWriter(writerConfig);
 Map<String, Object> map = Map.of("name", "Toutatis");
 List<TestEntity> datas = new ArrayList<>();
 // 调用模板写入方法
-axolotlExcelWriter.writeToTemplate(0, map, datas);
+axolotlAutoExcelWriter.writeToTemplate(0, map, datas);
 ```
 
 ###### <2> 预设样式写入
@@ -535,10 +535,10 @@ WriterConfig writerConfig = new WriterConfig();
 FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
 writerConfig.setOutputStream(fileOutputStream);
 // 创建写入器
-try (AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig)) {
+try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, writerConfig)) {
     // 获取数据
     Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
-    axolotlExcelWriter.writeToTemplate(0, map, null);
+    axolotlAutoExcelWriter.writeToTemplate(0, map, null);
     ArrayList<JSONObject> datas = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
         JSONObject sch = new JSONObject();
@@ -548,7 +548,7 @@ try (AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writer
         datas.add(sch);
     }
     // 调用写入模板方法
-    axolotlExcelWriter.writeToTemplate(0, Map.of("age",50), datas);
+    axolotlAutoExcelWriter.writeToTemplate(0, Map.of("age",50), datas);
 }
 ```
 

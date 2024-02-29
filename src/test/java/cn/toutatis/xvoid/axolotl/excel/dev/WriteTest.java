@@ -50,7 +50,7 @@ public class WriteTest {
         WriterConfig writerConfig = new WriterConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         writerConfig.setOutputStream(fileOutputStream);
-        AxolotlExcelWriter axolotlExcelWriter = new AxolotlExcelWriter(file, writerConfig);
+        AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig);
         Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
@@ -73,8 +73,8 @@ public class WriteTest {
             LIST.add(dmsRegReceivables);
         }
 
-        axolotlExcelWriter.writeToTemplate(map, LIST);
-        axolotlExcelWriter.close();
+        axolotlAutoExcelWriter.write(map, LIST);
+        axolotlAutoExcelWriter.close();
     }
 
     @Test
@@ -83,9 +83,9 @@ public class WriteTest {
         WriterConfig writerConfig = new WriterConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         writerConfig.setOutputStream(fileOutputStream);
-        try (AxolotlExcelWriter axolotlExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig)) {
+        try (AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig)) {
             Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
-            axolotlExcelWriter.writeToTemplate(map, null);
+            axolotlAutoExcelWriter.write(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
                 JSONObject sch = new JSONObject();
@@ -94,7 +94,7 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            axolotlExcelWriter.writeToTemplate(Map.of("age",50), datas);
+            axolotlAutoExcelWriter.write(Map.of("age",50), datas);
             datas.clear();
             for (int i = 0; i < 5; i++) {
                 JSONObject sch = new JSONObject();
@@ -103,7 +103,7 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            axolotlExcelWriter.writeToTemplate(null, datas);
+            axolotlAutoExcelWriter.write(null, datas);
         }
     }
 
