@@ -3,8 +3,11 @@ package cn.toutatis.xvoid.axolotl.excel.dev;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.Axolotls;
+import cn.toutatis.xvoid.axolotl.excel.entities.SunUser;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
+import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import com.alibaba.fastjson.JSONObject;
@@ -13,14 +16,17 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,5 +112,27 @@ public class WriteTest {
             axolotlAutoExcelWriter.write(null, datas);
         }
     }
+    @Test
+    public void test() throws FileNotFoundException {
+        File file = FileToolkit.getResourceFileAsFile("workbook/write/sunUser.xlsx");
+        WriterConfig writerConfig = new WriterConfig();
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        writerConfig.setOutputStream(fileOutputStream);
+// 创建写入器
+        try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, writerConfig)) {
+            List list = new ArrayList();
+            for (int i = 0; i < 10; i++) {
+                SunUser sunUser = new SunUser();
+                for (Field declaredField : SunUser.class.getDeclaredFields()) {
+                    ReflectToolkit.setObjectField(sunUser, declaredField, "11"+i);
+                }
+                list.add(sunUser);
+            }
+            axolotlAutoExcelWriter.write(null,list);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
+
+    }
 }
