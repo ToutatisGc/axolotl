@@ -46,6 +46,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
 
     public AxolotlAbstractExcelWriter(WriterConfig writerConfig) {
         this.writerConfig = writerConfig;
+        this.writeContext.setSwitchSheetIndex(writerConfig.getSheetIndex());
     }
 
     /**
@@ -103,4 +104,11 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     public SXSSFWorkbook getWorkbook() {
         return workbook;
     }
+
+    @Override
+    public void switchSheet(int sheetIndex) {
+        LoggerHelper.debug(LOGGER,"切换到工作表[%s]",sheetIndex);
+        this.writeContext.setSwitchSheetIndex(sheetIndex);
+    }
+
 }

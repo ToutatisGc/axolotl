@@ -38,7 +38,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
 
     @Override
     public AxolotlWriteResult write(Map<String, ?> singleMap, List<?> circleDataList) throws AxolotlWriteException {
-        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
+        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writerConfig.getSheetIndex()));
         SXSSFSheet sheet = workbook.createSheet();
         workbook.setSheetName(writerConfig.getSheetIndex(),writerConfig.getSheetName());
         ExcelStyleRender styleRender = writerConfig.getStyleRender();

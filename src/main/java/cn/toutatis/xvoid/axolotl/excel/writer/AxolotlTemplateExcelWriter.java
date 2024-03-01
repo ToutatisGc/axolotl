@@ -51,7 +51,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlTemplateExcelWriter.class);
 
-
     /**
      * 主构造函数
      *
@@ -77,14 +76,14 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
 
     @Override
     public AxolotlWriteResult write(Map<String, ?> singleMap, List<?> circleDataList) {
-        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
+        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeContext.getSwitchSheetIndex()));
         XSSFSheet sheet;
         // 判断是否是模板写入
         AxolotlWriteResult axolotlWriteResult = new AxolotlWriteResult();
         if (writeContext.isTemplateWrite()){
             sheet = this.getConfigBoundSheet();
             // 只有第一次写入时解析模板占位符
-            if (writeContext.isFirstBatch()){
+            if (writeContext.isFirstBatch(writeContext.getSwitchSheetIndex())){
                 // 解析模板占位符到上下文
                 this.resolveTemplate(sheet);
             }
@@ -155,7 +154,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private void gatherUnusedSingleReferenceDataAndFillDefault() {
         if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
-            int sheetIndex = writerConfig.getSheetIndex();
+            int sheetIndex = writeContext.getSwitchSheetIndex();
             Sheet sheet = this.getConfigBoundSheet();
             Map<String, CellAddress> singleReferenceMapping =  writeContext.getSingleReferenceData().row(sheetIndex);
             HashMap<String, Object> unusedMap = gatherUnusedField(sheetIndex, singleReferenceMapping);
@@ -168,7 +167,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private void gatherUnusedCircleReferenceDataAndFillDefault() {
         if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
-            int sheetIndex = writerConfig.getSheetIndex();
+            int sheetIndex = writeContext.getSwitchSheetIndex();
             Map<String, CellAddress> circleReferenceData =  writeContext.getCircleReferenceData().row(sheetIndex);
             HashMap<String, Object> map = gatherUnusedField(sheetIndex, circleReferenceData);
             this.writeSingleData(this.getConfigBoundSheet(),map,writeContext.getCircleReferenceData(),true);
@@ -203,7 +202,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     @SuppressWarnings("unchecked")
     private void writeCircleData(XSSFSheet sheet, List<?> circleDataList){
         boolean dataNotEmpty = Validator.objNotNull(circleDataList);
-        Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(writerConfig.getSheetIndex());
+        Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(writeContext.getSwitchSheetIndex());
         if (dataNotEmpty){
             boolean isSimplePOJO;
             // 获取写入类字段数据
@@ -236,8 +235,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             writeFieldNamesList = new ArrayList<>(writeFieldNames.keySet());
             LoggerHelper.debug(LOGGER,"本次写入字段为:%s",writeFieldNames.keySet());
             // 漂移写入特性
-            boolean initialWriting = writeContext.fieldsIsInitialWriting(writeFieldNamesList);
-            writeContext.addFieldRecords(writeFieldNamesList,writeContext.getCurrentWrittenBatch());
+            int sheetIndex = writeContext.getSwitchSheetIndex();
+            boolean initialWriting = writeContext.fieldsIsInitialWriting(sheetIndex,writeFieldNamesList);
+            writeContext.addFieldRecords(sheetIndex,writeFieldNamesList,writeContext.getCurrentWrittenBatch().get(sheetIndex));
             if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
                     writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
                 int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
@@ -247,7 +247,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             }
             // 写入列表数据
             HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
-            Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writerConfig.getSheetIndex());
+            Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writeContext.getSwitchSheetIndex());
             for (Object data : circleDataList) {
                 System.err.println("写入"+data);
                 for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
@@ -317,7 +317,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     @SuppressWarnings({"rawtypes","unchecked"})
     private void injectCommonConstInfo(Map singleMap, boolean gatherUnusedStage){
-        if(!gatherUnusedStage && writeContext.isFirstBatch()){
+        if(!gatherUnusedStage && writeContext.isFirstBatch(writeContext.getSwitchSheetIndex())){
             if (singleMap == null){
                 singleMap = new HashMap<>();
             }
@@ -426,6 +426,5 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         workbook.close();
         writerConfig.getOutputStream().close();
     }
-
-
+    
 }

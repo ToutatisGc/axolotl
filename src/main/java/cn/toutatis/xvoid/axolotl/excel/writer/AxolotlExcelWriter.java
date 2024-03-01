@@ -30,4 +30,10 @@ public interface AxolotlExcelWriter extends Closeable {
      */
     SXSSFWorkbook getWorkbook();
 
+    /**
+     * 切换工作表
+     * @param sheetIndex 工作表索引
+     */
+    void switchSheet(int sheetIndex);
+
 }

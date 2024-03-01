@@ -20,20 +20,15 @@ import java.util.Map;
 public class WriteContext extends AbstractContext {
 
     /**
-     * 当前写入的行数
-     */
-    @Deprecated
-    private int currentWrittenRow = 0;
-
-    /**
      * 当前写入批次
      */
-    private int currentWrittenBatch = 0;
+    private Map<Integer,Integer> currentWrittenBatch = new HashMap<>();
 
     /**
      * 同字段引用索引
+     * 用于校验同一批次的字段引用去计算引用索引
      */
-    private Map<List<String>,Integer> sameFields = new HashMap<>();
+    private HashBasedTable<Integer,List<String>,Integer> sheetSameFields = HashBasedTable.create();
 
     /**
      * 单次引用索引
@@ -51,6 +46,11 @@ public class WriteContext extends AbstractContext {
     private HashBasedTable<Integer,String,CellAddress> circleReferenceData = HashBasedTable.create();
 
     /**
+     * 当前切换的sheet索引
+     */
+    private int switchSheetIndex = -1;
+
+    /**
      * 是否是模板写入
      * @return true:是模板写入 false:不是模板写入
      */
@@ -63,19 +63,26 @@ public class WriteContext extends AbstractContext {
      * 此方法影响读取模板
      * @return 是否第一批次写入
      */
-    public boolean isFirstBatch(){
-        return currentWrittenBatch == 1;
+    public boolean isFirstBatch(int sheetIndex){
+        return 1 == currentWrittenBatch.get(sheetIndex);
     }
 
-    public String getCurrentWrittenBatchAndIncrement(){
-        return LoggerHelper.format("当前写入第[%s]批次",++currentWrittenBatch);
+    public String getCurrentWrittenBatchAndIncrement(int sheetIndex){
+        if (!currentWrittenBatch.containsKey(sheetIndex)){
+            currentWrittenBatch.put(sheetIndex,0);
+        }
+        Integer batchNum = currentWrittenBatch.get(sheetIndex);
+        currentWrittenBatch.put(sheetIndex,batchNum+1);
+        return LoggerHelper.format("当前写入第[%s]批次",batchNum);
     }
 
-    public void addFieldRecords(List<String> fields,int batch){
-        sameFields.put(fields,batch);
+
+    public void addFieldRecords(int sheetIndex,List<String> fields,int batch){
+        sheetSameFields.put(sheetIndex,fields,batch);
     }
 
-    public boolean fieldsIsInitialWriting(List<String> fields) {
-        return !sameFields.containsKey(fields);
+    public boolean fieldsIsInitialWriting(int sheetIndex,List<String> fields) {
+        return !sheetSameFields.contains(sheetIndex,fields);
     }
+
 }
