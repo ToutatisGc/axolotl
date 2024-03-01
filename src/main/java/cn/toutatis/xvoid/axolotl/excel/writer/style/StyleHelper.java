@@ -36,7 +36,7 @@ public class StyleHelper {
         PRESET_CELL_LENGTH_MAP.put("身份证",SERIAL_NUMBER_LENGTH);
         PRESET_CELL_LENGTH_MAP.put("身份证号",SERIAL_NUMBER_LENGTH);
         PRESET_CELL_LENGTH_MAP.put("身份证号码",SERIAL_NUMBER_LENGTH);
-        PRESET_CELL_LENGTH_MAP.put("性别",1500);
+        PRESET_CELL_LENGTH_MAP.put("性别",2000);
         PRESET_CELL_LENGTH_MAP.put("地址",12800);
     }
 

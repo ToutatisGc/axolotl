@@ -48,7 +48,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         }else {
             styleRender.renderHeader(sheet);
         }
-        styleRender.renderData(sheet,writerConfig.getData());
+        styleRender.renderData(sheet,circleDataList);
         return null;
     }
 

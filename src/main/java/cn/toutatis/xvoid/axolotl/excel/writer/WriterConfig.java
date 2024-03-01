@@ -53,6 +53,11 @@ public class WriterConfig {
     private int sheetIndex = 0;
 
     /**
+     * 默认打开工作表索引
+     */
+    private int activeSheetIndex = 0;
+
+    /**
      * 标题
      */
     private String title;
@@ -73,15 +78,9 @@ public class WriterConfig {
     private ExcelStyleRender styleRender;
 
     /**
-     * 数据
-     */
-    private List<?> data;
-
-    /**
      * 输出流
      */
     private OutputStream outputStream;
-
 
 
     private List<String> columnNames;

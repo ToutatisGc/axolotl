@@ -7,7 +7,6 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.CellAddress;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.PlaceholderType;
-import cn.toutatis.xvoid.axolotl.manage.Progress;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -80,6 +79,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     public AxolotlWriteResult write(Map<String, ?> singleMap, List<?> circleDataList) {
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement());
         XSSFSheet sheet;
+        // 判断是否是模板写入
+        AxolotlWriteResult axolotlWriteResult = new AxolotlWriteResult();
         if (writeContext.isTemplateWrite()){
             sheet = this.getConfigBoundSheet();
             // 只有第一次写入时解析模板占位符
@@ -91,10 +92,17 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             this.writeSingleData(sheet,singleMap,writeContext.getSingleReferenceData(),false);
             // 写入循环数据
             this.writeCircleData(sheet,circleDataList);
+            axolotlWriteResult.setWrite(true);
+            axolotlWriteResult.setMessage("写入完成");
         }else{
-            throw new AxolotlWriteException("非模板写入请使用write方法");
+            String message = "非模板写入请使用AxolotlAutoExcelWriter.write()方法";
+            if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.EXCEPTION_RETURN_RESULT)){
+                axolotlWriteResult.setMessage(message);
+                return axolotlWriteResult;
+            }
+            throw new AxolotlWriteException(message);
         }
-        return null;
+        return axolotlWriteResult;
     }
 
     /**
@@ -195,8 +203,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     @SuppressWarnings("unchecked")
     private void writeCircleData(XSSFSheet sheet, List<?> circleDataList){
         boolean dataNotEmpty = Validator.objNotNull(circleDataList);
-        String progressId = Progress.generateProgressId();
-        Progress.init(progressId,dataNotEmpty? circleDataList.size() : 1);
         Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(writerConfig.getSheetIndex());
         if (dataNotEmpty){
             boolean isSimplePOJO;
@@ -234,14 +240,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             writeContext.addFieldRecords(writeFieldNamesList,writeContext.getCurrentWrittenBatch());
             if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
                     writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
-                int maxRowPosition = Integer.MIN_VALUE;
-                for (Map.Entry<String, CellAddress> addressEntry : circleReferenceData.entrySet()) {
-                    if (writeFieldNames.containsKey(addressEntry.getKey())){
-                        maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());
-                    }
-                }
-                // 第一次写入需要跳过占位符那一行，所以移动需要少一行
-                int startShiftRow = initialWriting ? maxRowPosition + 1 : maxRowPosition;
+                int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
                 int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
                 LoggerHelper.debug(LOGGER,"当前写入起始行次[%s],下移行次:[%s],",startShiftRow,shiftRowNumber);
                 sheet.shiftRows(startShiftRow, sheet.getLastRowNum(), shiftRowNumber, true,true);
@@ -293,6 +292,24 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     }
 
     /**
+     * 计算起始行
+     * @param circleReferenceData 引用数据
+     * @param writeFieldNames 写入字段
+     * @param initialWriting 是否是第一次写入
+     * @return 起始行
+     */
+    private static int calculateStartShiftRow(Map<String, CellAddress> circleReferenceData, Map<String, Integer> writeFieldNames, boolean initialWriting) {
+        int maxRowPosition = Integer.MIN_VALUE;
+        for (Map.Entry<String, CellAddress> addressEntry : circleReferenceData.entrySet()) {
+            if (writeFieldNames.containsKey(addressEntry.getKey())){
+                maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());
+            }
+        }
+        // 第一次写入需要跳过占位符那一行，所以移动需要少一行
+        return initialWriting ? maxRowPosition + 1 : maxRowPosition;
+    }
+
+    /**
      * 注入内置变量
      *
      * @param singleMap 单条数据
@@ -300,7 +317,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     @SuppressWarnings({"rawtypes","unchecked"})
     private void injectCommonConstInfo(Map singleMap, boolean gatherUnusedStage){
-        if(!gatherUnusedStage && 1 == writeContext.getCurrentWrittenBatch()){
+        if(!gatherUnusedStage && writeContext.isFirstBatch()){
             if (singleMap == null){
                 singleMap = new HashMap<>();
             }

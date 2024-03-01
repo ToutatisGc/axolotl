@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.Closeable;
 import java.util.List;
@@ -22,5 +23,11 @@ public interface AxolotlExcelWriter extends Closeable {
      * 刷新数据到文件中
      */
     void flush();
+
+    /**
+     * 获取工作簿
+     * @return 工作簿
+     */
+    SXSSFWorkbook getWorkbook();
 
 }
