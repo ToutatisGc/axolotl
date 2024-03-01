@@ -13,6 +13,7 @@ import java.util.concurrent.*;
 /**
  * 进度管理器
  * 内存实现
+ * TODO 迁移到VOID-CACHE
  */
 public class MemoryProgressManager implements ProgressManager {
 

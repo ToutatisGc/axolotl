@@ -99,5 +99,8 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
         return sheet;
     }
 
-
+    @Override
+    public SXSSFWorkbook getWorkbook() {
+        return workbook;
+    }
 }

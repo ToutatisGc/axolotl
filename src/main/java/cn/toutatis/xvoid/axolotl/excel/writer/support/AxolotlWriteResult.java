@@ -14,5 +14,9 @@ public class AxolotlWriteResult {
      */
     private boolean write = false;
 
+    /**
+     * 写入结果信息
+     */
+    private String message;
 
 }

@@ -28,7 +28,16 @@ public enum ExcelWritePolicy {
     /**
      * 为没有指定的占位符填充默认值
      */
-    PLACEHOLDER_FILL_DEFAULT(Type.BOOLEAN, true, true);
+    PLACEHOLDER_FILL_DEFAULT(Type.BOOLEAN, true, true),
+
+    /**
+     * 是否抛出异常
+     * true:返回写入结果
+     * false:抛出异常
+     */
+    EXCEPTION_RETURN_RESULT(Type.BOOLEAN, true, true)
+
+    ;
 
     /**
      * 写入策略类型
