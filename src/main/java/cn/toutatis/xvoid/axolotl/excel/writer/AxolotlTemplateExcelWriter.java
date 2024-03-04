@@ -263,7 +263,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writeContext.getSwitchSheetIndex());
             Map<String, CellAddress> calculateReferenceData = this.writeContext.getCalculateReferenceData().row(writeContext.getSwitchSheetIndex());
             for (Object data : circleDataList) {
-//                System.err.println("写入"+data);
+                debug(LOGGER,"[写入数据]"+data);
                 for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
                     String fieldMappingKey = fieldMapping.getKey();
                     CellAddress cellAddress = circleReferenceData.get(fieldMappingKey);
@@ -307,7 +307,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         sheet.addMergedRegion(mergeRegion);
                     }
                     cellAddress.setRowPosition(++rowPosition);
-                    alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
+                    if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
+                        alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
+                    }
                 }
             }
         }
