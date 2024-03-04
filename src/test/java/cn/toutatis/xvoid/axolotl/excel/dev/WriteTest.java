@@ -24,10 +24,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,6 +87,15 @@ public class WriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         writerConfig.setOutputStream(fileOutputStream);
         try (AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig)) {
+            ArrayList<JSONObject> datas1 = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                JSONObject sch = new JSONObject();
+                sch.put("workPlace","北京-"+RandomStringUtils.randomAlphabetic(16));
+                sch.put("workYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+                sch.put("salary", true);
+                datas1.add(sch);
+            }
+            axolotlAutoExcelWriter.write(null, datas1);
             Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
             axolotlAutoExcelWriter.write(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
@@ -128,7 +134,9 @@ public class WriteTest {
                 }
                 list.add(sunUser);
             }
-            axolotlAutoExcelWriter.write(null,list);
+            Map<String, String> map = new HashMap<>();
+            map.put("name","测试姓名");
+            axolotlAutoExcelWriter.write(map,list);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
