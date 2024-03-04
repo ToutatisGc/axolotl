@@ -6,14 +6,14 @@ import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * 写入上下文
- * 写入过程中的环境支撑
+ * <p>写入过程中的环境支撑</p>
+ * <p>由于一个工作薄(Workbook)中可能存在多个工作表（Sheet），所以需要维护每个工作表的索引</p>
  * @author Toutatis_Gc
  */
 @Data
@@ -26,6 +26,12 @@ public class WriteContext extends AbstractContext {
     private Map<Integer,Integer> currentWrittenBatch = new HashMap<>();
 
     /**
+     * 已解析工作表记录
+     * 存在于该记录则表示该工作表已解析过
+     */
+    private Map<Integer,Boolean> resolvedSheetRecord = new HashMap<>();
+
+    /**
      * 同字段引用索引
      * 用于校验同一批次的字段引用去计算引用索引
      */
@@ -34,27 +40,32 @@ public class WriteContext extends AbstractContext {
     /**
      * 单次引用索引
      * <p>单词引用数据仅能使用一次，重复写入相同字段将跳过</p>
+     * @see cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern#SINGLE_REFERENCE_TEMPLATE_PLACEHOLDER
      */
     private HashBasedTable<Integer,String,CellAddress> singleReferenceData = HashBasedTable.create();
-    /**
-     * 记录已使用引用索引
-     */
-    private HashBasedTable<Integer,String,Boolean> alreadyUsedReferenceData = HashBasedTable.create();
 
     /**
      * 循环引用索引
+     * @see cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern#CIRCLE_REFERENCE_TEMPLATE_PLACEHOLDER
      */
     private HashBasedTable<Integer,String,CellAddress> circleReferenceData = HashBasedTable.create();
 
     /**
-     * 循环引用合计占位符
+     * 计算占位符
+     * <p>用于计算引用数据</p>
+     * @see cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern#AGGREGATE_REFERENCE_TEMPLATE_PLACEHOLDER
      */
-    private HashBasedTable<Integer,String, BigDecimal> calculateReferenceData =  HashBasedTable.create();
+    private HashBasedTable<Integer,String, CellAddress> calculateReferenceData =  HashBasedTable.create();
 
     /**
      * 当前切换的sheet索引
      */
     private int switchSheetIndex = -1;
+
+    /**
+     * 记录已使用引用索引
+     */
+    private HashBasedTable<Integer,String,Boolean> alreadyUsedReferenceData = HashBasedTable.create();
 
     /**
      * 是否是模板写入

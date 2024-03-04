@@ -4,7 +4,7 @@ import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.util.CellRangeAddress;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 
 /**
  * 用于存放模板占位符单元格的行和列
@@ -53,7 +53,10 @@ public class CellAddress {
      */
     private int writtenRow = -1;
 
-    private BigInteger calculatedValue = BigInteger.ZERO;
+    /**
+     * 计算值
+     */
+    private BigDecimal calculatedValue = new BigDecimal("-1");
 
     /**
      * 合并单元格的区域

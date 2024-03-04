@@ -1,12 +1,10 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.CellAddress;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.PlaceholderType;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -29,12 +27,13 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static cn.toutatis.xvoid.axolotl.Meta.CONST_PREFIX;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.format;
 
@@ -174,6 +173,22 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     }
 
     /**
+     * 设置计算数据
+     */
+    private void setCalculateData() {
+        int sheetIndex = writeContext.getSwitchSheetIndex();
+        Sheet sheet = this.getConfigBoundSheet();
+        HashBasedTable<Integer, String, CellAddress> calculateReferenceData = writeContext.getCalculateReferenceData();
+        Map<String, CellAddress> calculateData = calculateReferenceData.row(sheetIndex);
+        Map<String, BigDecimal> extract = new HashMap<>();
+        for (String s : calculateData.keySet()) {
+            BigDecimal calculatedValue = calculateData.get(s).getCalculatedValue();
+            extract.put(s,calculatedValue.setScale(AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP));
+        }
+        this.writeSingleData(sheet,extract,calculateReferenceData,true);
+    }
+
+    /**
      * 采集未使用的占位符
      *
      * @param sheetIndex 工作表索引
@@ -250,18 +265,20 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             // 写入列表数据
             HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
             Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writeContext.getSwitchSheetIndex());
+            Map<String, CellAddress> calculateReferenceData = this.writeContext.getCalculateReferenceData().row(writeContext.getSwitchSheetIndex());
             for (Object data : circleDataList) {
                 System.err.println("写入"+data);
                 for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
-                    CellAddress cellAddress = circleReferenceData.get(fieldMapping.getKey());
+                    String fieldMappingKey = fieldMapping.getKey();
+                    CellAddress cellAddress = circleReferenceData.get(fieldMappingKey);
                     Object value;
                     if (isSimplePOJO){
-                        Field field = data.getClass().getDeclaredField(fieldMapping.getKey());
+                        Field field = data.getClass().getDeclaredField(fieldMappingKey);
                         field.setAccessible(true);
                         value = field.get(data);
                     }else{
                         Map<String, Object> map = (Map<String, Object>) data;
-                        value = map.get(fieldMapping.getKey());
+                        value = map.get(fieldMappingKey);
                     }
                     int rowPosition = cellAddress.getRowPosition();
                     XSSFRow writableRow = sheet.getRow(rowPosition);
@@ -276,6 +293,12 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     if (Validator.strIsBlank(value)){
                         writableCell.setBlank();
                     }else {
+                        if (calculateReferenceData.containsKey(fieldMappingKey) && Validator.strIsNumber(value.toString())){
+                            BigDecimal calculatedValue = calculateReferenceData.get(fieldMappingKey).getCalculatedValue();
+                            calculatedValue = calculatedValue.add(new BigDecimal(value.toString()));
+                            cellAddress.setCalculatedValue(calculatedValue);
+                            calculateReferenceData.put(fieldMappingKey,cellAddress);
+                        }
                         // 暂时只适配String类型
                         writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
                     }
@@ -323,8 +346,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             if (singleMap == null){
                 singleMap = new HashMap<>();
             }
-            singleMap.put(CONST_PREFIX+"_CREATE_TIME", Time.getCurrentTime());
-            singleMap.put(CONST_PREFIX+"_CREATE_DATE", Time.regexTime(Time.YMD_HORIZONTAL_FORMAT_REGEX,new Date()));
+            singleMap.put(AxolotlConstant.CREATE_TIME, Time.getCurrentTime());
+            singleMap.put(AxolotlConstant.CREATE_DATE, Time.regexTime(Time.YMD_HORIZONTAL_FORMAT_REGEX,new Date()));
             LoggerHelper.debug(LOGGER, "注入内置常量");
         }
     }
@@ -335,40 +358,51 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * @param sheet 工作表
      */
     private void resolveTemplate(Sheet sheet){
-        int lastRowNum = sheet.getLastRowNum();
-        for (int rowIdx = 0; rowIdx <= lastRowNum; rowIdx++) {
-            Row row = sheet.getRow(rowIdx);
-            if (row != null){
-                short lastCellNum = row.getLastCellNum();
-                for (int colIdx = 0; colIdx < lastCellNum; colIdx++) {
-                    Cell cell = row.getCell(colIdx);
-                    if (cell != null && CellType.STRING.equals(cell.getCellType())){
-                        String cellValue = cell.getStringCellValue();
-                        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
-                        CellAddress cellAddress = new CellAddress(cellValue,rowIdx, colIdx,cell.getCellStyle());
-                        Boolean foundPlaceholder = findPlaceholderData(
-                                writeContext.getSingleReferenceData(),
-                                TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress
-                        );
-
-                        if (foundPlaceholder == null){
-                            foundPlaceholder = findPlaceholderData(
-                                    writeContext.getCircleReferenceData(),
-                                    TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress
-                            );
-                        }
-                        if (foundPlaceholder != null && foundPlaceholder){
-                            CellRangeAddress cellMerged = ExcelToolkit.isCellMerged(sheet, rowIdx, colIdx);
-                            if (cellMerged != null){
-                                LoggerHelper.debug(LOGGER, format("解析到占位符[%s]为合并单元格[%s]",cellAddress.getPlaceholder(),cellMerged.formatAsString()));
-                                cellAddress.setMergeRegion(cellMerged);
+        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
+        if (writeContext.getResolvedSheetRecord().containsKey(sheetIndex)){
+            HashBasedTable<Integer, String, CellAddress> singleReferenceData = writeContext.getSingleReferenceData();
+            HashBasedTable<Integer, String, CellAddress> circleReferenceData = writeContext.getCircleReferenceData();
+            HashBasedTable<Integer, String, CellAddress> calculateReferenceData = writeContext.getCalculateReferenceData();
+            for (int rowIdx = 0; rowIdx <= sheet.getLastRowNum(); rowIdx++) {
+                Row row = sheet.getRow(rowIdx);
+                if (row != null){
+                    short lastCellNum = row.getLastCellNum();
+                    for (int colIdx = 0; colIdx < lastCellNum; colIdx++) {
+                        Cell cell = row.getCell(colIdx);
+                        if (cell != null && CellType.STRING.equals(cell.getCellType())){
+                            String cellValue = cell.getStringCellValue();
+                            CellAddress cellAddress = new CellAddress(cellValue,rowIdx, colIdx,cell.getCellStyle());
+                            Boolean foundPlaceholder = findPlaceholderData(singleReferenceData, TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
+                            if (foundPlaceholder == null){
+                                foundPlaceholder = findPlaceholderData(circleReferenceData, TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
+                            }
+                            if (foundPlaceholder == null) {
+                                foundPlaceholder = findPlaceholderData(calculateReferenceData, TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
+                            }
+                            if (foundPlaceholder != null && foundPlaceholder){
+                                CellRangeAddress cellMerged = ExcelToolkit.isCellMerged(sheet, rowIdx, colIdx);
+                                if (cellMerged != null){
+                                    LoggerHelper.debug(LOGGER, format("解析到占位符[%s]为合并单元格[%s]",cellAddress.getPlaceholder(),cellMerged.formatAsString()));
+                                    cellAddress.setMergeRegion(cellMerged);
+                                }
                             }
                         }
                     }
                 }
             }
+            int singleReferenceDataSize = writeContext.getSingleReferenceData().size();
+            int circleReferenceDataSize = writeContext.getCircleReferenceData().size();
+            int calculateReferenceDataSize = writeContext.getCalculateReferenceData().size();
+            writeContext.getResolvedSheetRecord().put(sheetIndex,true);
+            debug(LOGGER, format("解析模板完成，共解析到[%s]个占位符,引用占位符[%s]个,列表占位符[%s]个,计算占位符[%s]个",
+                    singleReferenceDataSize + circleReferenceDataSize + calculateReferenceDataSize,
+                    singleReferenceDataSize,
+                    circleReferenceDataSize,
+                    calculateReferenceDataSize
+            ));
+        }else{
+            debug(LOGGER, format("工作表[%s]已被解析过，跳过本次解析",sheetIndex));
         }
-        debug(LOGGER, format("解析模板完成，共解析到%s个占位符",writeContext.getSingleReferenceData().size() + writeContext.getCircleReferenceData().size()));
     }
 
     /**
@@ -383,12 +417,15 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         Matcher matcher = pattern.matcher(cellAddress.getCellValue());
         if (matcher.find()) {
             cellAddress.setPlaceholder(matcher.group());
-            if (pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN)){
-                cellAddress.setPlaceholderType(PlaceholderType.CIRCLE);
-            }else {
-                cellAddress.setPlaceholderType(PlaceholderType.MAPPING);
+            boolean isCirclePattern = pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN);
+            if (isCirclePattern || pattern.equals(TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN)){
+                cellAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);
+                referenceData.put(sheetIndex, matcher.group(1), cellAddress);
+            }else if (pattern.equals(TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN)){
+                cellAddress.setPlaceholderType(PlaceholderType.CALCULATE);
+                cellAddress.setCalculatedValue(BigDecimal.ZERO);
+                referenceData.put(sheetIndex, matcher.group(1), cellAddress);
             }
-            referenceData.put(sheetIndex, matcher.group(1), cellAddress);
             return true;
         }
         return null;
@@ -408,8 +445,11 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         if (isFinal){
             this.gatherUnusedSingleReferenceDataAndFillDefault();
             this.gatherUnusedCircleReferenceDataAndFillDefault();
+            this.setCalculateData();
         }
     }
+
+
 
     @Override
     public void flush() {
@@ -429,5 +469,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         workbook.close();
         writerConfig.getOutputStream().close();
     }
-    
+
+    @Override
+    public void switchSheet(int sheetIndex) {
+        super.switchSheet(sheetIndex);
+        this.resolveTemplate(this.getWorkbookSheet(sheetIndex));
+    }
 }

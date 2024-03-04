@@ -17,4 +17,9 @@ public enum PlaceholderType {
      */
     CIRCLE,
 
+    /**
+     * 计算值类型
+     */
+    CALCULATE,
+
 }
