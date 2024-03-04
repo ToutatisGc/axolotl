@@ -112,18 +112,13 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private void writeSingleData(Sheet sheet,Map<String,?> singleMap,HashBasedTable<Integer, String, CellAddress> referenceData,boolean gatherUnusedStage){
         int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
-        Map<String, CellAddress> singleAddressMapping = referenceData.row(sheetIndex);
-        HashMap<String, Object> dataMapping;
-        if (singleMap != null){
-            dataMapping = new HashMap<>(singleMap);
-        }else{
-            dataMapping = new HashMap<>();
-        }
+        Map<String, CellAddress> addressMapping = referenceData.row(sheetIndex);
+        HashMap<String, Object> dataMapping = (singleMap != null ? new HashMap<>(singleMap) : new HashMap<>());
         this.injectCommonConstInfo(dataMapping,gatherUnusedStage);
         HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
         Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(sheetIndex);
-        for (String singleKey : singleAddressMapping.keySet()) {
-            CellAddress cellAddress = singleAddressMapping.get(singleKey);
+        for (String singleKey : addressMapping.keySet()) {
+            CellAddress cellAddress = addressMapping.get(singleKey);
             String placeholder = cellAddress.getPlaceholder();
             if(alreadyUsedDataMapping.containsKey(placeholder)){continue;}
             Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
@@ -256,9 +251,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
                 int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
                 // 最后一行大于起始行，则下移，否则为表底不下移
-                if(sheet.getLastRowNum() > startShiftRow){
+                if(sheet.getLastRowNum() >= startShiftRow){
                     int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
                     LoggerHelper.debug(LOGGER,"当前写入起始行次[%s],下移行次:[%s],",startShiftRow,shiftRowNumber);
+
                     sheet.shiftRows(startShiftRow, sheet.getLastRowNum(), shiftRowNumber, true,true);
                 }
             }
@@ -267,7 +263,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writeContext.getSwitchSheetIndex());
             Map<String, CellAddress> calculateReferenceData = this.writeContext.getCalculateReferenceData().row(writeContext.getSwitchSheetIndex());
             for (Object data : circleDataList) {
-                System.err.println("写入"+data);
+//                System.err.println("写入"+data);
                 for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
                     String fieldMappingKey = fieldMapping.getKey();
                     CellAddress cellAddress = circleReferenceData.get(fieldMappingKey);
@@ -373,12 +369,15 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         if (cell != null && CellType.STRING.equals(cell.getCellType())){
                             String cellValue = cell.getStringCellValue();
                             CellAddress cellAddress = new CellAddress(cellValue,rowIdx, colIdx,cell.getCellStyle());
-                            Boolean foundPlaceholder = findPlaceholderData(singleReferenceData, TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
+                            Boolean foundPlaceholder = findPlaceholderData(isFinal,singleReferenceData,
+                                    TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
                             if (foundPlaceholder == null){
-                                foundPlaceholder = findPlaceholderData(circleReferenceData, TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
+                                foundPlaceholder = findPlaceholderData(isFinal,circleReferenceData,
+                                        TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
                             }
-                            if (foundPlaceholder == null && !isFinal) {
-                                foundPlaceholder = findPlaceholderData(calculateReferenceData, TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
+                            if (foundPlaceholder == null) {
+                                foundPlaceholder = findPlaceholderData(isFinal,calculateReferenceData,
+                                        TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
                             }
                             if (foundPlaceholder != null && foundPlaceholder){
                                 CellRangeAddress cellMerged = ExcelToolkit.isCellMerged(sheet, rowIdx, colIdx);
@@ -395,8 +394,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             int circleReferenceDataSize = writeContext.getCircleReferenceData().size();
             int calculateReferenceDataSize = writeContext.getCalculateReferenceData().size();
             writeContext.getResolvedSheetRecord().put(sheetIndex,true);
-            debug(LOGGER, format("%s解析模板完成，共解析到[%s]个占位符,引用占位符[%s]个,列表占位符[%s]个,计算占位符[%s]个",
+            debug(LOGGER, format("%s工作表索引[%s]解析模板完成，共解析到[%s]个占位符,引用占位符[%s]个,列表占位符[%s]个,计算占位符[%s]个",
                     isFinal? "[收尾阶段]":"",
+                    sheetIndex,
                     singleReferenceDataSize + circleReferenceDataSize + calculateReferenceDataSize,
                     singleReferenceDataSize,
                     circleReferenceDataSize,
@@ -410,23 +410,36 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     /**
      * 解析模板值到变量
      *
+     * @param isFinal 是否是收尾阶段
      * @param referenceData 引用数据
-     * @param pattern 模板匹配正则
-     * @param sheetIndex 工作簿索引
-     * @param cellAddress 单元格地址
+     * @param pattern       模板匹配正则
+     * @param sheetIndex    工作簿索引
+     * @param cellAddress   单元格地址
      */
-    private Boolean findPlaceholderData(HashBasedTable<Integer, String, CellAddress> referenceData, Pattern pattern, int sheetIndex, CellAddress cellAddress) {
+    private Boolean findPlaceholderData(boolean isFinal, HashBasedTable<Integer, String, CellAddress> referenceData,
+                                        Pattern pattern, int sheetIndex, CellAddress cellAddress) {
         Matcher matcher = pattern.matcher(cellAddress.getCellValue());
         if (matcher.find()) {
             cellAddress.setPlaceholder(matcher.group());
+            String name = matcher.group(1);
             boolean isCirclePattern = pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN);
             if (isCirclePattern || pattern.equals(TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN)){
                 cellAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);
-                referenceData.put(sheetIndex, matcher.group(1), cellAddress);
+                referenceData.put(sheetIndex,name, cellAddress);
             }else if (pattern.equals(TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN)){
-                cellAddress.setPlaceholderType(PlaceholderType.CALCULATE);
-                cellAddress.setCalculatedValue(BigDecimal.ZERO);
-                referenceData.put(sheetIndex, matcher.group(1), cellAddress);
+                if (!isFinal){
+                    cellAddress.setPlaceholderType(PlaceholderType.CALCULATE);
+                    cellAddress.setCalculatedValue(BigDecimal.ZERO);
+                }else {
+                    Map<String, CellAddress> addressMap = referenceData.row(sheetIndex);
+                    if (addressMap.containsKey(name)){
+                        CellAddress originalAddress = addressMap.get(name);
+                        originalAddress.setRowPosition(cellAddress.getRowPosition());
+                        referenceData.put(sheetIndex,name, originalAddress);
+                        return true;
+                    }
+                }
+                referenceData.put(sheetIndex,name, cellAddress);
             }
             return true;
         }
