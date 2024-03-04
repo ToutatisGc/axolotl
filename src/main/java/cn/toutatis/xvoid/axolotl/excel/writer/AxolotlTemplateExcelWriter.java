@@ -8,6 +8,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
+import cn.toutatis.xvoid.common.standard.StringPool;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -246,15 +247,38 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             // 漂移写入特性
             int sheetIndex = writeContext.getSwitchSheetIndex();
             boolean initialWriting = writeContext.fieldsIsInitialWriting(sheetIndex,writeFieldNamesList);
+            int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
+            boolean nonTemplateCellFill = writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL);
+            if (initialWriting && nonTemplateCellFill){
+                // 获取模板行次的非模板值的列
+                int templateLineIdx = startShiftRow - 1;
+                XSSFRow templateRow = sheet.getRow(templateLineIdx);
+                int templateRowLastCellNum = templateRow.getLastCellNum();
+                Map<Integer,String > templateColumnMap = circleReferenceData.values()
+                        .stream().filter(cellAddress -> cellAddress.getRowPosition() == templateLineIdx)
+                        .collect(Collectors.toMap(CellAddress::getColumnPosition, CellAddress::getPlaceholder));
+                List<CellAddress> nonTemplateCellAddressList = new ArrayList<>();
+                // 将非模板列存储
+                for (int i = 0; i < templateRowLastCellNum; i++) {
+                    if(!templateColumnMap.containsKey(i)){
+                        XSSFCell cell = templateRow.getCell(i);
+                        CellAddress nonTempalteCellAddress = new CellAddress(null, templateLineIdx, i, cell.getCellStyle());
+                        nonTempalteCellAddress.set_nonTemplateCell(cell);
+                        nonTempalteCellAddress.setMergeRegion(ExcelToolkit.isCellMerged(sheet, templateLineIdx, i));
+                        nonTemplateCellAddressList.add(nonTempalteCellAddress);
+                    }
+                }
+                // 存储非模板列
+                writeContext.getSheetNonTemplateCells().put(sheetIndex,writeFieldNamesList,nonTemplateCellAddressList);
+                debug(LOGGER,"获取模板行[%s]个非模板列",nonTemplateCellAddressList.size());
+            }
             writeContext.addFieldRecords(sheetIndex,writeFieldNamesList,writeContext.getCurrentWrittenBatch().get(sheetIndex));
             if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
                     writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
-                int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
                 // 最后一行大于起始行，则下移，否则为表底不下移
                 if(sheet.getLastRowNum() >= startShiftRow){
                     int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
                     LoggerHelper.debug(LOGGER,"当前写入起始行次[%s],下移行次:[%s],",startShiftRow,shiftRowNumber);
-
                     sheet.shiftRows(startShiftRow, sheet.getLastRowNum(), shiftRowNumber, true,true);
                 }
             }
@@ -286,9 +310,20 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         writableCell = writableRow.createCell(cellAddress.getColumnPosition());
                     }
                     writableCell.setCellStyle(cellAddress.getCellStyle());
+                    // 空值时使用默认值填充
                     if (Validator.strIsBlank(value)){
-                        writableCell.setBlank();
+                        String defaultValue = cellAddress.getDefaultValue();
+                        if (defaultValue != null){
+                            writableCell.setCellValue(cellAddress.replacePlaceholder(defaultValue));
+                        }else{
+                            if (writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NULL_VALUE_WITH_TEMPLATE_FILL)){
+                                writableCell.setCellValue(cellAddress.replacePlaceholder(""));
+                            }else{
+                                writableCell.setBlank();
+                            }
+                        }
                     }else {
+                        // 计算写入列的值
                         if (calculateReferenceData.containsKey(fieldMappingKey) && Validator.strIsNumber(value.toString())){
                             CellAddress calculateAddress = calculateReferenceData.get(fieldMappingKey);
                             BigDecimal calculatedValue = calculateAddress.getCalculatedValue();
@@ -299,19 +334,46 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         // 暂时只适配String类型
                         writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
                     }
-                    if (cellAddress.isMergeCell() && !cellAddress.isInitializedWrite()){
-                        CellRangeAddress mergeRegion = cellAddress.getMergeRegion();
-                        mergeRegion.setFirstRow(rowPosition);
-                        mergeRegion.setLastRow(rowPosition);
-                        StyleHelper.renderMergeRegionStyle(sheet,mergeRegion,cellAddress.getCellStyle());
-                        sheet.addMergedRegion(mergeRegion);
-                    }
+                    this.setMergeRegion(sheet,cellAddress,rowPosition);
                     cellAddress.setRowPosition(++rowPosition);
                     if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
                         alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
                     }
                 }
+                if (nonTemplateCellFill){
+                    List<CellAddress> nonTemplateCells = writeContext.getSheetNonTemplateCells().get(sheetIndex, writeFieldNamesList);
+                    if (nonTemplateCells != null) {
+                        for (CellAddress nonTemplateCellAddress : nonTemplateCells){
+                            int rowPosition = nonTemplateCellAddress.getRowPosition();
+                            XSSFRow writableRow = sheet.getRow(nonTemplateCellAddress.getRowPosition());
+                            XSSFCell writableCell = writableRow.getCell(nonTemplateCellAddress.getColumnPosition());
+                            if (writableCell == null){
+                                writableCell = writableRow.createCell(nonTemplateCellAddress.getColumnPosition());
+                            }
+                            Cell nonTemplateCell = nonTemplateCellAddress.get_nonTemplateCell();
+                            ExcelToolkit.cloneOldCell2NewCell(writableCell,nonTemplateCell);
+                            this.setMergeRegion(sheet,nonTemplateCellAddress,rowPosition);
+                            nonTemplateCellAddress.setRowPosition(++rowPosition);
+                        }
+                    }
+                }
             }
+        }
+    }
+
+    /**
+     * 设置合并单元格区域
+     * @param sheet 工作表
+     * @param cellAddress 单元格地址信息
+     * @param rowPosition 行次
+     */
+    private void setMergeRegion(Sheet sheet,CellAddress cellAddress,int rowPosition){
+        if (cellAddress.isMergeCell() && !cellAddress.isInitializedWrite()){
+            CellRangeAddress mergeRegion = cellAddress.getMergeRegion();
+            mergeRegion.setFirstRow(rowPosition);
+            mergeRegion.setLastRow(rowPosition);
+            StyleHelper.renderMergeRegionStyle(sheet,mergeRegion,cellAddress.getCellStyle());
+            sheet.addMergedRegion(mergeRegion);
         }
     }
 
@@ -424,6 +486,11 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         if (matcher.find()) {
             cellAddress.setPlaceholder(matcher.group());
             String name = matcher.group(1);
+            String[] defaultSplitContent = name.split(StringPool.COLON);
+            name = defaultSplitContent[0];
+            if (defaultSplitContent.length > 1){
+                cellAddress.setDefaultValue(defaultSplitContent[1]);
+            }
             boolean isCirclePattern = pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN);
             if (isCirclePattern || pattern.equals(TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN)){
                 cellAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);

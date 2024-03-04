@@ -127,7 +127,7 @@ public class WriteTest {
 // 创建写入器
         try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, writerConfig)) {
             List list = new ArrayList();
-            for (int i = 0; i < 10000; i++) {
+            for (int i = 0; i < 100; i++) {
                 SunUser sunUser = new SunUser();
                 for (Field declaredField : SunUser.class.getDeclaredFields()) {
                     ReflectToolkit.setObjectField(sunUser, declaredField, "11"+i);

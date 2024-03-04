@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
 import lombok.Data;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.util.CellRangeAddress;
 
@@ -33,6 +34,11 @@ public class CellAddress {
     private String cellValue;
 
     /**
+     * 占位符产生的默认值
+     */
+    private String defaultValue;
+
+    /**
      * 模板单元格的行位置
      */
     private int rowPosition;
@@ -52,6 +58,12 @@ public class CellAddress {
      * 模板单元格的已写入行
      */
     private int writtenRow = -1;
+
+    /**
+     * [内部维护变量]
+     * 非模板单元格
+     */
+    private Cell _nonTemplateCell;
 
     /**
      * 计算值

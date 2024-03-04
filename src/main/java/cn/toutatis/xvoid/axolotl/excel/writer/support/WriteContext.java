@@ -38,6 +38,12 @@ public class WriteContext extends AbstractContext {
     private HashBasedTable<Integer,List<String>,Integer> sheetSameFields = HashBasedTable.create();
 
     /**
+     * 同字段引用索引
+     * 用于校验同一批次的字段引用去计算引用索引
+     */
+    private HashBasedTable<Integer,List<String>,List<CellAddress>> sheetNonTemplateCells = HashBasedTable.create();
+
+    /**
      * 单次引用索引
      * <p>单词引用数据仅能使用一次，重复写入相同字段将跳过</p>
      * @see cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern#SINGLE_REFERENCE_TEMPLATE_PLACEHOLDER

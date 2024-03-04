@@ -35,8 +35,21 @@ public enum ExcelWritePolicy {
      * true:返回写入结果
      * false:抛出异常
      */
-    EXCEPTION_RETURN_RESULT(Type.BOOLEAN, true, true)
+    EXCEPTION_RETURN_RESULT(Type.BOOLEAN, true, true),
 
+    /**
+     * 空值是否使用模板填充
+     * true:使用模板填充
+     * false:填充为空单元格
+     */
+    NULL_VALUE_WITH_TEMPLATE_FILL(Type.BOOLEAN, true, true),
+
+    /**
+     * 非模板单元格是否模板填充
+     * true:填充为单元格同样数据
+     * false:该列为空
+     */
+    NON_TEMPLATE_CELL_FILL(Type.BOOLEAN, true, true),
     ;
 
     /**

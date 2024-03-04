@@ -139,7 +139,7 @@ public class ExcelToolkit {
             case STRING -> newCell.setCellValue(oldCell.getStringCellValue());
             case FORMULA -> newCell.setCellValue(oldCell.getCellFormula());
             case ERROR -> newCell.setCellValue(oldCell.getErrorCellValue());
-            case BLANK -> newCell.setCellValue("");
+            case BLANK -> newCell.setBlank();
         }
     }
 
