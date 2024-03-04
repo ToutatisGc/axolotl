@@ -28,7 +28,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -241,9 +240,12 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
                     writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
                 int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
-                int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
-                LoggerHelper.debug(LOGGER,"当前写入起始行次[%s],下移行次:[%s],",startShiftRow,shiftRowNumber);
-                sheet.shiftRows(startShiftRow, sheet.getLastRowNum(), shiftRowNumber, true,true);
+                // 最后一行大于起始行，则下移，否则为表底不下移
+                if(sheet.getLastRowNum() > startShiftRow){
+                    int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
+                    LoggerHelper.debug(LOGGER,"当前写入起始行次[%s],下移行次:[%s],",startShiftRow,shiftRowNumber);
+                    sheet.shiftRows(startShiftRow, sheet.getLastRowNum(), shiftRowNumber, true,true);
+                }
             }
             // 写入列表数据
             HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
@@ -418,8 +420,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     /**
      * 关闭工作簿所对应输出流
      */
+    @SneakyThrows
     @Override
-    public void close() throws IOException {
+    public void close() {
         LoggerHelper.debug(LOGGER, "工作薄写入进入关闭阶段");
         this.flush(true);
         workbook.write(writerConfig.getOutputStream());

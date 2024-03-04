@@ -20,4 +20,10 @@ public class TemplatePlaceholderPattern {
     public static final String CIRCLE_REFERENCE_TEMPLATE_PLACEHOLDER = "#\\{([^}]*)\\}";
     public static final Pattern CIRCLE_REFERENCE_TEMPLATE_PATTERN = Pattern.compile(CIRCLE_REFERENCE_TEMPLATE_PLACEHOLDER);
 
+    /**
+     * 合计占位符正则表达式
+     */
+    public static final String AGGREGATE_REFERENCE_TEMPLATE_PLACEHOLDER = "&\\{([^}]*)\\}";
+    public static final Pattern AGGREGATE_REFERENCE_TEMPLATE_PATTERN = Pattern.compile(AGGREGATE_REFERENCE_TEMPLATE_PLACEHOLDER);
+
 }

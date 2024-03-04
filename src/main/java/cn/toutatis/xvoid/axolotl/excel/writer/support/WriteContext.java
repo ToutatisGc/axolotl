@@ -6,6 +6,7 @@ import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,11 @@ public class WriteContext extends AbstractContext {
      * 循环引用索引
      */
     private HashBasedTable<Integer,String,CellAddress> circleReferenceData = HashBasedTable.create();
+
+    /**
+     * 循环引用合计占位符
+     */
+    private HashBasedTable<Integer,String, BigDecimal> calculateReferenceData =  HashBasedTable.create();
 
     /**
      * 当前切换的sheet索引

@@ -4,6 +4,8 @@ import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.util.CellRangeAddress;
 
+import java.math.BigInteger;
+
 /**
  * 用于存放模板占位符单元格的行和列
  * @author Toutatis_Gc
@@ -50,6 +52,8 @@ public class CellAddress {
      * 模板单元格的已写入行
      */
     private int writtenRow = -1;
+
+    private BigInteger calculatedValue = BigInteger.ZERO;
 
     /**
      * 合并单元格的区域
