@@ -149,7 +149,15 @@ public class ExcelToolkit {
         }
     }
 
-    public static void cellAssignment(Sheet sheet, int row, int column, CellStyle cellStyle ,Object value){
+    /**
+     * 创建单元格
+     * @param sheet 工作表
+     * @param row 行位置
+     * @param column 列位置
+     * @param cellStyle 单元格样式
+     * @return 新单元格
+     */
+    public static Cell createOrCatchCell(Sheet sheet, int row, int column, CellStyle cellStyle){
         Row writableRow = sheet.getRow(row);
         if (writableRow == null){
             writableRow = sheet.createRow(row);
@@ -161,6 +169,19 @@ public class ExcelToolkit {
         if (cellStyle != null){
             writableCell.setCellStyle(cellStyle);
         }
+        return writableCell;
+    }
+
+    /**
+     * 单元格赋值
+     * @param sheet 工作表
+     * @param row 行位置
+     * @param column 列位置
+     * @param cellStyle 单元格样式
+     * @param value 值
+     */
+    public static void cellAssignment(Sheet sheet, int row, int column, CellStyle cellStyle ,Object value){
+        Cell writableCell = createOrCatchCell(sheet, row, column, cellStyle);
         if (value != null){
             Class<?> valueClass = value.getClass();
             if ((ReflectToolkit.isWrapperClass(valueClass) && valueClass != String.class) || valueClass.isPrimitive()){

@@ -302,15 +302,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             Map<String, Object> map = (Map<String, Object>) data;
                             value = map.get(fieldMappingKey);
                         }
-                        XSSFRow writableRow = sheet.getRow(rowPosition);
-                        if (writableRow == null){
-                            writableRow = sheet.createRow(rowPosition);
-                        }
-                        XSSFCell writableCell = writableRow.getCell(cellAddress.getColumnPosition());
-                        if (writableCell == null){
-                            writableCell = writableRow.createCell(cellAddress.getColumnPosition());
-                        }
-                        writableCell.setCellStyle(cellAddress.getCellStyle());
+                        Cell writableCell = ExcelToolkit.createOrCatchCell(sheet, rowPosition,
+                                cellAddress.getColumnPosition(), cellAddress.getCellStyle());
                         // 空值时使用默认值填充
                         if (Validator.strIsBlank(value)){
                             String defaultValue = cellAddress.getDefaultValue();
@@ -353,13 +346,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     if (nonTemplateCells != null) {
                         for (CellAddress nonTemplateCellAddress : nonTemplateCells){
                             int rowPosition = nonTemplateCellAddress.getRowPosition();
-                            XSSFRow writableRow = sheet.getRow(nonTemplateCellAddress.getRowPosition());
-                            XSSFCell writableCell = writableRow.getCell(nonTemplateCellAddress.getColumnPosition());
-                            if (writableCell == null){
-                                writableCell = writableRow.createCell(nonTemplateCellAddress.getColumnPosition());
-                            }
-                            Cell nonTemplateCell = nonTemplateCellAddress.get_nonTemplateCell();
-                            ExcelToolkit.cloneOldCell2NewCell(writableCell,nonTemplateCell);
+                            Cell writableCell = ExcelToolkit.createOrCatchCell(sheet, rowPosition, nonTemplateCellAddress.getColumnPosition(), null);
+                            ExcelToolkit.cloneOldCell2NewCell(writableCell,nonTemplateCellAddress.get_nonTemplateCell());
                             this.setMergeRegion(sheet,nonTemplateCellAddress,rowPosition);
                             nonTemplateCellAddress.setRowPosition(++rowPosition);
                         }
