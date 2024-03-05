@@ -33,7 +33,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
         workbook = sheet.getWorkbook();
         this.createTitleRow(sheet);
-        CellStyle headerCellStyle = StyleHelper.createCommonCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TEXT_FONT_SIZE);
+        CellStyle headerCellStyle = StyleHelper.createStandardCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TEXT_FONT_SIZE);
         SXSSFRow columnNamesRow = sheet.createRow(++alreadyWriteRow);
         columnNamesRow.setHeight((short) 400);
 //        List<String> columnNames = writeConfig.getColumnNames();
@@ -50,7 +50,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     @Override
     @SuppressWarnings("rawtypes")
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
-        CellStyle dataStyle = StyleHelper.createCommonCellStyle(
+        CellStyle dataStyle = StyleHelper.createStandardCellStyle(
                 sheet.getWorkbook(), BorderStyle.MEDIUM, THEME_COLOR, false,
                 "宋体", StyleHelper.STANDARD_TEXT_FONT_SIZE
         );
@@ -83,7 +83,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         titleRow.setHeight((short) 600);
         SXSSFCell startPositionCell = titleRow.createCell(0);
         startPositionCell.setCellValue(writeConfig.getTitle());
-        CellStyle titleCellStyle = StyleHelper.createCommonCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TITLE_FONT_SIZE);
+        CellStyle titleCellStyle = StyleHelper.createStandardCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TITLE_FONT_SIZE);
         startPositionCell.setCellStyle(titleCellStyle);
 //        CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, writeConfig.getColumnNames().size() - 1);
 //        StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleCellStyle);

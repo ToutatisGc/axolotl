@@ -39,9 +39,10 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
     public AxolotlAutoExcelWriter(AutoWriteConfig autoWriteConfig) {
         this.writeConfig = autoWriteConfig;
         AutoWriteContext autoWriteContext = new AutoWriteContext();
+        this.workbook = this.initWorkbook(null);
+        autoWriteContext.setWorkbook(this.workbook);
         this.writeContext = autoWriteContext;
         super.writeContext = autoWriteContext;
-        this.workbook = this.initWorkbook(null);
         super.LOGGER = LOGGER;
     }
 

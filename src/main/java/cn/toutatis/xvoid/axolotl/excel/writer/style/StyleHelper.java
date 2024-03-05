@@ -59,7 +59,7 @@ public class StyleHelper {
      * @param borderColor 边框颜色
      * @return 单元格样式
      */
-    public static CellStyle createCommonCellStyle(
+    public static CellStyle createStandardCellStyle(
             Workbook workbook,
             BorderStyle borderStyle,
             IndexedColors borderColor,

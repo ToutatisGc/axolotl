@@ -198,16 +198,26 @@ public class WriteTest {
     public void generateColorCard() throws IOException {
         SXSSFWorkbook workbook = new SXSSFWorkbook();
         SXSSFSheet sheet = workbook.createSheet("内置色卡");
-        for (int i = 0; i < IndexedColors.values().length; i++) {
+        for (int i = 0; i < FillPatternType.values().length; i++) {
+            FillPatternType patternType = FillPatternType.values()[i];
             SXSSFRow row = sheet.createRow(i);
             SXSSFCell cell = row.createCell(0);
-            IndexedColors color = IndexedColors.values()[i];
-            cell.setCellValue(color.name());
+            cell.setCellValue(patternType.name());
             CellStyle cellStyle = workbook.createCellStyle();
-            cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            cellStyle.setFillForegroundColor(color.getIndex());
+            cellStyle.setFillPattern(patternType);
+            cellStyle.setFillForegroundColor(IndexedColors.ORANGE.getIndex());
             cell.setCellStyle(cellStyle);
         }
+//        for (int i = 0; i < IndexedColors.values().length; i++) {
+//            SXSSFRow row = sheet.createRow(i);
+//            SXSSFCell cell = row.createCell(0);
+//            IndexedColors color = IndexedColors.values()[i];
+//            cell.setCellValue(color.name());
+//            CellStyle cellStyle = workbook.createCellStyle();
+//            cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+//            cellStyle.setFillForegroundColor(color.getIndex());
+//            cell.setCellStyle(cellStyle);
+//        }
         workbook.write(new FileOutputStream("D:\\COLOR-CARD.xlsx"));
         workbook.close();
     }

@@ -605,11 +605,13 @@ try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, co
 
 ​	🧭示例表格:
 
-![模板表格示例](./README.assets/image-20240227153425342.png)
+![模板表格示例](./README.assets/下移写入表格示例图片.png)
 
 ##### 4.1.2.2 自动写入
 
-![内置色卡](./README.assets/image-20240305171850955.png)
+![内置色卡](./README.assets/IndexedColors内置颜色.png)
+
+![填充样式](./README.assets/FillPatternType填充样式.png)
 
 ```
 // 等待完善
