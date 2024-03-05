@@ -29,7 +29,7 @@ public class AxolotlClassicalTheme extends AbstractInnerStyleRender implements E
         CellStyle headerCellStyle = StyleHelper.createCommonCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TEXT_FONT_SIZE);
         SXSSFRow columnNamesRow = sheet.createRow(++alreadyWriteRow);
         columnNamesRow.setHeight((short) 400);
-        List<String> columnNames = writerConfig.getColumnNames();
+        List<String> columnNames = writeConfig.getColumnNames();
         for (int i = 0; i < columnNames.size(); i++) {
             SXSSFCell cell = columnNamesRow.createCell(i);
             String name = columnNames.get(i);
@@ -37,7 +37,7 @@ public class AxolotlClassicalTheme extends AbstractInnerStyleRender implements E
             cell.setCellStyle(headerCellStyle);
             sheet.setColumnWidth(i,StyleHelper.getPresetCellLength(name));
         }
-        workbook.setPrintArea(workbook.getSheetIndex(sheet), 0,writerConfig.getColumnNames().size() - 1,0, 10 );
+        workbook.setPrintArea(workbook.getSheetIndex(sheet), 0, writeConfig.getColumnNames().size() - 1,0, 10 );
     }
 
     @Override
@@ -64,14 +64,19 @@ public class AxolotlClassicalTheme extends AbstractInnerStyleRender implements E
         }
     }
 
+    @Override
+    public void dataProcessing(SXSSFSheet sheet, Map<String, ?> singleMap, List<?> data) {
+
+    }
+
     private void createTitleRow(SXSSFSheet sheet){
         SXSSFRow titleRow = sheet.createRow(++alreadyWriteRow);
         titleRow.setHeight((short) 600);
         SXSSFCell startPositionCell = titleRow.createCell(0);
-        startPositionCell.setCellValue(writerConfig.getTitle());
+        startPositionCell.setCellValue(writeConfig.getTitle());
         CellStyle titleCellStyle = StyleHelper.createCommonCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TITLE_FONT_SIZE);
         startPositionCell.setCellStyle(titleCellStyle);
-        CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, writerConfig.getColumnNames().size() - 1);
+        CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, writeConfig.getColumnNames().size() - 1);
         StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleCellStyle);
         sheet.addMergedRegion(cellAddresses);
     }

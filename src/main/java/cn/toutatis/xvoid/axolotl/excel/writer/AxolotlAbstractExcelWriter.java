@@ -40,16 +40,6 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     protected final WriteContext writeContext = new WriteContext();
 
     /**
-     * 写入配置
-     */
-    protected final WriterConfig writerConfig;
-
-    public AxolotlAbstractExcelWriter(WriterConfig writerConfig) {
-        this.writerConfig = writerConfig;
-        this.writeContext.setSwitchSheetIndex(writerConfig.getSheetIndex());
-    }
-
-    /**
      * 初始化工作簿
      *
      * @param templateFile 模板文件
@@ -79,12 +69,6 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
         return workbook;
     }
 
-    /**
-     * 获取配置绑定索引
-     */
-    protected XSSFSheet getConfigBoundSheet() {
-        return this.getWorkbookSheet(this.writerConfig.getSheetIndex());
-    }
 
     /**
      * 获取工作簿对应的工作表
@@ -95,7 +79,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     protected XSSFSheet getWorkbookSheet(int sheetIndex) {
         XSSFSheet sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
         if (sheet == null){
-            throw new AxolotlWriteException(LoggerHelper.format("工作簿索引[%s]对应的工作表不存在",this.writerConfig.getSheetIndex()));
+            throw new AxolotlWriteException(LoggerHelper.format("工作簿索引[%s]对应的工作表不存在",sheetIndex));
         }
         return sheet;
     }

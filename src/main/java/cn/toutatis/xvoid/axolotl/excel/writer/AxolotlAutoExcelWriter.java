@@ -7,6 +7,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -25,25 +26,27 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlAutoExcelWriter.class);
 
+    private final AutoWriteConfig writeConfig;
+
     /**
      * 主构造函数
      *
-     * @param writerConfig 写入配置
+     * @param autoWriteConfig 写入配置
      */
-    public AxolotlAutoExcelWriter(WriterConfig writerConfig) {
-        super(writerConfig);
+    public AxolotlAutoExcelWriter(AutoWriteConfig autoWriteConfig) {
+        this.writeConfig = autoWriteConfig;
         this.workbook = this.initWorkbook(null);
         super.LOGGER = LOGGER;
     }
 
     @Override
-    public AxolotlWriteResult write(Map<String, ?> singleMap, List<?> circleDataList) throws AxolotlWriteException {
-        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writerConfig.getSheetIndex()));
+    public AxolotlWriteResult write(Map<String, ?> header, List<?> circleDataList) throws AxolotlWriteException {
+        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
         SXSSFSheet sheet = workbook.createSheet();
-        workbook.setSheetName(writerConfig.getSheetIndex(),writerConfig.getSheetName());
-        ExcelStyleRender styleRender = writerConfig.getStyleRender();
+        workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
+        ExcelStyleRender styleRender = writeConfig.getStyleRender();
         if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
-            innerStyleRender.setWriterConfig(writerConfig);
+            innerStyleRender.setWriteConfig(writeConfig);
             innerStyleRender.renderHeader(sheet);
         }else {
             styleRender.renderHeader(sheet);
@@ -59,6 +62,13 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
 
     @Override
     public void close() throws IOException {
-        workbook.write(writerConfig.getOutputStream());
+        workbook.write(writeConfig.getOutputStream());
+    }
+
+    /**
+     * 获取配置绑定索引
+     */
+    protected XSSFSheet getConfigBoundSheet() {
+        return this.getWorkbookSheet(this.writeConfig.getSheetIndex());
     }
 }

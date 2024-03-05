@@ -41,12 +41,12 @@
 
 #### 🔝 0.0.10-ALPHA-8 更新说明
 
-- 修复部分API错误
-- 增加指定列范围[sheetColumnEffectiveRange]的ReaderConfig支持
-- 增加默认转换器[support方法]约束
-- 完善读取说明
-- 增加散播策略的读取策略[SPREAD_MERGING_REGION]
-- Excel模板写入进入支持阶段
+- 修复部分API错误。
+- 增加指定列范围[sheetColumnEffectiveRange]的ReaderConfig支持。
+- 增加默认转换器[support方法]约束。
+- 完善使用说明。
+- 增加散播策略的读取策略[SPREAD_MERGING_REGION]。
+- Excel模板写入进入支持阶段。
 
 #### 🧩历史版本更新说明
 
@@ -125,12 +125,12 @@ System.out.println(data);
 
 ```java
 // 最重要的是需要创建写入配置
-WriterConfig writerConfig = new WriterConfig();
+WriterConfig commonWriteConfig = new WriterConfig();
 // 创建模板Excel写入器
 File file = FileToolkit.getResourceFileAsFile("写入模板.xlsx");
-AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig);
+AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
 // 创建普通Excel写入器
-AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getExcelWriter(writerConfig);
+AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getExcelWriter(commonWriteConfig);
 ```
 
 ##### 3.2.2.2 两种写入方式
@@ -556,11 +556,11 @@ public abstract class AbstractDataCastAdapter<FT> implements DataCastAdapter<FT>
 // 添加一个模板文件
 File file = FileToolkit.getResourceFileAsFile("workbook/write/.xlsx");
 //创建写入配置
-WriterConfig writerConfig = new WriterConfig();
+WriterConfig commonWriteConfig = new WriterConfig();
 FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
-writerConfig.setOutputStream(fileOutputStream);
+commonWriteConfig.setOutputStream(fileOutputStream);
 // 创建写入器
-try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, writerConfig)) {
+try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, commonWriteConfig)) {
     // 获取数据
     Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
     axolotlAutoExcelWriter.writeToTemplate(0, map, null);

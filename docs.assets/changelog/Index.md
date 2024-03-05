@@ -1,4 +1,13 @@
-### 🔝0.0.9-ALPHA-8 更新说明
+### 🔝 0.0.10-ALPHA-8 更新说明
+
+- 修复部分API错误。
+- 增加指定列范围[sheetColumnEffectiveRange]的ReaderConfig支持。
+- 增加默认转换器[support方法]约束。
+- 完善使用说明。
+- 增加散播策略的读取策略[SPREAD_MERGING_REGION]。
+- Excel模板写入进入支持阶段。
+
+### 🧩0.0.9-ALPHA-8 更新说明
 
 - 增加对流式读取的支持。**详情查看章节【4.1.7】**
 - 对读取器进行抽取方法，增加灵活性。

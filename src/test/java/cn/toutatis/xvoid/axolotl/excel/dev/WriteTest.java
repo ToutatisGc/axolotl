@@ -4,9 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.SunUser;
-import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
-import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
-import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.*;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
@@ -50,10 +48,10 @@ public class WriteTest {
     @Test
     public void testWritePlaceholders() throws Exception {
         File file = FileToolkit.getResourceFileAsFile("workbook/write/读取占位符测试.xlsx");
-        WriterConfig writerConfig = new WriterConfig();
+        TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
-        writerConfig.setOutputStream(fileOutputStream);
-        AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig);
+        commonWriteConfig.setOutputStream(fileOutputStream);
+        AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
         Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
@@ -83,10 +81,10 @@ public class WriteTest {
     @Test
     public void testShift() throws IOException {
         File file = FileToolkit.getResourceFileAsFile("workbook/write/漂移写入测试.xlsx");
-        WriterConfig writerConfig = new WriterConfig();
+        TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
-        writerConfig.setOutputStream(fileOutputStream);
-        try (AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, writerConfig)) {
+        commonWriteConfig.setOutputStream(fileOutputStream);
+        try (AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig)) {
             ArrayList<JSONObject> datas1 = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
                 JSONObject sch = new JSONObject();
@@ -121,11 +119,11 @@ public class WriteTest {
     @Test
     public void test() throws FileNotFoundException {
         File file = FileToolkit.getResourceFileAsFile("workbook/write/sunUser.xlsx");
-        WriterConfig writerConfig = new WriterConfig();
+        TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
-        writerConfig.setOutputStream(fileOutputStream);
+        commonWriteConfig.setOutputStream(fileOutputStream);
 // 创建写入器
-        try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, writerConfig)) {
+        try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
             List list = new ArrayList();
             for (int i = 0; i < 100; i++) {
                 SunUser sunUser = new SunUser();
@@ -142,4 +140,34 @@ public class WriteTest {
         }
 
     }
+
+    @Test
+    public void testAuto1() throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
+        AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
+        commonWriteConfig.setOutputStream(fileOutputStream);
+        commonWriteConfig.setTitle("测试生成表标题");
+        ArrayList<String> columnNames = new ArrayList<>();
+        columnNames.add("名称");
+        columnNames.add("姓名");
+        columnNames.add("性别");
+        columnNames.add("身份证号");
+        columnNames.add("地址");
+        commonWriteConfig.setColumnNames(columnNames);
+        ArrayList<JSONObject> data = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            JSONObject json = new JSONObject(true);
+            json.put("name", "name" + i);
+            json.put("age", i);
+            json.put("sex", i % 2 == 0? "男" : "女");
+            json.put("card", 555444114);
+            json.put("address", null);
+            data.add(json);
+        }
+        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
+        autoExcelWriter.write(null,data);
+        autoExcelWriter.close();
+
+    }
+
 }

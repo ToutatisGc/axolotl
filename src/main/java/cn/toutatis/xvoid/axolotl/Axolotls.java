@@ -2,10 +2,7 @@ package cn.toutatis.xvoid.axolotl;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlStreamExcelReader;
-import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
-import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlExcelWriter;
-import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
-import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -68,19 +65,19 @@ public class Axolotls {
     /**
      * 获取模板Excel写入器
      * @param template 模板文件
-     * @param writerConfig 写入器配置
+     * @param writeConfig 写入器配置
      * @return Excel写入器
      */
-    public static AxolotlExcelWriter getTemplateExcelWriter(File template, WriterConfig writerConfig){
-        return new AxolotlTemplateExcelWriter(template, writerConfig);
+    public static AxolotlExcelWriter getTemplateExcelWriter(File template, TemplateWriteConfig writeConfig){
+        return new AxolotlTemplateExcelWriter(template, writeConfig);
     }
 
     /**
      * 获取Excel写入器
-     * @param writerConfig 写入器配置
+     * @param writeConfig 写入器配置
      * @return Excel写入器
      */
-    public static AxolotlAutoExcelWriter getAutoExcelWriter(WriterConfig writerConfig){
-        return new AxolotlAutoExcelWriter(writerConfig);
+    public static AxolotlAutoExcelWriter getAutoExcelWriter(AutoWriteConfig writeConfig){
+        return new AxolotlAutoExcelWriter(writeConfig);
     }
 }

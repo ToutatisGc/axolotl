@@ -51,12 +51,18 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlTemplateExcelWriter.class);
 
     /**
+     * 写入配置
+     */
+    private final TemplateWriteConfig writeConfig;
+
+    /**
      * 主构造函数
      *
-     * @param writerConfig 写入配置
+     * @param templateWriteConfig 写入配置
      */
-    public AxolotlTemplateExcelWriter(WriterConfig writerConfig) {
-        super(writerConfig);
+    public AxolotlTemplateExcelWriter(TemplateWriteConfig templateWriteConfig) {
+        this.writeConfig = templateWriteConfig;
+        this.writeContext.setSwitchSheetIndex(writeConfig.getSheetIndex());
         super.LOGGER = LOGGER;
     }
 
@@ -65,10 +71,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * 可以写入一个模板文件
      *
      * @param templateFile 模板文件
-     * @param writerConfig 写入配置
+     * @param writeConfig 写入配置
      */
-    public AxolotlTemplateExcelWriter(File templateFile, WriterConfig writerConfig) {
-        this(writerConfig);
+    public AxolotlTemplateExcelWriter(File templateFile, TemplateWriteConfig writeConfig) {
+        this(writeConfig);
         TikaShell.preCheckFileNormalThrowException(templateFile);
         this.workbook = this.initWorkbook(templateFile);
     }
@@ -80,7 +86,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         // 判断是否是模板写入
         AxolotlWriteResult axolotlWriteResult = new AxolotlWriteResult();
         if (writeContext.isTemplateWrite()){
-            sheet = this.getConfigBoundSheet();
+            sheet = getWorkbookSheet(writeContext.getSwitchSheetIndex());
             // 只有第一次写入时解析模板占位符
             if (writeContext.isFirstBatch(writeContext.getSwitchSheetIndex())){
                 // 解析模板占位符到上下文
@@ -94,7 +100,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             axolotlWriteResult.setMessage("写入完成");
         }else{
             String message = "非模板写入请使用AxolotlAutoExcelWriter.write()方法";
-            if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.EXCEPTION_RETURN_RESULT)){
+            if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.EXCEPTION_RETURN_RESULT)){
                 axolotlWriteResult.setMessage(message);
                 return axolotlWriteResult;
             }
@@ -148,7 +154,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * 未使用的单次占位符填充默认值
      */
     private void gatherUnusedSingleReferenceDataAndFillDefault() {
-        if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
+        if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
             int sheetIndex = writeContext.getSwitchSheetIndex();
             Sheet sheet = this.getWorkbookSheet(writeContext.getSwitchSheetIndex());
             Map<String, CellAddress> singleReferenceMapping =  writeContext.getSingleReferenceData().row(sheetIndex);
@@ -161,7 +167,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * 未使用的列表占位符填充默认值
      */
     private void gatherUnusedCircleReferenceDataAndFillDefault() {
-        if(writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
+        if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
             int sheetIndex = writeContext.getSwitchSheetIndex();
             Sheet sheet = this.getWorkbookSheet(sheetIndex);
             Map<String, CellAddress> circleReferenceData =  writeContext.getCircleReferenceData().row(sheetIndex);
@@ -248,7 +254,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             int sheetIndex = writeContext.getSwitchSheetIndex();
             boolean initialWriting = writeContext.fieldsIsInitialWriting(sheetIndex,writeFieldNamesList);
             int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
-            boolean nonTemplateCellFill = writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL);
+            boolean nonTemplateCellFill = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL);
             if (initialWriting && nonTemplateCellFill){
                 // 获取模板行次的非模板值的列
                 int templateLineIdx = startShiftRow - 1;
@@ -274,7 +280,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             }
             writeContext.addFieldRecords(sheetIndex,writeFieldNamesList,writeContext.getCurrentWrittenBatch().get(sheetIndex));
             if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
-                    writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
+                    writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
                 // 最后一行大于起始行，则下移，否则为表底不下移
                 if(sheet.getLastRowNum() >= startShiftRow){
                     int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
@@ -310,7 +316,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             if (defaultValue != null){
                                 writableCell.setCellValue(cellAddress.replacePlaceholder(defaultValue));
                             }else{
-                                if (writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NULL_VALUE_WITH_TEMPLATE_FILL)){
+                                if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NULL_VALUE_WITH_TEMPLATE_FILL)){
                                     writableCell.setCellValue(cellAddress.replacePlaceholder(""));
                                 }else{
                                     writableCell.setBlank();
@@ -546,9 +552,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     public void close() {
         LoggerHelper.debug(LOGGER, "工作薄写入进入关闭阶段");
         this.flush(true);
-        workbook.write(writerConfig.getOutputStream());
+        workbook.write(writeConfig.getOutputStream());
         workbook.close();
-        writerConfig.getOutputStream().close();
+        writeConfig.getOutputStream().close();
     }
 
     @Override

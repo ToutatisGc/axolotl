@@ -1,9 +1,10 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.WriterConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.CommonWriteConfig;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Excel样式渲染器接口。
@@ -32,7 +33,15 @@ public interface ExcelStyleRender {
      * 渲染 Excel 数据的样式。
      *
      * @param sheet        {@link SXSSFSheet} 表示工作表对象，用于设置数据样式。
-     * @param data {@link WriterConfig} 表示 Excel 写入器的配置，用于根据需要进行更多的样式定制。
+     * @param data {@link CommonWriteConfig} 表示 Excel 写入器的配置，用于根据需要进行更多的样式定制。
      */
     void renderData(SXSSFSheet sheet, List<?> data);
+
+    /**
+     * 数据处理
+     * @param sheet 工作表
+     * @param singleMap 单行数据
+     * @param data 列表数据
+     */
+    void dataProcessing(SXSSFSheet sheet, Map<String,?> singleMap, List<?> data);
 }
