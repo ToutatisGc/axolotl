@@ -2,12 +2,18 @@ package cn.toutatis.xvoid.axolotl.toolkit;
 
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 
 /**
@@ -140,6 +146,43 @@ public class ExcelToolkit {
             case FORMULA -> newCell.setCellValue(oldCell.getCellFormula());
             case ERROR -> newCell.setCellValue(oldCell.getErrorCellValue());
             case BLANK -> newCell.setBlank();
+        }
+    }
+
+    public static void cellAssignment(Sheet sheet, int row, int column, CellStyle cellStyle ,Object value){
+        Row writableRow = sheet.getRow(row);
+        if (writableRow == null){
+            writableRow = sheet.createRow(row);
+        }
+        Cell writableCell = writableRow.getCell(column);
+        if (writableCell == null){
+            writableCell = writableRow.createCell(column);
+        }
+        if (cellStyle != null){
+            writableCell.setCellStyle(cellStyle);
+        }
+        if (value != null){
+            Class<?> valueClass = value.getClass();
+            if ((ReflectToolkit.isWrapperClass(valueClass) && valueClass != String.class) || valueClass.isPrimitive()){
+                writableCell.setCellValue((Double) value);
+            }
+            if (value instanceof String){
+                writableCell.setCellValue((String) value);
+            }else if (value instanceof Boolean){
+                writableCell.setCellValue((Boolean) value);
+            }else if (value instanceof Date){
+                writableCell.setCellValue((Date) value);
+            }else if (value instanceof LocalDateTime){
+                writableCell.setCellValue((LocalDateTime) value);
+            }else if (value instanceof LocalDate){
+                writableCell.setCellValue((LocalDate) value);
+            }else if (value instanceof Calendar){
+                writableCell.setCellValue((Calendar) value);
+            }else {
+                throw new AxolotlException("不支持的写入类型");
+            }
+        }else {
+            writableCell.setBlank();
         }
     }
 

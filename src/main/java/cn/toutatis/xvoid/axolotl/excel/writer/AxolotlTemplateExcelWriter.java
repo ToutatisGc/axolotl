@@ -288,51 +288,59 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             Map<String, CellAddress> calculateReferenceData = this.writeContext.getCalculateReferenceData().row(writeContext.getSwitchSheetIndex());
             for (Object data : circleDataList) {
                 debug(LOGGER,"[写入数据]"+data);
-                for (Map.Entry<String, Integer> fieldMapping : writeFieldNames.entrySet()) {
+                for (Map.Entry<String, CellAddress> fieldMapping : circleReferenceData.entrySet()) {
                     String fieldMappingKey = fieldMapping.getKey();
                     CellAddress cellAddress = circleReferenceData.get(fieldMappingKey);
-                    Object value;
-                    if (isSimplePOJO){
-                        Field field = data.getClass().getDeclaredField(fieldMappingKey);
-                        field.setAccessible(true);
-                        value = field.get(data);
-                    }else{
-                        Map<String, Object> map = (Map<String, Object>) data;
-                        value = map.get(fieldMappingKey);
-                    }
                     int rowPosition = cellAddress.getRowPosition();
-                    XSSFRow writableRow = sheet.getRow(rowPosition);
-                    if (writableRow == null){
-                        writableRow = sheet.createRow(rowPosition);
-                    }
-                    XSSFCell writableCell = writableRow.getCell(cellAddress.getColumnPosition());
-                    if (writableCell == null){
-                        writableCell = writableRow.createCell(cellAddress.getColumnPosition());
-                    }
-                    writableCell.setCellStyle(cellAddress.getCellStyle());
-                    // 空值时使用默认值填充
-                    if (Validator.strIsBlank(value)){
-                        String defaultValue = cellAddress.getDefaultValue();
-                        if (defaultValue != null){
-                            writableCell.setCellValue(cellAddress.replacePlaceholder(defaultValue));
+                    if(writeFieldNames.containsKey(fieldMappingKey)){
+                        Object value;
+                        if (isSimplePOJO){
+                            Field field = data.getClass().getDeclaredField(fieldMappingKey);
+                            field.setAccessible(true);
+                            value = field.get(data);
                         }else{
-                            if (writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NULL_VALUE_WITH_TEMPLATE_FILL)){
-                                writableCell.setCellValue(cellAddress.replacePlaceholder(""));
+                            Map<String, Object> map = (Map<String, Object>) data;
+                            value = map.get(fieldMappingKey);
+                        }
+                        XSSFRow writableRow = sheet.getRow(rowPosition);
+                        if (writableRow == null){
+                            writableRow = sheet.createRow(rowPosition);
+                        }
+                        XSSFCell writableCell = writableRow.getCell(cellAddress.getColumnPosition());
+                        if (writableCell == null){
+                            writableCell = writableRow.createCell(cellAddress.getColumnPosition());
+                        }
+                        writableCell.setCellStyle(cellAddress.getCellStyle());
+                        // 空值时使用默认值填充
+                        if (Validator.strIsBlank(value)){
+                            String defaultValue = cellAddress.getDefaultValue();
+                            if (defaultValue != null){
+                                writableCell.setCellValue(cellAddress.replacePlaceholder(defaultValue));
                             }else{
-                                writableCell.setBlank();
+                                if (writerConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NULL_VALUE_WITH_TEMPLATE_FILL)){
+                                    writableCell.setCellValue(cellAddress.replacePlaceholder(""));
+                                }else{
+                                    writableCell.setBlank();
+                                }
                             }
+                        }else {
+                            // 计算写入列的值
+                            if (calculateReferenceData.containsKey(fieldMappingKey) && Validator.strIsNumber(value.toString())){
+                                CellAddress calculateAddress = calculateReferenceData.get(fieldMappingKey);
+                                BigDecimal calculatedValue = calculateAddress.getCalculatedValue();
+                                calculatedValue = calculatedValue.add(new BigDecimal(value.toString()));
+                                calculateAddress.setCalculatedValue(calculatedValue);
+                                this.writeContext.getCalculateReferenceData().put(sheetIndex,fieldMappingKey, calculateAddress);
+                            }
+                            // 暂时只适配String类型
+                            writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
                         }
-                    }else {
-                        // 计算写入列的值
-                        if (calculateReferenceData.containsKey(fieldMappingKey) && Validator.strIsNumber(value.toString())){
-                            CellAddress calculateAddress = calculateReferenceData.get(fieldMappingKey);
-                            BigDecimal calculatedValue = calculateAddress.getCalculatedValue();
-                            calculatedValue = calculatedValue.add(new BigDecimal(value.toString()));
-                            calculateAddress.setCalculatedValue(calculatedValue);
-                            this.writeContext.getCalculateReferenceData().put(sheetIndex,fieldMappingKey, calculateAddress);
-                        }
-                        // 暂时只适配String类型
-                        writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
+                    // 将未引用的占位符填充默认值
+                    }else{
+                        ExcelToolkit.cellAssignment(
+                                sheet, rowPosition, cellAddress.getColumnPosition(),
+                                cellAddress.getCellStyle(), cellAddress.getDefaultValue()
+                        );
                     }
                     this.setMergeRegion(sheet,cellAddress,rowPosition);
                     cellAddress.setRowPosition(++rowPosition);

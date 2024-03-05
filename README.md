@@ -587,7 +587,7 @@ try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, wr
 |  #{}   |        列表数据占位符<br />写入多条数据时指定该占位符        | #{schoolName} |
 |  &{}   | 合计占位符**（仅支持合计列表数据）**<br />使用方法和映射占位符一致 |   &{money}    |
 
-占位符默认值：
+**占位符默认值：**
 
 ​	在使用占位符时，如果数据为空（null，不是空字符串）时，可使用占位符指定默认值。
 
