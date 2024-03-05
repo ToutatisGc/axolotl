@@ -609,6 +609,8 @@ try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, co
 
 ##### 4.1.2.2 自动写入
 
+![内置色卡](./README.assets/image-20240305171850955.png)
+
 ```
 // 等待完善
 ```

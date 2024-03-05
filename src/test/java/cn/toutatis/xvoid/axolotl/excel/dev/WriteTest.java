@@ -6,12 +6,22 @@ import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.DmsRegReceivables;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.SunUser;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
-import cn.toutatis.xvoid.axolotl.excel.writer.*;
+import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
+import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
+import cn.toutatis.xvoid.axolotl.excel.writer.TemplateWriteConfig;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -153,7 +163,7 @@ public class WriteTest {
         columnNames.add("性别");
         columnNames.add("身份证号");
         columnNames.add("地址");
-        commonWriteConfig.setColumnNames(columnNames);
+//        commonWriteConfig.setColumnNames(columnNames);
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             JSONObject json = new JSONObject(true);
@@ -182,5 +192,23 @@ public class WriteTest {
         AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
         autoExcelWriter.write(list);
+    }
+
+    @Test
+    public void generateColorCard() throws IOException {
+        SXSSFWorkbook workbook = new SXSSFWorkbook();
+        SXSSFSheet sheet = workbook.createSheet("内置色卡");
+        for (int i = 0; i < IndexedColors.values().length; i++) {
+            SXSSFRow row = sheet.createRow(i);
+            SXSSFCell cell = row.createCell(0);
+            IndexedColors color = IndexedColors.values()[i];
+            cell.setCellValue(color.name());
+            CellStyle cellStyle = workbook.createCellStyle();
+            cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            cellStyle.setFillForegroundColor(color.getIndex());
+            cell.setCellStyle(cellStyle);
+        }
+        workbook.write(new FileOutputStream("D:\\COLOR-CARD.xlsx"));
+        workbook.close();
     }
 }
