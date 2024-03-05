@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.entities;
+package cn.toutatis.xvoid.axolotl.excel.entities.reader;
 
 import lombok.Data;
 

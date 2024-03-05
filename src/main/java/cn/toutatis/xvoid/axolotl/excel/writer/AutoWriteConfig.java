@@ -7,9 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-
 /**
  * 模板写入配置
  * @author Toutatis_Gc
@@ -17,14 +14,6 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AutoWriteConfig extends CommonWriteConfig {
-
-    public AutoWriteConfig() {
-        try {
-            styleRender = ExcelWriteThemes.$DEFAULT.getStyleRenderClass().getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * 标题
@@ -39,12 +28,7 @@ public class AutoWriteConfig extends CommonWriteConfig {
     /**
      * 样式渲染器
      */
-    private ExcelStyleRender styleRender;
-
-    /**
-     * 列名
-     */
-    private List<String> columnNames;
+    private ExcelStyleRender styleRender = ExcelWriteThemes.$DEFAULT.getRender();
 
 
     public void setStyleRender(ExcelStyleRender styleRender) {
@@ -53,7 +37,7 @@ public class AutoWriteConfig extends CommonWriteConfig {
 
     @SneakyThrows
     public void setStyleRender(ExcelWriteThemes theme) {
-        this.styleRender = theme.getStyleRenderClass().getDeclaredConstructor().newInstance();
+        this.styleRender = theme.getRender();
     }
 
     public void setStyleRender(String themeName) {

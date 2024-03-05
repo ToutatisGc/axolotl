@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.dev;
 
 import cn.toutatis.xvoid.axolotl.Axolotls;
-import cn.toutatis.xvoid.axolotl.excel.entities.*;
+import cn.toutatis.xvoid.axolotl.excel.entities.reader.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;

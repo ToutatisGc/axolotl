@@ -3,7 +3,9 @@ package cn.toutatis.xvoid.axolotl.excel.dev;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.Axolotls;
-import cn.toutatis.xvoid.axolotl.excel.entities.SunUser;
+import cn.toutatis.xvoid.axolotl.excel.entities.reader.DmsRegReceivables;
+import cn.toutatis.xvoid.axolotl.excel.entities.reader.SunUser;
+import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.*;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
@@ -168,4 +170,17 @@ public class WriteTest {
 
     }
 
+    @Test
+    public void testAnno(){
+        List<AnnoEntity> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            AnnoEntity annoEntity = new AnnoEntity();
+            annoEntity.setName("name"+i);
+            annoEntity.setAddress("address"+i);
+            list.add(annoEntity);
+        }
+        AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
+        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
+        autoExcelWriter.write(list);
+    }
 }

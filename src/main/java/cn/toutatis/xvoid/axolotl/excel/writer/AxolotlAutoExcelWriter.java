@@ -1,9 +1,11 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractInnerStyleRender;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
@@ -12,7 +14,6 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 文档文件写入器
@@ -28,6 +29,8 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
 
     private final AutoWriteConfig writeConfig;
 
+    private final AutoWriteContext writeContext;
+
     /**
      * 主构造函数
      *
@@ -35,6 +38,9 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      */
     public AxolotlAutoExcelWriter(AutoWriteConfig autoWriteConfig) {
         this.writeConfig = autoWriteConfig;
+        AutoWriteContext autoWriteContext = new AutoWriteContext();
+        this.writeContext = autoWriteContext;
+        super.writeContext = autoWriteContext;
         this.workbook = this.initWorkbook(null);
         super.LOGGER = LOGGER;
     }
@@ -45,19 +51,37 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      * @return 写入结果
      * @throws AxolotlWriteException 写入异常
      */
-    public AxolotlWriteResult write(Map<String, ?> headers, List<?> dataList) throws AxolotlWriteException {
+    public AxolotlWriteResult write(List<Header> headers, List<?> dataList) throws AxolotlWriteException {
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
         SXSSFSheet sheet = workbook.createSheet();
         workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
-        styleRender.dataProcessing(sheet, headers, dataList);
-        if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
+        if (styleRender instanceof AbstractStyleRender innerStyleRender){
             innerStyleRender.setWriteConfig(writeConfig);
             innerStyleRender.renderHeader(sheet);
         }else {
             styleRender.renderHeader(sheet);
         }
 
+        styleRender.renderData(sheet, dataList);
+        return null;
+    }
+
+    public AxolotlWriteResult write(List<?> dataList) throws AxolotlWriteException {
+        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
+        SXSSFSheet sheet = workbook.createSheet();
+        // TODO 渲染头部信息
+        // TODO 解析实体注解
+        // TODO 渲染实体数据到表
+        // TODO 渲染结束数据
+        workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
+        ExcelStyleRender styleRender = writeConfig.getStyleRender();
+//        if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
+//            innerStyleRender.setWriteConfig(writeConfig);
+//            innerStyleRender.renderHeader(sheet);
+//        }else {
+//            styleRender.renderHeader(sheet);
+//        }
         styleRender.renderData(sheet, dataList);
         return null;
     }
