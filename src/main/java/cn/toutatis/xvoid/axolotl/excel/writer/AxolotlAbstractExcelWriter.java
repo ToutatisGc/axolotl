@@ -37,7 +37,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     /**
      * 写入上下文
      */
-    protected final WriteContext writeContext = new WriteContext();
+    protected WriteContext writeContext;
 
     /**
      * 初始化工作簿

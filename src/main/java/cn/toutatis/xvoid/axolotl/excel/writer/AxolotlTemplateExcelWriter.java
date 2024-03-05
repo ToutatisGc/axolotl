@@ -55,6 +55,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private final TemplateWriteConfig writeConfig;
 
+    private final TemplateWriteContext writeContext;
+
     /**
      * 主构造函数
      *
@@ -62,6 +64,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     public AxolotlTemplateExcelWriter(TemplateWriteConfig templateWriteConfig) {
         this.writeConfig = templateWriteConfig;
+        TemplateWriteContext templateWriteContext = new TemplateWriteContext();
+        super.writeContext = templateWriteContext;
+        this.writeContext = templateWriteContext;
         this.writeContext.setSwitchSheetIndex(writeConfig.getSheetIndex());
         super.LOGGER = LOGGER;
     }
@@ -79,8 +84,14 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         this.workbook = this.initWorkbook(templateFile);
     }
 
-    @Override
-    public AxolotlWriteResult write(Map<String, ?> singleMap, List<?> circleDataList) {
+    /**
+     * 写入Excel数据
+     * @param fixMapping 固定值数据
+     * @param dataList 循环引用数据
+     * @return 写入结果
+     * @throws AxolotlWriteException 写入异常
+     */
+    public AxolotlWriteResult write(Map<String, ?> fixMapping, List<?> dataList) {
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeContext.getSwitchSheetIndex()));
         XSSFSheet sheet;
         // 判断是否是模板写入
@@ -93,9 +104,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 this.resolveTemplate(sheet,false);
             }
             // 写入Map映射
-            this.writeSingleData(sheet,singleMap,writeContext.getSingleReferenceData(),false);
+            this.writeSingleData(sheet, fixMapping,writeContext.getSingleReferenceData(),false);
             // 写入循环数据
-            this.writeCircleData(sheet,circleDataList);
+            this.writeCircleData(sheet, dataList);
             axolotlWriteResult.setWrite(true);
             axolotlWriteResult.setMessage("写入完成");
         }else{

@@ -68,7 +68,7 @@ public class Axolotls {
      * @param writeConfig 写入器配置
      * @return Excel写入器
      */
-    public static AxolotlExcelWriter getTemplateExcelWriter(File template, TemplateWriteConfig writeConfig){
+    public static AxolotlTemplateExcelWriter getTemplateExcelWriter(File template, TemplateWriteConfig writeConfig){
         return new AxolotlTemplateExcelWriter(template, writeConfig);
     }
 

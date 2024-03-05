@@ -39,19 +39,26 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         super.LOGGER = LOGGER;
     }
 
-    @Override
-    public AxolotlWriteResult write(Map<String, ?> header, List<?> circleDataList) throws AxolotlWriteException {
+    /**
+     * 写入Excel数据
+     * @param dataList 循环引用数据
+     * @return 写入结果
+     * @throws AxolotlWriteException 写入异常
+     */
+    public AxolotlWriteResult write(Map<String, ?> headers, List<?> dataList) throws AxolotlWriteException {
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
         SXSSFSheet sheet = workbook.createSheet();
         workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
+        styleRender.dataProcessing(sheet, headers, dataList);
         if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
             innerStyleRender.setWriteConfig(writeConfig);
             innerStyleRender.renderHeader(sheet);
         }else {
             styleRender.renderHeader(sheet);
         }
-        styleRender.renderData(sheet,circleDataList);
+
+        styleRender.renderData(sheet, dataList);
         return null;
     }
 

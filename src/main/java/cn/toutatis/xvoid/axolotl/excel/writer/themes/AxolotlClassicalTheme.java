@@ -37,7 +37,6 @@ public class AxolotlClassicalTheme extends AbstractInnerStyleRender implements E
             cell.setCellStyle(headerCellStyle);
             sheet.setColumnWidth(i,StyleHelper.getPresetCellLength(name));
         }
-        workbook.setPrintArea(workbook.getSheetIndex(sheet), 0, writeConfig.getColumnNames().size() - 1,0, 10 );
     }
 
     @Override

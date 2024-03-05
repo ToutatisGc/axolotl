@@ -51,7 +51,7 @@ public class WriteTest {
         TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
-        AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
+        AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
         Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
@@ -84,7 +84,7 @@ public class WriteTest {
         TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
-        try (AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig)) {
+        try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig)) {
             ArrayList<JSONObject> datas1 = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
                 JSONObject sch = new JSONObject();
@@ -123,7 +123,7 @@ public class WriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
 // 创建写入器
-        try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
+        try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
             List list = new ArrayList();
             for (int i = 0; i < 100; i++) {
                 SunUser sunUser = new SunUser();
@@ -135,8 +135,6 @@ public class WriteTest {
             Map<String, String> map = new HashMap<>();
             map.put("name","测试姓名");
             axolotlAutoExcelWriter.write(map,list);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
     }
