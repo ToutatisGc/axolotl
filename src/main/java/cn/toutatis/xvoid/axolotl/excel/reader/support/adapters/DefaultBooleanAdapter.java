@@ -53,7 +53,11 @@ public class DefaultBooleanAdapter extends AbstractDataCastAdapter<Boolean> impl
 
     @Override
     public boolean support(CellType cellType, Class<Boolean> clazz) {
-        return true;
+        return (cellType == CellType.BOOLEAN ||
+                cellType == CellType.STRING ||
+                cellType == CellType.NUMERIC) &&
+                (clazz == Boolean.class ||
+                clazz == boolean.class) ;
     }
 
 }

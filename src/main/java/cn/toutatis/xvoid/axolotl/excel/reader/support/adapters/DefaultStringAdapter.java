@@ -71,6 +71,6 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
 
     @Override
     public boolean support(CellType cellType, Class<String> clazz) {
-        return true;
+        return clazz == String.class ;
     }
 }

@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.dev;
 
 import cn.toutatis.xvoid.axolotl.Axolotls;
-import cn.toutatis.xvoid.axolotl.excel.entities.OneFieldString3Entity;
+import cn.toutatis.xvoid.axolotl.excel.entities.reader.OneFieldString3Entity;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlStreamExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.stream.AxolotlExcelStream;

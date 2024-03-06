@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.reader;
 
-import cn.toutatis.xvoid.axolotl.excel.reader.support.AbstractContext;
+import cn.toutatis.xvoid.axolotl.common.AbstractContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import com.google.common.collect.HashBasedTable;
@@ -56,6 +57,12 @@ public class WorkBookContext extends AbstractContext {
      */
     @Getter
     private final Map<Integer, HashBasedTable<String,Integer,Integer>> headerCaches = new HashMap<>();
+
+    /**
+     * 转换器缓存
+     */
+    @Getter
+    private Map<Class<?>, DataCastAdapter<?>> castAdapterCache = new HashMap<>();
 
     /**
      * 是否是事件驱动的读取

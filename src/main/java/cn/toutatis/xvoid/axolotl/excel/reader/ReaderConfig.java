@@ -3,10 +3,13 @@ package cn.toutatis.xvoid.axolotl.excel.reader;
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,6 +22,11 @@ import java.util.stream.Collectors;
 
 import static cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy.*;
 
+/**
+ * 读取配置
+ * @param <T> 转换实体
+ * @author Toutatis_Gc
+ */
 @ToString
 @Getter
 @Setter
@@ -58,11 +66,23 @@ public class ReaderConfig<T> {
     private int endIndex = -1;
 
     /**
+     * 工作表有效列起始范围
+     * 默认使用默认值[0,-1]
+     * 起始索引为0,结束索引-1为表最后一列
+     */
+    private int[] sheetColumnEffectiveRange = new int[]{0,-1};
+
+    /**
      * 读取表为对象
      * 默认读取为List
      */
     private boolean readAsObject = false;
 
+    /**
+     * 是否需要记录信息
+     */
+    @Setter(AccessLevel.PROTECTED)
+    private String needRecordInfo;
     /**
      * 索引映射信息
      * key: 索引
@@ -170,6 +190,7 @@ public class ReaderConfig<T> {
             this.setSheetName(namingWorkSheet.sheetName());
             this.setInitialRowPositionOffset(namingWorkSheet.readRowOffset());
             this.setReadClassAnnotation(true);
+            this.setSheetColumnEffectiveRange(namingWorkSheet.sheetColumnEffectiveRange());
             return;
         }
         IndexWorkSheet indexWorkSheet = castClass.getAnnotation(IndexWorkSheet.class);
@@ -177,6 +198,7 @@ public class ReaderConfig<T> {
             this.setSheetIndex(indexWorkSheet.sheetIndex());
             this.setInitialRowPositionOffset(indexWorkSheet.readRowOffset());
             this.setReadClassAnnotation(true);
+            this.setSheetColumnEffectiveRange(indexWorkSheet.sheetColumnEffectiveRange());
         }
     }
 
@@ -186,7 +208,7 @@ public class ReaderConfig<T> {
      * 指定位置注解优先级>数据绑定注解优先级
      */
     private void processEntityFieldMappingToCell() {
-        Field[] declaredFields = castClass.getDeclaredFields();
+        List<Field> declaredFields = ReflectToolkit.getAllFields(castClass, true);
         List<EntityCellMappingInfo<?>> indexPositionMappingInfos = new ArrayList<>();
         List<EntityCellMappingInfo<?>> positionMappingInfos = new ArrayList<>();
         boolean preciseLocalization = getReadPolicyAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
@@ -244,6 +266,10 @@ public class ReaderConfig<T> {
                 entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
                 entityCellMappingInfo.setFormat(columnBind.format());
                 indexPositionMappingInfos.add(entityCellMappingInfo);
+                continue;
+            }
+            if (declaredField.getType() == AxolotlReadInfo.class && this.needRecordInfo == null){
+                this.needRecordInfo = declaredField.getName();
                 continue;
             }
             // 未指定单元格位置默认情况
@@ -305,5 +331,34 @@ public class ReaderConfig<T> {
         }else{
             throw new IllegalArgumentException("转换类型为空");
         }
+    }
+
+    /**
+     * 设置列有效范围
+     * @param start 开始列位置
+     */
+    public void setSheetColumnEffectiveRangeStart(int start){
+        if (start<0){
+            throw new IllegalArgumentException("开始位置不能小于0");
+        }
+        this.sheetColumnEffectiveRange[0] = start;
+    }
+
+    /**
+     * 设置列有效范围
+     * @param end 结束列位置
+     */
+    public void setSheetColumnEffectiveRangeEnd(int end){
+        this.sheetColumnEffectiveRange[1] = end;
+    }
+
+    /**
+     * 设置列有效范围
+     * @param start 开始列位置
+     * @param end 结束列位置
+     */
+    public void setSheetColumnEffectiveRange(int start,int end){
+        this.setSheetColumnEffectiveRangeStart(start);
+        this.setSheetColumnEffectiveRangeEnd(end);
     }
 }

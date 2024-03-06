@@ -85,13 +85,17 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
 
     @Override
     public boolean support(CellType cellType, Class<NT> clazz) {
-        return clazz == Integer.class || clazz == String.class ||
+        return (cellType == CellType.NUMERIC ||
+                cellType == CellType.STRING ||
+                cellType == CellType.BOOLEAN ||
+                cellType == CellType.BLANK) &&
+                (clazz == Integer.class || clazz == String.class ||
                 clazz == int.class || clazz == BigDecimal.class ||
                 clazz == Long.class || clazz == long.class ||
                 clazz == Double.class || clazz == double.class ||
                 clazz == Float.class || clazz == float.class ||
                 clazz == Short.class || clazz == short.class ||
                 clazz == Byte.class || clazz == byte.class ||
-                clazz == Number.class ;
+                clazz == Number.class) ;
     }
 }

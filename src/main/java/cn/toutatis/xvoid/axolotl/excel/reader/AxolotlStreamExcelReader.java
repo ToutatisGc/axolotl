@@ -108,7 +108,7 @@ public class AxolotlStreamExcelReader<T> extends AxolotlAbstractExcelReader<T> {
      */
     public <RT> RT castRow2Instance(Row row, ReaderConfig<RT> readerConfig){
         RT instance = readerConfig.getCastClassInstance();
-        if (ExcelToolkit.blankRowCheck(row)){
+        if (ExcelToolkit.blankRowCheck(row,readerConfig)){
             if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.INCLUDE_EMPTY_ROW)){
                 return instance;
             }else{

@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.reader.support;
+package cn.toutatis.xvoid.axolotl.common;
 
 import lombok.Data;
 import org.apache.tika.mime.MimeType;

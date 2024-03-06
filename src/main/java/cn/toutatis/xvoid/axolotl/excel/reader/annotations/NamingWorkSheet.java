@@ -26,4 +26,9 @@ public @interface NamingWorkSheet {
      * @return 起始行
      */
     int readRowOffset() default 0;
+
+    /**
+     * 工作表列有效范围
+     */
+    int[] sheetColumnEffectiveRange() default {0,-1};
 }

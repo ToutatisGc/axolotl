@@ -107,6 +107,37 @@ public class ReadConfigBuilder<T> {
     }
 
     /**
+     * 设置读取范围起始列索引
+     * @param start 起始列索引
+     * @return 返回ReadConfigBuilder对象
+     */
+    public ReadConfigBuilder<T> setSheetColumnEffectiveRangeStart(int start) {
+        readerConfig.setSheetColumnEffectiveRangeStart(start);
+        return this;
+    }
+
+    /**
+     * 设置读取范围结束列索引
+     * @param end 结束列索引
+     * @return 返回ReadConfigBuilder对象
+     */
+    public ReadConfigBuilder<T> setSheetColumnEffectiveRangeEnd(int end) {
+        readerConfig.setSheetColumnEffectiveRangeEnd(end);
+        return this;
+    }
+
+    /**
+     * 设置读取范围起始列索引和结束列索引
+     * @param start 起始列索引
+     * @param end 结束列索引
+     * @return 返回ReadConfigBuilder对象
+     */
+    public ReadConfigBuilder<T> setSheetColumnEffectiveRange(int start,int end) {
+        readerConfig.setSheetColumnEffectiveRange(start,end);
+        return this;
+    }
+
+    /**
      * 构建读取配置
      *
      * @return 返回ReaderConfig对象

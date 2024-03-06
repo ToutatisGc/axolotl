@@ -1,12 +1,20 @@
 package cn.toutatis.xvoid.axolotl.toolkit;
 
 import cn.toutatis.xvoid.axolotl.Meta;
+import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
 
 /**
  * Excel工具类
@@ -30,13 +38,16 @@ public class ExcelToolkit {
      * @param row 当前行
      * @return 当前行是否是空行
      */
-    public static boolean blankRowCheck(Row row){
+    public static boolean blankRowCheck(Row row,int rangeStart,int rangeEnd){
         if (row == null){
             return true;
         }
         int isAllBlank = 0;
-        short lastCellNum = row.getLastCellNum();
-        for (int i = 0; i < lastCellNum; i++) {
+        short lastCellNum = rangeEnd < 0 ? row.getLastCellNum() : (short) rangeEnd;
+        if(rangeStart > lastCellNum){
+            throw new IllegalArgumentException("读取列起始位置必须大于结束位置");
+        }
+        for (int i = rangeStart; i < lastCellNum; i++) {
             Cell cell = row.getCell(i);
             if (cell == null || cell.getCellType() == CellType.BLANK){
                 isAllBlank++;
@@ -50,12 +61,150 @@ public class ExcelToolkit {
     }
 
     /**
+     * 判断当前行是否是空行
+     * @param row 当前行
+     * @param readerConfig 读取配置
+     * @return 当前行是否是空行
+     */
+    public static boolean blankRowCheck(Row row, ReaderConfig<?> readerConfig){
+        int[] sheetColumnEffectiveRange = readerConfig.getSheetColumnEffectiveRange();
+        return blankRowCheck(row, sheetColumnEffectiveRange[0],sheetColumnEffectiveRange[1]);
+    }
+
+    /**
+     * 判断当前行不是空行
+     * @param row 当前行
+     * @return 当前行是否不是空行
+     */
+    public static boolean notBlankRowCheck(Row row, int rangeStart, int rangeEnd){
+        return !blankRowCheck(row,rangeStart,rangeEnd);
+    }
+
+    /**
      * 判断当前行不是空行
      * @param row 当前行
      * @return 当前行是否不是空行
      */
     public static boolean notBlankRowCheck(Row row){
-        return !blankRowCheck(row);
+        return !blankRowCheck(row,0,-1);
+    }
+
+    /**
+     * 判断当前单元格是否在合并单元格中
+     * @param sheet 工作表
+     * @param rowIndex 行号
+     * @param colIndex 列号
+     * @return 当前单元格是否是合并单元格
+     */
+    public static CellRangeAddress isCellMerged(Sheet sheet, int rowIndex, int colIndex) {
+        int numMergedRegions = sheet.getNumMergedRegions();
+        for(int i = 0; i < numMergedRegions; i++) {
+            CellRangeAddress mergedRegion = sheet.getMergedRegion(i);
+            if(rowIndex >= mergedRegion.getFirstRow() && rowIndex <= mergedRegion.getLastRow() &&
+                    colIndex >= mergedRegion.getFirstColumn() && colIndex <= mergedRegion.getLastColumn()) {
+                return mergedRegion;
+            }
+        }
+        return null;
+    }
+
+    public static void cloneOldWorkbook2NewWorkbook(Workbook newWorkbook, Workbook oldWorkBook){
+        if (oldWorkBook == null || newWorkbook == null){return;}
+        Iterator<Sheet> sheetIterator = oldWorkBook.sheetIterator();
+        while (sheetIterator.hasNext()) {
+            Sheet tmpSheet = sheetIterator.next();
+            Sheet sxssfSheet = newWorkbook.createSheet(tmpSheet.getSheetName());
+            cloneOldSheet2NewSheet(sxssfSheet, tmpSheet);
+        }
+    }
+
+    public static void cloneOldSheet2NewSheet(Sheet newSheet, Sheet oldSheet){
+        for (Row tmpRow : oldSheet) {
+            if (tmpRow == null){continue;}
+            Row sxssfRow = newSheet.createRow(tmpRow.getRowNum());
+            cloneOldRow2NewRow(sxssfRow, tmpRow);
+        }
+    }
+
+    public static void cloneOldRow2NewRow(Row newRow, Row oldRow){
+        Iterator<Cell> cellIterator = oldRow.cellIterator();
+        while (cellIterator.hasNext()) {
+            Cell tmpCell = cellIterator.next();
+            if (tmpCell == null){continue;}
+            Cell newCell = newRow.createCell(tmpCell.getColumnIndex());
+            cloneOldCell2NewCell(newCell, tmpCell);
+        }
+    }
+
+    public static void cloneOldCell2NewCell(Cell newCell, Cell oldCell) {
+        if (oldCell == null || newCell == null){return;}
+        newCell.setCellStyle(oldCell.getCellStyle());
+        switch (oldCell.getCellType()){
+            case BOOLEAN -> newCell.setCellValue(oldCell.getBooleanCellValue());
+            case NUMERIC -> newCell.setCellValue(oldCell.getNumericCellValue());
+            case STRING -> newCell.setCellValue(oldCell.getStringCellValue());
+            case FORMULA -> newCell.setCellValue(oldCell.getCellFormula());
+            case ERROR -> newCell.setCellValue(oldCell.getErrorCellValue());
+            case BLANK -> newCell.setBlank();
+        }
+    }
+
+    /**
+     * 创建单元格
+     * @param sheet 工作表
+     * @param row 行位置
+     * @param column 列位置
+     * @param cellStyle 单元格样式
+     * @return 新单元格
+     */
+    public static Cell createOrCatchCell(Sheet sheet, int row, int column, CellStyle cellStyle){
+        Row writableRow = sheet.getRow(row);
+        if (writableRow == null){
+            writableRow = sheet.createRow(row);
+        }
+        Cell writableCell = writableRow.getCell(column);
+        if (writableCell == null){
+            writableCell = writableRow.createCell(column);
+        }
+        if (cellStyle != null){
+            writableCell.setCellStyle(cellStyle);
+        }
+        return writableCell;
+    }
+
+    /**
+     * 单元格赋值
+     * @param sheet 工作表
+     * @param row 行位置
+     * @param column 列位置
+     * @param cellStyle 单元格样式
+     * @param value 值
+     */
+    public static void cellAssignment(Sheet sheet, int row, int column, CellStyle cellStyle ,Object value){
+        Cell writableCell = createOrCatchCell(sheet, row, column, cellStyle);
+        if (value != null){
+            Class<?> valueClass = value.getClass();
+            if ((ReflectToolkit.isWrapperClass(valueClass) && valueClass != String.class) || valueClass.isPrimitive()){
+                writableCell.setCellValue((Double) value);
+            }
+            if (value instanceof String){
+                writableCell.setCellValue((String) value);
+            }else if (value instanceof Boolean){
+                writableCell.setCellValue((Boolean) value);
+            }else if (value instanceof Date){
+                writableCell.setCellValue((Date) value);
+            }else if (value instanceof LocalDateTime){
+                writableCell.setCellValue((LocalDateTime) value);
+            }else if (value instanceof LocalDate){
+                writableCell.setCellValue((LocalDate) value);
+            }else if (value instanceof Calendar){
+                writableCell.setCellValue((Calendar) value);
+            }else {
+                throw new AxolotlException("不支持的写入类型");
+            }
+        }else {
+            writableCell.setBlank();
+        }
     }
 
 }

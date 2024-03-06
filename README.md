@@ -8,21 +8,43 @@
 
 ------
 
-​	此项目基于 Apache POI 框架，用于处理文档内容如Excel工作簿等。
 
-​	通过该框架，用户可以轻松读取、写入、以及操作文件中的数据，支持对不同格式的文件进行处理。
 
-​	项目利用 Apache POI 提供的丰富功能，实现了对大型文档的高效处理，并提供了灵活的接口，方便用户根据需求定制化操作。
+<div style='display:flex'>
+    <div>
+        <img src='./docs.assets/logo.png' width='250px' style='margin-top: 75px'/>
+    </div>
+     <div style='margin:20px'>
+         <p>
+         &nbsp;&nbsp;&nbsp;&nbsp;	此项目基于 Apache POI 框架，用于处理文档内容如Excel工作簿等。
+         </p>
+         <p>
+         &nbsp;&nbsp;&nbsp;&nbsp;	通过该框架，用户可以轻松读取、写入、以及操作文件中的数据，支持对不同格式的文件进行处理。
+         </p>
+          <p>
+          &nbsp;&nbsp;&nbsp;&nbsp;	项目利用 Apache POI 提供的丰富功能，实现了对大型文档的高效处理，并提供了灵活的接口，方便用户根据需求定制化操作。
+         </p>
+          <p>
+          &nbsp;&nbsp;&nbsp;&nbsp;	无论是数据导入、导出，还是对内容进行复杂的编辑和分析，此框架都为用户提供了便捷而强大的解决方案，使得文档的处理变得更加高效、灵活。
+         </p>
+    </div>
+</div>
 
-​	无论是数据导入、导出，还是对内容进行复杂的编辑和分析，此框架都为用户提供了便捷而强大的解决方案，使得文档的处理变得更加高效、灵活。
+
+> Axolotl意为美西螈（ˈæksəˌlɒtəl），总的来说，美西螈以其独特的外观、再生能力和生活习性而备受关注。
+
+
 
 ### 1.1 版本更新说明
 
-#### 🔝 0.0.9-ALPHA-8 更新说明
+#### 🔝 0.0.10-ALPHA-8 更新说明
 
-- 增加对流式读取的支持。**详情查看章节【4.1.7】**
-- 对读取器进行抽取方法，增加灵活性。
-- 计划支持PDF，添加相关依赖。
+- 修复部分API错误。
+- 增加指定列范围[sheetColumnEffectiveRange]的ReaderConfig支持。
+- 增加默认转换器[support方法]约束。
+- 完善使用说明。
+- 增加散播策略的读取策略[SPREAD_MERGING_REGION]。
+- Excel模板写入进入支持阶段。
 
 #### 🧩历史版本更新说明
 
@@ -55,7 +77,7 @@
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>0.0.8-ALPHA-8</version>
+    <version>0.0.10-ALPHA-8</version>
 </dependency>
 ```
 
@@ -99,25 +121,33 @@ System.out.println(data);
 
 ##### 3.2.2.1 构建文档写入器
 
-```
-//TODO 等待完善
+```java
+// 最重要的是需要创建写入配置
+WriterConfig commonWriteConfig = new WriterConfig();
+// 创建模板Excel写入器
+File file = FileToolkit.getResourceFileAsFile("写入模板.xlsx");
+AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
+// 创建普通Excel写入器
+AxolotlExcelWriter axolotlAutoExcelWriter = Axolotls.getExcelWriter(commonWriteConfig);
 ```
 
 ##### 3.2.2.2 两种写入方式
 
 ###### <1> 模板写入
 
-```
-
+```java
+// 获取数据
+Map<String, Object> map = Map.of("name", "Toutatis");
+List<TestEntity> datas = new ArrayList<>();
+// 调用模板写入方法
+axolotlAutoExcelWriter.writeToTemplate(0, map, datas);
 ```
 
 ###### <2> 预设样式写入
 
 ```
-
+// 等待支持
 ```
-
-
 
 ### 3.3 PDF 文档操作
 
@@ -150,7 +180,7 @@ List<POJO> data = reader.readSheetData(ReaderConfig readerConfig)
 
 | 注解（annotations）                   | 用途                                            | 参数说明                                                     |
 | ------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
-| @IndexWorkSheet                       | [Class]<br />指定具体索引的工作表               | [readRowOffset]读取起始偏移行<br />[sheetIndex]工作表索引[默认值:0] |
+| @IndexWorkSheet                       | [Class]<br />指定具体索引的工作表               | [readRowOffset]读取起始偏移行<br />[sheetIndex]工作表索引[默认值:0]<br />[sheetColumnEffectiveRange]工作表列有效范围[默认范围:{0,-1}] |
 | @NamingWorkSheet                      | [Class]<br />指定具体名称的工作表（区分大小写） | [readRowOffset]读取起始偏移行<br />[sheetName]工作表名称     |
 | <font color='red'>@ColumnBind*</font> | [Property]<br />实体绑定列位置                  | [columnIndex]列索引<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器<br />[headerName]表头名称<br /> |
 | @SpecifyPositionBind                  | [Property]<br />实体绑定具体单元格位置          | [value]单元格位置[举例:A1,B2,C3]<br />[format]日期格式化（数据格式化暂不支持）<br />[adapter]数据适配器 |
@@ -220,20 +250,21 @@ List<TestEntity> list = reader.readSheetData(readerConfig);
 
 📖ReaderConfig可配置项：
 
-| 配置项                            | 说明                             | 必填 | 默认值       |
-| --------------------------------- | -------------------------------- | ---- | ------------ |
-| 构造器(Class<T> castClass)        | 设置读取类                       | 是   | 无           |
-| 构造器(boolean withDefaultConfig) | 是否使用默认配置                 | 是   | True         |
-| Class<T> castClass                | 设置读取类                       | 是   | 无           |
-| sheetIndex                        | 工作表索引                       | 否   | 0            |
-| sheetName                         | 工作表名称                       | 否   | 无           |
-| initialRowPositionOffset          | 初始行偏移量                     | 否   | 0            |
-| startIndex                        | 读取起始行                       | 否   | 0            |
-| endIndex                          | 读取结束行                       | 否   | -1（所有）   |
-| <del>indexMappingInfos</del>      | 索引映射<br />（一般不用指定）   | 否   | 无           |
-| <del>positionMappingInfos</del>   | 单元格映射<br />（一般不用指定） | 否   | 无           |
-| rowReadPolicyMap                  | 策略集合                         | 否   | 参考默认策略 |
-| searchHeaderMaxRows               | 搜索表头最大行                   | 否   | 10           |
+| 配置项                            | 说明                                             | 必填 | 默认值       |
+| --------------------------------- | ------------------------------------------------ | ---- | ------------ |
+| 构造器(Class<T> castClass)        | 设置读取类                                       | 是   | 无           |
+| 构造器(boolean withDefaultConfig) | 是否使用默认配置                                 | 是   | True         |
+| Class<T> castClass                | 设置读取类                                       | 是   | 无           |
+| sheetIndex                        | 工作表索引                                       | 否   | 0            |
+| sheetName                         | 工作表名称                                       | 否   | 无           |
+| initialRowPositionOffset          | 初始行偏移量                                     | 否   | 0            |
+| startIndex                        | 读取起始行                                       | 否   | 0            |
+| endIndex                          | 读取结束行                                       | 否   | -1（所有）   |
+| <del>indexMappingInfos</del>      | 索引映射<br />（一般不用指定）                   | 否   | 无           |
+| <del>positionMappingInfos</del>   | 单元格映射<br />（一般不用指定）                 | 否   | 无           |
+| rowReadPolicyMap                  | 策略集合                                         | 否   | 参考默认策略 |
+| searchHeaderMaxRows               | 搜索表头最大行                                   | 否   | 10           |
+| sheetColumnEffectiveRange         | 工作表有效列范围<br />arr[1] = -1表示该Row所有列 | 否   | {0,-1}       |
 
 ##### 4.1.1.4 读取策略说明
 
@@ -255,6 +286,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | ------------------------------- | ------------------------------------------------------------ | -------- | -------------- | ------ |
 | IGNORE_EMPTY_SHEET_ERROR        | 忽略空表异常                                                 | Boolean  | true           | true   |
 | IGNORE_EMPTY_SHEET_HEADER_ERROR | 忽略空表头的错误                                             | Boolean  | true           | true   |
+| SPREAD_MERGING_REGION           | 将合并的单元格展开到合并单元格的各个单元格                   | Boolean  | true           | true   |
 | INCLUDE_EMPTY_ROW               | 空行也视为有效数据                                           | Boolean  | true           | false  |
 | SORTED_READ_SHEET_DATA          | 在使用Map接收时，使用LinkedHashMap                           | Boolean  | true           | true   |
 | CAST_NUMBER_TO_DATE             | 判断数字为日期类型将转换为日期格式                           | Boolean  | true           | true   |
@@ -322,7 +354,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 
 ##### 4.1.1.7 StreamReader流读取器支持
 
-​	在读取大的Excel文件（文件大小>=10-16M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据30w行数据左右时将占用10G内存,时间在1min左右。
+​	在读取大的Excel文件（文件大小>=15M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据40w行数据左右时将占用10G内存,时间在1min左右。
 
 ​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
 
@@ -346,15 +378,258 @@ while (dataIterator.hasNext()){
 }
 ```
 
+​        在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
 
+##### 4.1.1.8 数据适配器
+
+​	**数据适配器（DataCastAdapter）**用于将Excel单元格转换为Java实体对应属性的的处理器，在获取到单元格数据时适配为转换类实例对象中对应字段类型并赋值。
+
+**📖适配器的配置：**
+
+1. 通过注解指定adapter:
+
+```
+@ColumnBind(headerName = "工程名称",adapter = DefaultStringAdapter.class)
+private String a1;
+
+@SpecifyPositionBind(value = "A1",adapter = DefaultStringAdapter.class)
+private String a2;
+```
+
+​	可在注解 **@ColumnBind与@SpecifyPositionBind** 中直接指定该属性使用的适配器，需注意适配器是否支持该属性类型与单元格类型的转换。
+
+------
+
+2. 全局指定
+
+全局指定时可通过配置**DefaultAdapters**类实现，**注解指定优先级高于全局指定**。
+
+（有关默认适配器信息请看下一小节）
+
+------
+
+📖DefaultAdapters[默认适配器]：
+
+​	默认数据适配器，框架为**基本数据类型以及常用Java类**提供预设数据适配器。
+
+- **DefaultBooleanAdapter**（布尔类处理器）-> STRING,BOOLEAN,NUMERIC -> Boolean
+- **DefaultDateTimeAdapter**（时间类适配器）-> STRING,NUMERIC -> LocalDateTime等
+- **DefaultNumericAdapter**（数字类适配器）-> STRING,NUMERIC -> Interger等
+- **DefaultStringAdapter**（字符串类处理器）-> ALL -> String
+
+> 通过DefaultAdapters该类方法可完成全局适配器的配置，使用**registerDefaultAdapter**方法注册全局适配器，使用**removeDefaultAdapter**方法移除全局适配器（**基础类型适配器不能被移除**）。
+
+添加其他适配器为默认适配器：
+
+```java
+// 调用registerDefaultAdapter方法注册一个适配器为全局适配器
+// clazz为需要转换的Java类型
+DefaultAdapters.registerDefaultAdapter(clazz,adapter);
+```
+
+移除默认适配器：
+
+```java
+// clazz为需要转换的Java类型
+DefaultAdapters.removeDefaultAdapter(clazz);
+```
+
+------
+
+<font color='red'>**📖自定义适配器：** </font>
+
+所有适配器都为**DataCastAdapter** 接口实现类。
+
+**DataCastAdapter接口：**
+
+```java
+public interface DataCastAdapter<FT> {
+
+    /**
+     * 类型转换
+     * @param cellGetInfo 单元格信息
+     * @param context 类型转换所需的上下文
+     * @return 转换后的值
+     */
+    FT cast(CellGetInfo cellGetInfo, CastContext<FT> context);
+
+    /**
+     * 是否支持该类型进行转换
+     * @param cellType 单元格类型
+     * @param clazz 需要转换的类型
+     * @return 是否支持该类型进行转换
+     */
+    boolean support(CellType cellType, Class<FT> clazz);
+
+}
+```
+
+接口中有两个方法**cast（转换）**与**support（是否支持转换）**。
+
+------
+
+<font color='orange'>cast方法: </font>
+
+​	将**Excel的单元格类型**转换为**Java类型**的方法，转换逻辑在此方法中实现。
+
+方法形参:
+
+| 参数                    | 说明                             |
+| ----------------------- | -------------------------------- |
+| CellGetInfo cellGetInfo | 单元格信息:包含数据,单元格类型等 |
+| CastContext context     | 转换上下文:包含转换字段类型等    |
+
+**cellGetInfo** 为单元格相关信息，**context **为类型转换所需的上下文信息
+
+------
+
+<font color='orange'>support方法：</font>
+
+​	判断该适配器是否支持从单元格类型转换为Java字段类型。
+
+​	**cellType** 为单元格类型，**clazz** 为Java类型，返回**true**说明该适配器支持转换，反之不支持转换并抛出异常。
+
+------
+
+适配器抽象基类 **AbstractDataCastAdapter(推荐使用)**
+
+框架中的默认实现皆由此类实现：
+
+```java
+public abstract class AbstractDataCastAdapter<FT> implements DataCastAdapter<FT> {
+
+    /**
+     * 读取配置
+     */
+    private ReaderConfig<?> readerConfig;
+
+    /**
+     * 实体映射信息
+     */
+    private EntityCellMappingInfo<?> entityCellMappingInfo;
+
+}
+```
+
+​	**AbstractDataCastAdapter** 提供了读取配置**readerConfig**与实体映射信息**entityCellMappingInfo**两种**配置信息**供开发者在编写适配器时使用。
+
+| 参数                                           | 说明                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------ |
+| ReaderConfig<?> readerConfig                   | 为读取表格时的相关配置信息，包括已启用的读取特性、读取的sheet表相关信息、读取表头的范围信息（当以表头名称绑定列时可用）、实体类属性与表格的映射信息（所有属性）以及读取的行次、列次范围信息等等。 |
+| EntityCellMappingInfo<?> entityCellMappingInfo | 主要为当前属性的相关映射信息，如属性类型、属性名称、对应单元格的行次列次、单元格映射类型以及该属性排除的读取特性等等。 |
+
+##### 4.1.1.9 实体读取相关信息
+
+​	在实体中指定字段类型为**AxolotlReadInfo**时候，读取表中数据将自动赋值该字段，该类中包含以下内容。
+
+📖AxolotlReadInfo字段：
+
+|  字段名称  |        说明        |
+| :--------: | :----------------: |
+| sheetIndex |     工作表索引     |
+| sheetName  |     工作表名称     |
+| rowNumber  | 工作表中该实体行号 |
+
+​	<font color='red'>**每个实体中仅支持一个该字段属性，其余相同类型字段将被覆盖。**</font>
 
 #### 4.1.2 Excel文档写入
 
 ​	<font color='orange'>**本框架仅支持XLSX文件写入，性能更优异兼容更好。**</font>
 
-##### 4.1.2.1 写入模板文件
+> <font color='red'>**所有写入方法注意事项：大批量写入时避免合并单元格写入，将降低大量性能！！！**</font>
+>
+> <font color='red'>**所有写入方法注意事项：大批量写入时避免合并单元格写入，将降低大量性能！！！**</font>
+>
+> <font color='red'>**所有写入方法注意事项：大批量写入时避免合并单元格写入，将降低大量性能！！！**</font>
 
-​	框架支持将写入模板文件
+##### 4.1.2.1 模板文件写入
+
+​	确保你已经准备好一个模板文件，该文件包含了你希望在其中填充数据的格式，例如，包含了表头、样式等。
+
+​	模板写入将根据模板中占位符替换数据。
+
+###### 📖使用方法：
+
+```java
+// 添加一个模板文件
+File file = FileToolkit.getResourceFileAsFile("workbook/write/.xlsx");
+//创建写入配置
+WriterConfig commonWriteConfig = new WriterConfig();
+FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+commonWriteConfig.setOutputStream(fileOutputStream);
+// 创建写入器
+try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, commonWriteConfig)) {
+    // 获取数据
+    Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
+    axolotlAutoExcelWriter.writeToTemplate(0, map, null);
+    ArrayList<JSONObject> datas = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+        JSONObject sch = new JSONObject();
+        sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
+        sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+        sch.put("graduate", true);
+        datas.add(sch);
+    }
+    // 调用写入模板方法
+    axolotlAutoExcelWriter.writeToTemplate(0, Map.of("age",50), datas);
+}
+```
+
+###### 📖占位符(占位符区分大小写)：
+
+​	<font color='orange'>**模板写入必须要在模板单元格中指定占位符。**</font>
+
+| 占位符 |                             说明                             |     示例      |
+| :----: | :----------------------------------------------------------: | :-----------: |
+|  ${}   |              映射占位符<br />占位符只能使用一次              |    ${name}    |
+|  #{}   |        列表数据占位符<br />写入多条数据时指定该占位符        | #{schoolName} |
+|  &{}   | 合计占位符**（仅支持合计列表数据）**<br />使用方法和映射占位符一致 |   &{money}    |
+
+**占位符默认值：**
+
+​	在使用占位符时，如果数据为空（null，不是空字符串）时，可使用占位符指定默认值。
+
+| 占位符格式          | 说明                                           |
+| ------------------- | ---------------------------------------------- |
+| ${admin:系统管理员} | map中，admin为null时将被填充为系统管理员字符串 |
+| #{money:0}          | 列表数据中金额为null时将被填充为0              |
+
+###### 📖内置常量：
+
+​	写入模板数据时,框架拥有一些内置常量。
+
+|      常量名称       |                  说明                   |
+| :-----------------: | :-------------------------------------: |
+| AXOLOTL_CREATE_TIME | 当前写入时间[格式：yyyy-MM-dd hh:MM:ss] |
+| AXOLOTL_CREATE_DATE |     当前写入日期[格式：yyyy-MM-dd]      |
+
+​	🧭示例表格:
+
+![模板表格示例](./README.assets/下移写入表格示例图片.png)
+
+##### 4.1.2.2 自动写入
+
+![内置色卡](./README.assets/IndexedColors内置颜色.png)
+
+![填充样式](./README.assets/FillPatternType填充样式.png)
+
+```
+// 等待完善
+```
+
+##### 4.1.2.3 写入策略
+
+在写入数据时，支持写入策略来对数据进行处理。
+
+| 策略名称                      | 使用范围 | 说明                           |
+| ----------------------------- | -------- | ------------------------------ |
+| AUTO_CATCH_COLUMN_LENGTH      | 自动写入 | 自动计算列长度                 |
+| AUTO_INSERT_SERIAL_NUMBER     | 自动写入 | 自动在第一列插入编号           |
+| SHIFT_WRITE_ROW               | 模板写入 | 数据写入自动将数据写入到下一行 |
+| PLACEHOLDER_FILL_DEFAULT      | 模板写入 | 为没有指定的占位符填充默认值   |
+| EXCEPTION_RETURN_RESULT       | 所有写入 | 异常将返回结果，不抛出异常     |
+| NULL_VALUE_WITH_TEMPLATE_FILL | 模板写入 | 空值是否使用模板填充           |
+| NON_TEMPLATE_CELL_FILL        | 模板写入 | 非模板单元格是否模板填充       |
 
 ### 4.2 PDF操作
 
@@ -427,7 +702,7 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
 #### 合并单元格内容读取
 
-​	读取<font color='red'>**合并单元格**</font>不同列时会读取到同样的内容，因为本框架**目前**采用的策略为散播策略，会将合并单元格的值散播到合并单元格的各个单元格上（原为合并单元格中第0行，第0列的值），未来如有需要将会把此项作为读取策略作为可配置项。
+​	读取<font color='red'>**合并单元格**</font>不同列时会读取到同样的内容，因为本框架**默认**采用的策略为散播策略（**SPREAD_MERGING_REGION** 可配置，默认开启），会将合并单元格的值散播到合并单元格的各个单元格上（原为合并单元格中第0行，第0列的值）。
 
 ### 🚸使用疑问
 
@@ -436,9 +711,24 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 ​	该功能的是为了读取数据时直接按照表头名称读取对应列所设计，解决不同模板之间表头有差异造成读取列错位所设计的功能。
 ​	指定注解中此参数，会去读取工作表中查找<font color='orange'>**完全匹配**</font>的单元格字符串（例如：备注，地址）所对应的列位置转换为所对应的列索引作为读取列（如果有多个同名表头可指定**sameHeaderIdx**参数区分不同同名列），相当于转化为注解中的columnIndex参数。
 
+📖<font color='orange'>**具体规则如下：**</font>
+
+​	**列与实体类属性的绑定**：
+
+​	**@ColumnBind**注解会根据属性中的**headerName**的值到工作表中进行单元格数据检索并绑定对应的列位置。
+​	查找规则为按行从上至下依次检索<font color='grey' size='2'>[配置**searchHeaderMaxRows**进行修改]</font>该行每一列上的单元格，如果这些单元格中的值与配置的**headerName**的值完全匹配的情况下，那么该单元格的列位置会被判定为表头。
+
+​	如果表头中只匹配到一个单元格的列，那么该**单元格所处的列**与该实体类属性绑定，如果备选区存在**多个同名表头**，可通过@ColumnBind注解的<font color='red'>sameHeaderIdx参数</font><font color='grey' size='2'>[默认为0]</font>指定同名表头索引，被指定的**单元格所处的列**会与该实体类属性绑定，**若不进行指定**，则按实体类**该属性所处位置**（在实体类中**headerName**参数**相同**的属性为一组，按属性声明的先后顺序**升序**排列，**属性所处位置**就是属性**在该组中的位置**，这个位置与**单元格在备选区的位置**对应）选择单元格进行列绑定。
+
+🧭<font color='orange'>**使用建议：**</font>
+
+1. 在使用**headerName**参数进行列绑定时，应首先配置**ReaderConfig**中的**searchHeaderMaxRows**属性确认表头范围，减少检索范围以提高效率并提高精准度。
+2. 在使用**headerName**指定列位置时，应检查工作表范围内是否存在多个相同表头，建议在工作表为动态时应对工作表表头位置进行判断，在需要时可通过配置@ColumnBind注解的**sameHeaderIdx**参数手动指定备选表头索引进行列绑定。
+
 <div style="float:right;padding-right:15px">
-    提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>
+    提出人：<b>@zhangzk</b> 提出时间：<b>2024-02-03</b>  最后更新时间：<b>2024-02-26</b>
 </div>
+
 ------
 
 #### IDEA 引入相关包后import中报错但编译正常
@@ -446,8 +736,9 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 ​	出现该问题是由于XVOID包功能由其他语言支持，遇到此问题请升级IDEA到最新版。
 
 <div style="float:right;padding-right:15px">
-    提出人：<b>@zongzg</b> 提出时间：<b>2024-02-19</b>
-</div>
+    提出人：<b>@zongzg</b> 提出时间：<b>2024-02-19</b> 
+</div> 
+
 ------
 
 
