@@ -57,7 +57,8 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         SXSSFSheet sheet = workbook.createSheet();
         workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
-        if (styleRender instanceof AbstractStyleRender innerStyleRender){
+        if (styleRender instanceof AbstractStyleRender){
+            AbstractStyleRender innerStyleRender = (AbstractStyleRender)styleRender;
             innerStyleRender.setWriteConfig(writeConfig);
             innerStyleRender.renderHeader(sheet);
         }else {

@@ -58,7 +58,8 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         for (Object datum : data) {
             SXSSFRow dataRow = sheet.createRow(++alreadyWriteRow);
             dataRow.setHeight((short) 400);
-            if (datum instanceof Map map){
+            if (datum instanceof Map){
+                Map map = (Map) datum;
                 int colIdx = 0;
                 for (Object o : map.keySet()) {
                     SXSSFCell cell = dataRow.createCell(colIdx);

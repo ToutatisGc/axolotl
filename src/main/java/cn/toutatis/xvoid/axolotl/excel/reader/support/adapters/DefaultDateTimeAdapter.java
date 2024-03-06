@@ -9,7 +9,6 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
-import cn.toutatis.xvoid.common.standard.StringPool;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -129,7 +128,7 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
      * @return 处理后的单元格数据
      */
     private Object checkTrimFeature2NewString(Map<ExcelReadPolicy, Object> excelPolicies, ReaderConfig<?> readerConfig, CastContext<?> context, Object cellValue){
-        if(context.getDataFormat().contains(StringPool.SPACE)){
+        if(context.getDataFormat().contains(" ")){
             //format存在空格，不进行去空格处理
             LoggerHelper.debug(LOGGER,LoggerHelper.format("日期格式化:[%s] 带有空格,不进行 [TRIM_CELL_VALUE] 特性处理",context.getDataFormat()));
             return cellValue;

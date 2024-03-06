@@ -599,7 +599,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
             throw new AxolotlExcelReadException(mappingInfo,String.format("未找到转换的类型:[%s->%s],字段:[%s]",info.getCellType(), mappingInfo.getFieldType(), mappingInfo.getFieldName()));
         }
         if (adapter instanceof AbstractDataCastAdapter){
-            AbstractDataCastAdapter<Object> abstractDataCastAdapter = (AbstractDataCastAdapter<Object>) adapter;
+            AbstractDataCastAdapter<Object> abstractDataCastAdapter = (AbstractDataCastAdapter<Object>)adapter;
             abstractDataCastAdapter.setReaderConfig(readerConfig);
             abstractDataCastAdapter.setEntityCellMappingInfo(mappingInfo);
             return castValue(abstractDataCastAdapter, info, mappingInfo);

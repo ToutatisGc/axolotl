@@ -140,12 +140,24 @@ public class ExcelToolkit {
         if (oldCell == null || newCell == null){return;}
         newCell.setCellStyle(oldCell.getCellStyle());
         switch (oldCell.getCellType()){
-            case BOOLEAN -> newCell.setCellValue(oldCell.getBooleanCellValue());
-            case NUMERIC -> newCell.setCellValue(oldCell.getNumericCellValue());
-            case STRING -> newCell.setCellValue(oldCell.getStringCellValue());
-            case FORMULA -> newCell.setCellValue(oldCell.getCellFormula());
-            case ERROR -> newCell.setCellValue(oldCell.getErrorCellValue());
-            case BLANK -> newCell.setBlank();
+            case BOOLEAN:
+                newCell.setCellValue(oldCell.getBooleanCellValue());
+                break;
+            case NUMERIC:
+                newCell.setCellValue(oldCell.getNumericCellValue());
+                break;
+            case STRING:
+                newCell.setCellValue(oldCell.getStringCellValue());
+                break;
+            case FORMULA:
+                newCell.setCellValue(oldCell.getCellFormula());
+                break;
+            case ERROR:
+                newCell.setCellValue(oldCell.getErrorCellValue());
+                break;
+            case BLANK:
+                newCell.setBlank();
+                break;
         }
     }
 

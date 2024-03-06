@@ -8,7 +8,6 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
-import cn.toutatis.xvoid.common.standard.StringPool;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -499,7 +498,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         if (matcher.find()) {
             cellAddress.setPlaceholder(matcher.group());
             String name = matcher.group(1);
-            String[] defaultSplitContent = name.split(StringPool.COLON);
+            String[] defaultSplitContent = name.split(":");
             name = defaultSplitContent[0];
             if (defaultSplitContent.length > 1){
                 cellAddress.setDefaultValue(defaultSplitContent[1]);
