@@ -24,6 +24,11 @@ public class CellAddress {
     private PlaceholderType placeholderType;
 
     /**
+     * 名称
+     */
+    private String name;
+
+    /**
      * 模板单元格的占位符
      */
     private String placeholder;

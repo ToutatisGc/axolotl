@@ -98,14 +98,23 @@ public class WriteTest {
         commonWriteConfig.setOutputStream(fileOutputStream);
         try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig)) {
             ArrayList<JSONObject> datas1 = new ArrayList<>();
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 2; i++) {
                 JSONObject sch = new JSONObject();
                 sch.put("workPlace","北京-"+RandomStringUtils.randomAlphabetic(16));
                 sch.put("workYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
-                sch.put("salary", true);
+                sch.put("salary", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
                 datas1.add(sch);
             }
             axolotlAutoExcelWriter.write(null, datas1);
+            ArrayList<JSONObject> datas2 = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                JSONObject sch = new JSONObject();
+                sch.put("workPlace","北京-"+RandomStringUtils.randomAlphabetic(16));
+                sch.put("workYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+                sch.put("salary", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
+                datas2.add(sch);
+            }
+            axolotlAutoExcelWriter.write(null, datas2);
             Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
             axolotlAutoExcelWriter.write(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
@@ -195,6 +204,24 @@ public class WriteTest {
     }
 
     @Test
+    public void testBlankFill() throws FileNotFoundException {
+        File file = FileToolkit.getResourceFileAsFile("workbook/write/空白占位符测试.xlsx");
+        TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        commonWriteConfig.setOutputStream(fileOutputStream);
+        // 创建写入器
+        try (AxolotlTemplateExcelWriter excelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
+            List list = new ArrayList();
+            for (int i = 0; i < 2; i++) {
+                JSONObject jsonObject = new JSONObject(true);
+                jsonObject.put("f1","tt");
+                list.add(jsonObject);
+            }
+            excelWriter.write(null,list);
+        }
+    }
+
+//    @Test
     public void generateColorCard() throws IOException {
         SXSSFWorkbook workbook = new SXSSFWorkbook();
         SXSSFSheet sheet = workbook.createSheet("内置色卡");
