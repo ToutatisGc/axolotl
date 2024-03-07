@@ -6,6 +6,7 @@ import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.DmsRegReceivables;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.SunUser;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
+import cn.toutatis.xvoid.axolotl.excel.entities.writer.MpOrgDataIssueNew;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
@@ -33,7 +34,9 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -247,5 +250,30 @@ public class WriteTest {
 //        }
         workbook.write(new FileOutputStream("D:\\COLOR-CARD.xlsx"));
         workbook.close();
+    }
+
+    @Test
+    public void test1() throws FileNotFoundException {
+        //  File file = FileToolkit.getResourceFileAsFile("workbook/write/sunUser.xlsx");
+        File file = new File("D:\\dataScheduleOther.xlsx");
+        TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        commonWriteConfig.setOutputStream(fileOutputStream);
+// 创建写入器
+        try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
+            List list = new ArrayList();
+
+            for (int i = 0; i < 20; i++) {
+                MpOrgDataIssueNew mpOrgDataIssueNew = new MpOrgDataIssueNew();
+                list.add(mpOrgDataIssueNew);
+            }
+            Map<String, String> map = new HashMap<>();
+            map.put("fileName","测试文件名");
+            map.put("bankName","山西省");
+            map.put("dataIssue","2024-02");
+            map.put("operationTime", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            axolotlAutoExcelWriter.write(map,list);
+        }
+
     }
 }

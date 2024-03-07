@@ -151,7 +151,11 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     cell.setBlank();
                 }else{
                     debug(LOGGER, format("设置模板占位符[%s]值[%s]",placeholder,info));
-                    cell.setCellValue(cellAddress.replacePlaceholder(info.toString()));
+                    if (cellAddress.getSameCellPlaceholder() == 0){
+                        cell.setCellValue(cellAddress.replacePlaceholder(info.toString()));
+                    }else{
+                        cell.setCellValue(cellAddress.replacePlaceholder(cell.getStringCellValue()));
+                    }
                 }
                 cellAddress.setWrittenRow(cell.getRowIndex());
                 alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
@@ -296,6 +300,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     String fieldMappingKey = fieldMapping.getKey();
                     CellAddress cellAddress = circleReferenceData.get(fieldMappingKey);
                     int rowPosition = cellAddress.getRowPosition();
+
                     if(writeFieldNames.containsKey(fieldMappingKey)){
                         Object value;
                         if (isSimplePOJO){
