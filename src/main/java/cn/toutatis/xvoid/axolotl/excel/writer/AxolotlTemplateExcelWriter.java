@@ -135,32 +135,45 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         this.injectCommonConstInfo(dataMapping,gatherUnusedStage);
         HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
         Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(sheetIndex);
-        for (String singleKey : addressMapping.keySet()) {
-            CellAddress cellAddress = addressMapping.get(singleKey);
-            String placeholder = cellAddress.getPlaceholder();
-            if(alreadyUsedDataMapping.containsKey(placeholder)){continue;}
-            Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
-            if (dataMapping.containsKey(singleKey)){
-                Object info = dataMapping.get(singleKey);
-                if(info == null){
-                    if(gatherUnusedStage){
-                        debug(LOGGER, format("[收尾阶段]设置模板占位符[%s]为空值",placeholder));
-                    }else {
-                        debug(LOGGER, format("设置模板占位符[%s]为空值",placeholder));
-                    }
-                    cell.setBlank();
-                }else{
-                    debug(LOGGER, format("设置模板占位符[%s]值[%s]",placeholder,info));
-                    if (cellAddress.getSameCellPlaceholder() == 0){
-                        cell.setCellValue(cellAddress.replacePlaceholder(info.toString()));
+        for (String singleKey : dataMapping.keySet()) {
+            if(addressMapping.containsKey(singleKey)){
+                CellAddress cellAddress = addressMapping.get(singleKey);
+//                System.err.println(cellAddress);
+                String placeholder = cellAddress.getPlaceholder();
+                if(alreadyUsedDataMapping.containsKey(placeholder)){continue;}
+                Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
+                if (dataMapping.containsKey(singleKey)){
+//                    System.err.println(cell.getStringCellValue());
+//                    System.err.println("=================");
+                    Object info = dataMapping.get(singleKey);
+                    if(info == null){
+                        if(gatherUnusedStage){
+                            debug(LOGGER, format("[收尾阶段]设置模板占位符[%s]为空值",placeholder));
+                        }else {
+                            debug(LOGGER, format("设置模板占位符[%s]为空值",placeholder));
+                        }
+                        if (cellAddress.getSameCellPlaceholder() == 0){
+                            cell.setCellValue(cellAddress.replacePlaceholder(""));
+                        }else{
+                            cell.setCellValue(cell.getStringCellValue().replace(cellAddress.getPlaceholder(),""));
+                        }
+//                        cell.setBlank();
                     }else{
-                        cell.setCellValue(cellAddress.replacePlaceholder(cell.getStringCellValue()));
+                        debug(LOGGER, format("设置模板占位符[%s]值[%s]",placeholder,info));
+                        cell.setCellValue(cell.getStringCellValue().replace(cellAddress.getPlaceholder(),info.toString()));
+//                        System.err.println(cell.getStringCellValue());
+//                        System.err.println("----------------");
+//                    if (cellAddress.getSameCellPlaceholder() == 0){
+//                        cell.setCellValue(cellAddress.replacePlaceholder(info.toString()));
+//                    }else{
+//                        cell.setCellValue(cell.getStringCellValue().replace(cellAddress.getPlaceholder(),info.toString()));
+//                    }
                     }
+                    cellAddress.setWrittenRow(cell.getRowIndex());
+                    alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
+                }else {
+                    debug(LOGGER, format("未找到模板占位符[%s]",placeholder));
                 }
-                cellAddress.setWrittenRow(cell.getRowIndex());
-                alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
-            }else {
-                debug(LOGGER, format("未找到模板占位符[%s]",placeholder));
             }
         }
     }
@@ -218,7 +231,11 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         Map<String, Object> onlyOnLeft = difference.entriesOnlyOnLeft();
         HashMap<String, Object> unusedMap = new HashMap<>();
         for (String singleKey : onlyOnLeft.keySet()) {
-            unusedMap.put(singleKey,null);
+            if(referenceMapping.containsKey(singleKey)){
+                unusedMap.put(singleKey,referenceMapping.get(singleKey).getDefaultValue());
+            }else{
+                unusedMap.put(singleKey,null);
+            }
         }
         return unusedMap;
     }
@@ -571,39 +588,47 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * @param cellAddress   单元格地址
      */
     private Boolean findPlaceholderData(boolean isFinal, HashBasedTable<Integer, String, CellAddress> referenceData,
-                                        Pattern pattern, int sheetIndex, CellAddress cellAddress) {
+                                        Pattern pattern, int sheetIndex,CellAddress cellAddress) {
+//        if(isFinal){
+//            referenceData.row(sheetIndex).clear();
+//        }
+        CellAddress storeAddress = new CellAddress(cellAddress.getCellValue(), cellAddress.getRowPosition(), cellAddress.getColumnPosition(), cellAddress.getCellStyle());
         Matcher matcher = pattern.matcher(cellAddress.getCellValue());
         Boolean found = null;
         int hasSameCell = -1;
         while (matcher.find()){
             hasSameCell++;
-            cellAddress.setPlaceholder(matcher.group());
+            if(hasSameCell > 0){
+                storeAddress = cellAddress.clone();
+            }
+            storeAddress.setPlaceholder(matcher.group());
             String name = matcher.group(1);
             String[] defaultSplitContent = name.split(StringPool.COLON);
             name = defaultSplitContent[0];
-            cellAddress.setName(name);
-            cellAddress.setSameCellPlaceholder(hasSameCell);
+            storeAddress.setName(name);
+
+            storeAddress.setSameCellPlaceholder(hasSameCell);
             if (defaultSplitContent.length > 1){
-                cellAddress.setDefaultValue(defaultSplitContent[1]);
+                storeAddress.setDefaultValue(defaultSplitContent[1]);
             }
             boolean isCirclePattern = pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN);
             if (isCirclePattern || pattern.equals(TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN)){
-                cellAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);
-                referenceData.put(sheetIndex,name, cellAddress);
+                storeAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);
+                referenceData.put(sheetIndex,name, storeAddress);
             }else if (pattern.equals(TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN)){
                 if (!isFinal){
-                    cellAddress.setPlaceholderType(PlaceholderType.CALCULATE);
-                    cellAddress.setCalculatedValue(BigDecimal.ZERO);
+                    storeAddress.setPlaceholderType(PlaceholderType.CALCULATE);
+                    storeAddress.setCalculatedValue(BigDecimal.ZERO);
                 }else {
                     Map<String, CellAddress> addressMap = referenceData.row(sheetIndex);
                     if (addressMap.containsKey(name)){
                         CellAddress originalAddress = addressMap.get(name);
-                        originalAddress.setRowPosition(cellAddress.getRowPosition());
+                        originalAddress.setRowPosition(storeAddress.getRowPosition());
                         referenceData.put(sheetIndex,name, originalAddress);
                         return true;
                     }
                 }
-                referenceData.put(sheetIndex,name, cellAddress);
+                referenceData.put(sheetIndex,name, storeAddress);
             }
             found = true;
         }

@@ -34,9 +34,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -254,8 +252,8 @@ public class WriteTest {
 
     @Test
     public void test1() throws FileNotFoundException {
-        //  File file = FileToolkit.getResourceFileAsFile("workbook/write/sunUser.xlsx");
-        File file = new File("D:\\dataScheduleOther.xlsx");
+          File file = FileToolkit.getResourceFileAsFile("workbook/write/dataScheduleOther.xlsx");
+//        File file = new File("D:\\dataScheduleOther.xlsx");
         TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
@@ -268,11 +266,11 @@ public class WriteTest {
                 list.add(mpOrgDataIssueNew);
             }
             Map<String, String> map = new HashMap<>();
-            map.put("fileName","测试文件名");
+//            map.put("fileName","测试文件名");
             map.put("bankName","山西省");
-            map.put("dataIssue","2024-02");
-            map.put("operationTime", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            axolotlAutoExcelWriter.write(map,list);
+//            map.put("dataIssue","2024-02");
+//            map.put("operationTime", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            axolotlAutoExcelWriter.write(map,null);
         }
 
     }

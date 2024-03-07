@@ -1,10 +1,12 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
 import lombok.Data;
+import lombok.SneakyThrows;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.util.CellRangeAddress;
 
+import java.io.*;
 import java.math.BigDecimal;
 
 /**
@@ -12,7 +14,7 @@ import java.math.BigDecimal;
  * @author Toutatis_Gc
  */
 @Data
-public class CellAddress {
+public class CellAddress implements Cloneable, Serializable {
 
     public CellAddress(String cellValue, int rowPosition, int columnPosition, CellStyle cellStyle) {
         this.cellValue = cellValue;
@@ -110,4 +112,23 @@ public class CellAddress {
         return mergeRegion != null;
     }
 
+    @Override
+    public CellAddress clone() {
+        try {
+            return (CellAddress) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
+    @SneakyThrows
+    public CellAddress deepClone() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(this);
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        ObjectInputStream ois = new ObjectInputStream(bis);
+        return (CellAddress) ois.readObject();
+    }
 }
