@@ -331,7 +331,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }
                             // 暂时只适配String类型
                             writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
-                            this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
+                            if(cellAddress.getSameCellPlaceholder() == 0){
+                                this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
+                            }
                             cellAddress.setRowPosition(++rowPosition);
                             if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
                                 alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
@@ -343,7 +345,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                 sheet, rowPosition, cellAddress.getColumnPosition(),
                                 cellAddress.getCellStyle(), cellAddress.getDefaultValue()
                         );
-                        this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
+                        if(cellAddress.getSameCellPlaceholder() == 0){
+                            this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
+                        }
                         cellAddress.setRowPosition(++rowPosition);
                         if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
                             alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
@@ -375,7 +379,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         }
                     }
                 }
-                System.err.println(alreadyWrittenMergeRegionColumns);
             }
         }
     }
@@ -405,7 +408,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         List<CellAddress> nonTemplateCellAddressList = new ArrayList<>();
 
         boolean alreadyFill = writeContext.getSheetNonTemplateCells().contains(sheetIndex, writeFieldNamesList);
-        System.err.println(alreadyFill);
         Map<String,CellAddress> nonWrittenAddress = new HashMap<>();
         for (int i = 0; i < templateRow.getLastCellNum(); i++) {
             if(!templateColumnMap.containsKey(i)){
@@ -566,12 +568,16 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     private Boolean findPlaceholderData(boolean isFinal, HashBasedTable<Integer, String, CellAddress> referenceData,
                                         Pattern pattern, int sheetIndex, CellAddress cellAddress) {
         Matcher matcher = pattern.matcher(cellAddress.getCellValue());
-        if (matcher.find()) {
+        Boolean found = null;
+        int hasSameCell = -1;
+        while (matcher.find()){
+            hasSameCell++;
             cellAddress.setPlaceholder(matcher.group());
             String name = matcher.group(1);
             String[] defaultSplitContent = name.split(StringPool.COLON);
             name = defaultSplitContent[0];
             cellAddress.setName(name);
+            cellAddress.setSameCellPlaceholder(hasSameCell);
             if (defaultSplitContent.length > 1){
                 cellAddress.setDefaultValue(defaultSplitContent[1]);
             }
@@ -594,9 +600,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 }
                 referenceData.put(sheetIndex,name, cellAddress);
             }
-            return true;
+            found = true;
         }
-        return null;
+        return found;
     }
 
     /**

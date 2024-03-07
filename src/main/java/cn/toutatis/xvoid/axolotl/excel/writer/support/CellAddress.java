@@ -65,6 +65,11 @@ public class CellAddress {
     private int writtenRow = -1;
 
     /**
+     * 该值等于0为该单元格位置占位符，大于1说明有其他占位符，只赋予值但不位移单元格
+     */
+    private int sameCellPlaceholder = -1;
+
+    /**
      * [内部维护变量]
      * 非模板单元格
      */
