@@ -54,7 +54,14 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      */
     public AxolotlWriteResult write(List<Header> headers, List<?> dataList) throws AxolotlWriteException {
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
-        SXSSFSheet sheet = workbook.createSheet();
+        SXSSFSheet sheet;
+        if(writeContext.isFirstBatch(writeContext.getSwitchSheetIndex())){
+            // TODO 渲染头部信息
+        }
+        // TODO 解析实体注解
+        // TODO 渲染实体数据到表
+        // TODO 渲染结束数据
+        sheet = workbook.createSheet();
         workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
         if (styleRender instanceof AbstractStyleRender){
@@ -72,10 +79,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
     public AxolotlWriteResult write(List<?> dataList) throws AxolotlWriteException {
         LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
         SXSSFSheet sheet = workbook.createSheet();
-        // TODO 渲染头部信息
-        // TODO 解析实体注解
-        // TODO 渲染实体数据到表
-        // TODO 渲染结束数据
+
         workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
 //        if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
@@ -96,6 +100,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
     @Override
     public void close() throws IOException {
         workbook.write(writeConfig.getOutputStream());
+        workbook.close();
     }
 
     /**

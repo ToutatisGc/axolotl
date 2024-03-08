@@ -56,6 +56,11 @@ public class TemplateWriteContext extends WriteContext{
     private HashBasedTable<Integer,String,Boolean> alreadyUsedReferenceData = HashBasedTable.create();
 
     /**
+     * 计算写入列行高
+     */
+    private HashBasedTable<Integer,List<String>,Short> lineHeightRecords = HashBasedTable.create();
+
+    /**
      * 是否是模板写入
      * @return true:是模板写入 false:不是模板写入
      */
