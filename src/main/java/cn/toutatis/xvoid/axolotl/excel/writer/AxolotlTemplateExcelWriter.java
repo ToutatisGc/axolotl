@@ -97,16 +97,18 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         // 判断是否是模板写入
         AxolotlWriteResult axolotlWriteResult = new AxolotlWriteResult();
         if (writeContext.isTemplateWrite()){
-            sheet = getWorkbookSheet(writeContext.getSwitchSheetIndex());
+            int switchSheetIndex = writeContext.getSwitchSheetIndex();
+            sheet = getWorkbookSheet(switchSheetIndex);
             // 只有第一次写入时解析模板占位符
-            if (writeContext.isFirstBatch(writeContext.getSwitchSheetIndex())){
+            if (writeContext.isFirstBatch(switchSheetIndex)){
                 // 解析模板占位符到上下文
                 this.resolveTemplate(sheet,false);
             }
-            // 写入Map映射
+            System.err.println(writeContext);
+//            // 写入Map映射
             this.writeSingleData(sheet, fixMapping,writeContext.getSingleReferenceData(),false);
-            // 写入循环数据
-            this.writeCircleData(sheet, dataList);
+//            // 写入循环数据
+//            this.writeCircleData(sheet, dataList);
             axolotlWriteResult.setWrite(true);
             axolotlWriteResult.setMessage("写入完成");
         }else{
@@ -152,7 +154,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         }else {
                             debug(LOGGER, format("设置模板占位符[%s]为空值",placeholder));
                         }
-                        if (cellAddress.getSameCellPlaceholder() == 0){
+                        if (cellAddress.isCellMultipleMatchTemplate()){
                             cell.setCellValue(cellAddress.replacePlaceholder(""));
                         }else{
                             cell.setCellValue(cell.getStringCellValue().replace(cellAddress.getPlaceholder(),""));
@@ -353,7 +355,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }
                             // 暂时只适配String类型
                             writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
-                            if(cellAddress.getSameCellPlaceholder() == 0){
+                            if(cellAddress.isCellMultipleMatchTemplate()){
                                 this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
                             }
                             cellAddress.setRowPosition(++rowPosition);
@@ -367,7 +369,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                 sheet, rowPosition, cellAddress.getColumnPosition(),
                                 cellAddress.getCellStyle(), cellAddress.getDefaultValue()
                         );
-                        if(cellAddress.getSameCellPlaceholder() == 0){
+                        if(cellAddress.isCellMultipleMatchTemplate()){
                             this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
                         }
                         cellAddress.setRowPosition(++rowPosition);
@@ -537,25 +539,16 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     short lastCellNum = row.getLastCellNum();
                     for (int colIdx = 0; colIdx < lastCellNum; colIdx++) {
                         Cell cell = row.getCell(colIdx);
+                        // 占位符必然是字符串类型
                         if (cell != null && CellType.STRING.equals(cell.getCellType())){
-                            String cellValue = cell.getStringCellValue();
-                            CellAddress cellAddress = new CellAddress(cellValue,rowIdx, colIdx,cell.getCellStyle());
                             Boolean foundPlaceholder = findPlaceholderData(isFinal,singleReferenceData,
-                                    TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
-                            if (foundPlaceholder == null){
+                                    TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cell);
+                            if (!foundPlaceholder){
                                 foundPlaceholder = findPlaceholderData(isFinal,circleReferenceData,
-                                        TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
+                                        TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cell);
                             }
-                            if (foundPlaceholder == null) {
-                                foundPlaceholder = findPlaceholderData(isFinal,calculateReferenceData,
-                                        TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cellAddress);
-                            }
-                            if (foundPlaceholder != null && foundPlaceholder){
-                                CellRangeAddress cellMerged = ExcelToolkit.isCellMerged(sheet, rowIdx, colIdx);
-                                if (cellMerged != null){
-                                    LoggerHelper.debug(LOGGER, format("解析到占位符[%s]为合并单元格[%s]",cellAddress.getPlaceholder(),cellMerged.formatAsString()));
-                                    cellAddress.setMergeRegion(cellMerged);
-                                }
+                            if (!foundPlaceholder) {
+                                findPlaceholderData(isFinal,calculateReferenceData, TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN, sheetIndex, cell);
                             }
                         }
                     }
@@ -580,59 +573,64 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
 
     /**
      * 解析模板值到变量
-     *
+     * 模板值为两部分组成：
+     * ${name:111}
+     * 一个是占位符本身name，另一个是默认值111，由:分隔
      * @param isFinal 是否是收尾阶段
      * @param referenceData 引用数据
      * @param pattern       模板匹配正则
      * @param sheetIndex    工作簿索引
-     * @param cellAddress   单元格地址
+     * @param cell   当前单元格
      */
     private Boolean findPlaceholderData(boolean isFinal, HashBasedTable<Integer, String, CellAddress> referenceData,
-                                        Pattern pattern, int sheetIndex,CellAddress cellAddress) {
-//        if(isFinal){
-//            referenceData.row(sheetIndex).clear();
-//        }
-        CellAddress storeAddress = new CellAddress(cellAddress.getCellValue(), cellAddress.getRowPosition(), cellAddress.getColumnPosition(), cellAddress.getCellStyle());
-        Matcher matcher = pattern.matcher(cellAddress.getCellValue());
-        Boolean found = null;
-        int hasSameCell = -1;
+                                        Pattern pattern, int sheetIndex,Cell cell) {
+        List<CellAddress> cellAddressList = new ArrayList<>();
+        Map<String, CellAddress> cellAddressMap = referenceData.row(sheetIndex);
+        int cellMultipleMatchTemplate = -1;
+        String stringCellValue = cell.getStringCellValue();
+        Matcher matcher = pattern.matcher(stringCellValue);
         while (matcher.find()){
-            hasSameCell++;
-            if(hasSameCell > 0){
-                storeAddress = cellAddress.clone();
-            }
-            storeAddress.setPlaceholder(matcher.group());
-            String name = matcher.group(1);
-            String[] defaultSplitContent = name.split(StringPool.COLON);
-            name = defaultSplitContent[0];
-            storeAddress.setName(name);
-
-            storeAddress.setSameCellPlaceholder(hasSameCell);
+            cellMultipleMatchTemplate++;
+            int rowIndex = cell.getRowIndex();
+            int columnIndex = cell.getColumnIndex();
+            CellAddress cellAddress = new CellAddress(stringCellValue,rowIndex ,columnIndex , cell.getCellStyle());
+            cellAddress.setPlaceholder(matcher.group());
+            String matchTemplate = matcher.group(1);
+            String[] defaultSplitContent = matchTemplate.split(StringPool.COLON);
+            cellAddress.setName(defaultSplitContent[0]);
             if (defaultSplitContent.length > 1){
-                storeAddress.setDefaultValue(defaultSplitContent[1]);
+                cellAddress.setDefaultValue(defaultSplitContent[1]);
+            }
+            CellRangeAddress cellMerged = ExcelToolkit.isCellMerged(getWorkbookSheet(sheetIndex), rowIndex, columnIndex);
+            if (cellMerged != null){
+                LoggerHelper.debug(LOGGER, format("解析到占位符[%s]为合并单元格[%s]",cellAddress.getPlaceholder(),cellMerged.formatAsString()));
+                cellAddress.setMergeRegion(cellMerged);
             }
             boolean isCirclePattern = pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN);
             if (isCirclePattern || pattern.equals(TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN)){
-                storeAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);
-                referenceData.put(sheetIndex,name, storeAddress);
+                cellAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);
+                cellAddressMap.put(matchTemplate, cellAddress);
             }else if (pattern.equals(TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN)){
                 if (!isFinal){
-                    storeAddress.setPlaceholderType(PlaceholderType.CALCULATE);
-                    storeAddress.setCalculatedValue(BigDecimal.ZERO);
+                    cellAddress.setPlaceholderType(PlaceholderType.CALCULATE);
+                    cellAddress.setCalculatedValue(BigDecimal.ZERO);
                 }else {
-                    Map<String, CellAddress> addressMap = referenceData.row(sheetIndex);
-                    if (addressMap.containsKey(name)){
-                        CellAddress originalAddress = addressMap.get(name);
-                        originalAddress.setRowPosition(storeAddress.getRowPosition());
-                        referenceData.put(sheetIndex,name, originalAddress);
-                        return true;
+                    if (cellAddressMap.containsKey(matchTemplate)){
+                        CellAddress originalAddress = cellAddressMap.get(matchTemplate);
+                        originalAddress.setRowPosition(cellAddress.getRowPosition());
+                        cellAddressMap.put(matchTemplate, originalAddress);
                     }
                 }
-                referenceData.put(sheetIndex,name, storeAddress);
+                cellAddressMap.put(matchTemplate, cellAddress);
             }
-            found = true;
+            cellAddressList.add(cellAddress);
         }
-        return found;
+        if (cellMultipleMatchTemplate > 0){
+            for (CellAddress cellAddress : cellAddressList) {
+                cellAddress.setCellMultipleMatchTemplate(true);
+            }
+        }
+        return !cellAddressList.isEmpty();
     }
 
     /**

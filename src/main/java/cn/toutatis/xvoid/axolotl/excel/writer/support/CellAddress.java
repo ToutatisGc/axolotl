@@ -69,7 +69,7 @@ public class CellAddress implements Cloneable, Serializable {
     /**
      * 该值等于0为该单元格位置占位符，大于1说明有其他占位符，只赋予值但不位移单元格
      */
-    private int sameCellPlaceholder = -1;
+    private boolean cellMultipleMatchTemplate = false;
 
     /**
      * [内部维护变量]
