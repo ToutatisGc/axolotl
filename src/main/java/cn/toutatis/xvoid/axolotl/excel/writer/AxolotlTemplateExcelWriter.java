@@ -425,7 +425,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                 BigDecimal calculatedValue = calculateAddress.getCalculatedValue();
                                 calculatedValue = calculatedValue.add(new BigDecimal(value.toString()));
                                 calculateAddress.setCalculatedValue(calculatedValue);
-                                this.writeContext.getCalculateReferenceData().put(sheetIndex,fieldMappingKey, calculateAddress);
                             }
                             // 暂时只适配String类型
                             writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
@@ -638,14 +637,16 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 if (!isFinal){
                     cellAddress.setPlaceholderType(PlaceholderType.CALCULATE);
                     cellAddress.setCalculatedValue(BigDecimal.ZERO);
+                    cellAddressMap.put(name, cellAddress);
                 }else {
                     if (cellAddressMap.containsKey(name)){
                         CellAddress originalAddress = cellAddressMap.get(name);
                         originalAddress.setRowPosition(cellAddress.getRowPosition());
                         cellAddressMap.put(name, originalAddress);
+                    }else{
+                        cellAddressMap.put(name, cellAddress);
                     }
                 }
-                cellAddressMap.put(name, cellAddress);
             }
             cellAddressList.add(cellAddress);
         }
