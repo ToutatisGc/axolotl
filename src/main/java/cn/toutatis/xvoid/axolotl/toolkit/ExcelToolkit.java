@@ -150,6 +150,20 @@ public class ExcelToolkit {
     }
 
     /**
+     * 创建行
+     * @param sheet 工作表
+     * @param row 行位置
+     * @return 新行
+     */
+    public static Row createOrCatchRow(Sheet sheet, int row){
+        Row writableRow = sheet.getRow(row);
+        if (writableRow == null){
+            writableRow = sheet.createRow(row);
+        }
+        return writableRow;
+    }
+
+    /**
      * 创建单元格
      * @param sheet 工作表
      * @param row 行位置
@@ -158,10 +172,7 @@ public class ExcelToolkit {
      * @return 新单元格
      */
     public static Cell createOrCatchCell(Sheet sheet, int row, int column, CellStyle cellStyle){
-        Row writableRow = sheet.getRow(row);
-        if (writableRow == null){
-            writableRow = sheet.createRow(row);
-        }
+        Row writableRow = createOrCatchRow(sheet, row);
         Cell writableCell = writableRow.getCell(column);
         if (writableCell == null){
             writableCell = writableRow.createCell(column);

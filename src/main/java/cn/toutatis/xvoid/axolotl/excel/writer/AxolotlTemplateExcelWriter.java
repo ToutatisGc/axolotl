@@ -104,11 +104,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 // 解析模板占位符到上下文
                 this.resolveTemplate(sheet,false);
             }
-            System.err.println(writeContext);
 //            // 写入Map映射
             this.writeSingleData(sheet, fixMapping,writeContext.getSingleReferenceData(),false);
 //            // 写入循环数据
-//            this.writeCircleData(sheet, dataList);
+            this.writeCircleData(sheet, dataList);
             axolotlWriteResult.setWrite(true);
             axolotlWriteResult.setMessage("写入完成");
         }else{
@@ -131,51 +130,55 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * @param gatherUnusedStage 是否收集未使用的数据
      */
     private void writeSingleData(Sheet sheet,Map<String,?> singleMap,HashBasedTable<Integer, String, CellAddress> referenceData,boolean gatherUnusedStage){
-        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
-        Map<String, CellAddress> addressMapping = referenceData.row(sheetIndex);
+        // 注入通用信息
         HashMap<String, Object> dataMapping = (singleMap != null ? new HashMap<>(singleMap) : new HashMap<>());
         this.injectCommonConstInfo(dataMapping,gatherUnusedStage);
-        HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
-        Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(sheetIndex);
-        for (String singleKey : dataMapping.keySet()) {
-            if(addressMapping.containsKey(singleKey)){
-                CellAddress cellAddress = addressMapping.get(singleKey);
-//                System.err.println(cellAddress);
-                String placeholder = cellAddress.getPlaceholder();
-                if(alreadyUsedDataMapping.containsKey(placeholder)){continue;}
-                Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
-                if (dataMapping.containsKey(singleKey)){
-//                    System.err.println(cell.getStringCellValue());
-//                    System.err.println("=================");
-                    Object info = dataMapping.get(singleKey);
-                    if(info == null){
-                        if(gatherUnusedStage){
-                            debug(LOGGER, format("[收尾阶段]设置模板占位符[%s]为空值",placeholder));
-                        }else {
-                            debug(LOGGER, format("设置模板占位符[%s]为空值",placeholder));
-                        }
-                        if (cellAddress.isCellMultipleMatchTemplate()){
-                            cell.setCellValue(cellAddress.replacePlaceholder(""));
-                        }else{
-                            cell.setCellValue(cell.getStringCellValue().replace(cellAddress.getPlaceholder(),""));
-                        }
-//                        cell.setBlank();
-                    }else{
-                        debug(LOGGER, format("设置模板占位符[%s]值[%s]",placeholder,info));
-                        cell.setCellValue(cell.getStringCellValue().replace(cellAddress.getPlaceholder(),info.toString()));
-//                        System.err.println(cell.getStringCellValue());
-//                        System.err.println("----------------");
-//                    if (cellAddress.getSameCellPlaceholder() == 0){
-//                        cell.setCellValue(cellAddress.replacePlaceholder(info.toString()));
-//                    }else{
-//                        cell.setCellValue(cell.getStringCellValue().replace(cellAddress.getPlaceholder(),info.toString()));
-//                    }
-                    }
-                    cellAddress.setWrittenRow(cell.getRowIndex());
-                    alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
-                }else {
-                    debug(LOGGER, format("未找到模板占位符[%s]",placeholder));
+        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
+        Map<String, CellAddress> addressMapping = referenceData.row(sheetIndex);
+        // 记录已使用的引用数据
+        Map<String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData().row(sheetIndex);
+        for (String singleKey : addressMapping.keySet()) {
+            // 如果地址引用包含该关键字，则写入数据
+            CellAddress cellAddress = addressMapping.get(singleKey);
+            String placeholder = cellAddress.getPlaceholder();
+            if(dataMapping.containsKey(singleKey)){
+                // 已经写入过则跳过写入
+                if(alreadyUsedReferenceData.containsKey(placeholder)){
+                    debug(LOGGER, format("已跳过使用的占位符[%s]",placeholder));
+                    continue;
                 }
+                // 写入单元格值
+                Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
+                String stringCellValue = cell.getStringCellValue();
+                Object info = dataMapping.get(singleKey);
+                if(info != null){
+                    debug(LOGGER, format("设置模板占位符[%s]值[%s]",placeholder,info));
+                    String replaceString = stringCellValue.replace(placeholder, info.toString());
+                    cell.setCellValue(replaceString);
+                }else{
+                    String defaultValue = cellAddress.getDefaultValue();
+                    String newCellValue = null;
+                    boolean isDefaultValue = false;
+                    if(defaultValue != null){
+                        isDefaultValue = true;
+                        newCellValue = stringCellValue.replace(placeholder, defaultValue);
+                    }else{
+                        if(!stringCellValue.equals(placeholder)){
+                            newCellValue = stringCellValue.replace(placeholder, "");
+                        }
+                    }
+                    if (newCellValue == null){
+                        debug(LOGGER, format("%s设置模板占位符[%s]为空值",gatherUnusedStage ? "[收尾阶段]":"",placeholder));
+                        cell.setBlank();
+                    }else{
+                        debug(LOGGER, format("%s设置模板占位符[%s]为%s值",gatherUnusedStage ? "[收尾阶段]":"", placeholder,isDefaultValue ? "默认":"空"));
+                        cell.setCellValue(newCellValue);
+                    }
+                }
+                cellAddress.setWrittenRow(cell.getRowIndex());
+                alreadyUsedReferenceData.put(placeholder,true);
+            }else{
+                debug(LOGGER, format("未使用模板占位符[%s]",placeholder));
             }
         }
     }
@@ -242,6 +245,108 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         return unusedMap;
     }
 
+    @SuppressWarnings("unchecked")
+    private DesignConditions calculateConditions(List<?> circleDataList){
+        DesignConditions designConditions = new DesignConditions();
+        // 设置表索引
+        int sheetIndex = writeContext.getSwitchSheetIndex();
+        designConditions.setSheetIndex(sheetIndex);
+        // 判断是否是Map还是实体类并采集字段名
+        Map<String, CellAddress> circleReferenceData = writeContext.getCircleReferenceData().row(sheetIndex);
+        Map<String,Integer> writeFieldNames = new HashMap<>();
+        Object rowObjInstance = circleDataList.get(0);
+        if (rowObjInstance instanceof Map){
+            designConditions.setSimplePOJO(false);
+            Map<String, Object> rowObjInstanceMap = (Map<String, Object>) rowObjInstance;
+            if (!rowObjInstanceMap.isEmpty()){
+                writeFieldNames = rowObjInstanceMap.keySet()
+                        .stream()
+                        .collect(Collectors.toMap(key -> key, key -> 1));
+            }
+        }else {
+            designConditions.setSimplePOJO(true);
+            Class<?> instanceClass = rowObjInstance.getClass();
+            for (String key : circleReferenceData.keySet()) {
+                Field field;
+                try {field = instanceClass.getDeclaredField(key);}catch(NoSuchFieldException noSuchFieldException){field = null;}
+                if (field != null){writeFieldNames.put(key, 1);}
+            }
+        }
+        designConditions.setWriteFieldNames(writeFieldNames);
+        ArrayList<String> writeFieldNamesList = new ArrayList<>(writeFieldNames.keySet());
+        designConditions.setWriteFieldNamesList(writeFieldNamesList);
+        // 判断字段第一次写入
+        boolean initialWriting = writeContext.fieldsIsInitialWriting(sheetIndex,writeFieldNamesList);
+        // 添加写入字段记录
+        writeContext.addFieldRecords(sheetIndex,writeFieldNamesList,writeContext.getCurrentWrittenBatch().get(sheetIndex));
+        designConditions.setFieldsInitialWriting(initialWriting);
+        // 漂移写入特性
+        int startShiftRow = calculateStartShiftRow(circleReferenceData, designConditions, initialWriting);
+        designConditions.setStartShiftRow(startShiftRow);
+        // 获取非模板字段
+        Map<String, CellAddress> nonWrittenAddress = findTemplateCell(initialWriting,
+                startShiftRow, writeFieldNamesList,sheetIndex, circleReferenceData
+        );
+        designConditions.setNonWrittenAddress(nonWrittenAddress);
+        designConditions.setNotTemplateCells(writeContext.getSheetNonTemplateCells().get(sheetIndex, writeFieldNamesList));
+        designConditions.setTemplateLineHeight(writeContext.getLineHeightRecords().get(sheetIndex, writeFieldNamesList));
+        return designConditions;
+    }
+
+    /**
+     * 寻找非模板值
+     *
+     * @param initialWriting      是否初始写入
+     * @param startShiftRow       起始行
+     * @param writeFieldNamesList 写入字段名
+     * @param sheetIndex          工作表索引
+     * @param circleReferenceData 循环引用数据
+     */
+    private Map<String, CellAddress> findTemplateCell(boolean initialWriting,
+                                                      int startShiftRow, List<String> writeFieldNamesList,
+                                                      int sheetIndex, Map<String, CellAddress> circleReferenceData
+    ){
+        int templateLineIdx = initialWriting ? startShiftRow - 1 : startShiftRow;
+        XSSFSheet sheet = getWorkbookSheet(sheetIndex);
+        // 获取到写入字段的行次，并转为列和地址的映射
+        XSSFRow templateRow = sheet.getRow(templateLineIdx);
+        Map<Integer,CellAddress > templateColumnMap = circleReferenceData.values()
+                .stream().filter(cellAddress -> cellAddress.getRowPosition() == templateLineIdx)
+                .collect(Collectors.toMap(CellAddress::getColumnPosition, cellAddress -> cellAddress));
+
+        boolean alreadyFill = writeContext.getSheetNonTemplateCells().contains(sheetIndex, writeFieldNamesList);
+        boolean nonTemplateCellFill = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL);
+        // 本行未在模板中的模板列（用于填充默认值或赋空值）
+        Map<String,CellAddress> nonWrittenAddress = new HashMap<>();
+        // 模板行种非模板列
+        List<CellAddress> nonTemplateCellAddressList = new ArrayList<>();
+        for (int i = 0; i < templateRow.getLastCellNum(); i++) {
+            if(!templateColumnMap.containsKey(i)){
+                if (alreadyFill){continue;}
+                // 将非模板列存储
+                if(initialWriting && nonTemplateCellFill){
+                    XSSFCell cell = templateRow.getCell(i);
+                    if(cell == null){continue;}
+                    CellAddress nonTempalteCellAddress = new CellAddress(null, templateLineIdx, i, cell.getCellStyle());
+                    nonTempalteCellAddress.set_nonTemplateCell(cell);
+                    nonTempalteCellAddress.setMergeRegion(ExcelToolkit.isCellMerged(sheet, templateLineIdx, i));
+                    nonTemplateCellAddressList.add(nonTempalteCellAddress);
+                }
+            }else{
+                // 本次未写入的地址
+                CellAddress cellAddress = templateColumnMap.get(i);
+                String name = cellAddress.getName();
+                if (!writeFieldNamesList.contains(name)) {nonWrittenAddress.put(name,cellAddress);}
+            }
+        }
+        // 存储非模板列
+        if(!alreadyFill){
+            debug(LOGGER,"获取模板行[%s]个非模板列",nonTemplateCellAddressList.size());
+            writeContext.getSheetNonTemplateCells().put(sheetIndex,writeFieldNamesList,nonTemplateCellAddressList);
+        }
+        return nonWrittenAddress;
+    }
+
     /**
      * 写入占位符列表数据到工作表
      *
@@ -253,48 +358,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     private void writeCircleData(XSSFSheet sheet, List<?> circleDataList){
         // 数据不为空则写入数据
         if (Validator.objNotNull(circleDataList)){
-            Map<String, CellAddress> circleReferenceData = this.writeContext.getCircleReferenceData().row(writeContext.getSwitchSheetIndex());
-            // 判断是否是Map还是实体类
-            boolean isSimplePOJO;
-            // 获取获取本次写入字段
-            Map<String,Integer> writeFieldNames = new HashMap<>();
-            Object rowObjInstance = circleDataList.get(0);
-            List<String> writeFieldNamesList;
-            if (rowObjInstance instanceof Map){
-                isSimplePOJO = false;
-                Map<String, Object> rowObjInstanceMap = (Map<String, Object>) rowObjInstance;
-                if (!rowObjInstanceMap.isEmpty()){
-                    writeFieldNames = rowObjInstanceMap.keySet()
-                            .stream()
-                            .collect(Collectors.toMap(key -> key, key -> 1));
-                }
-            }else {
-                isSimplePOJO = true;
-                Class<?> instanceClass = rowObjInstance.getClass();
-                for (String key : circleReferenceData.keySet()) {
-                    Field field;
-                    try {
-                        field = instanceClass.getDeclaredField(key);
-                    }catch(NoSuchFieldException noSuchFieldException){
-                        field = null;
-                    }
-                    if (field != null){
-                        writeFieldNames.put(key, 1);
-                    }
-                }
-            }
-            writeFieldNamesList = new ArrayList<>(writeFieldNames.keySet());
-            LoggerHelper.debug(LOGGER,"本次写入字段为:%s",writeFieldNames.keySet());
-            // 漂移写入特性
-            int sheetIndex = writeContext.getSwitchSheetIndex();
-            boolean initialWriting = writeContext.fieldsIsInitialWriting(sheetIndex,writeFieldNamesList);
-            int startShiftRow = calculateStartShiftRow(circleReferenceData, writeFieldNames, initialWriting);
-            // 获取该行模板未分配的占位符
-
-            // 寻找写入非模板行
-            boolean nonTemplateCellFill = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL);
-            Map<String, CellAddress> nonWrittenAddress = this.findTemplateCell(initialWriting, nonTemplateCellFill, startShiftRow, writeFieldNamesList, sheet, circleReferenceData);
-            writeContext.addFieldRecords(sheetIndex,writeFieldNamesList,writeContext.getCurrentWrittenBatch().get(sheetIndex));
+            DesignConditions designConditions = this.calculateConditions(circleDataList);
+            LoggerHelper.debug(LOGGER,"本次写入字段为:%s",designConditions.getWriteFieldNamesList());
+            boolean initialWriting = designConditions.isFieldsInitialWriting();
+            int startShiftRow = designConditions.getStartShiftRow();
             if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
                     writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
                 // 最后一行大于起始行，则下移，否则为表底不下移
@@ -307,22 +374,29 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     }
                 }
             }
+            int sheetIndex = designConditions.getSheetIndex();
+            Map<String, CellAddress> circleReferenceData = writeContext.getCircleReferenceData().row(sheetIndex);
             // 写入列表数据
             HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
             Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writeContext.getSwitchSheetIndex());
             Map<String, CellAddress> calculateReferenceData = this.writeContext.getCalculateReferenceData().row(writeContext.getSwitchSheetIndex());
             for (Object data : circleDataList) {
                 HashSet<Integer> alreadyWrittenMergeRegionColumns = new HashSet<>();
-                debug(LOGGER,"[写入数据]"+data);
+//                debug(LOGGER,"[写入数据]"+data);
                 boolean isCurrentBatchData = false;
+                boolean alreadySetLineHeight = false;
                 for (Map.Entry<String, CellAddress> fieldMapping : circleReferenceData.entrySet()) {
                     String fieldMappingKey = fieldMapping.getKey();
                     CellAddress cellAddress = circleReferenceData.get(fieldMappingKey);
                     int rowPosition = cellAddress.getRowPosition();
-
-                    if(writeFieldNames.containsKey(fieldMappingKey)){
+                    if(!alreadySetLineHeight){
+                        Row templateRow = ExcelToolkit.createOrCatchRow(sheet, rowPosition);
+                        templateRow.setHeight(designConditions.getTemplateLineHeight());
+                        alreadySetLineHeight = true;
+                    }
+                    if(designConditions.getWriteFieldNames().containsKey(fieldMappingKey)){
                         Object value;
-                        if (isSimplePOJO){
+                        if (designConditions.isSimplePOJO()){
                             Field field = data.getClass().getDeclaredField(fieldMappingKey);
                             field.setAccessible(true);
                             value = field.get(data);
@@ -355,23 +429,19 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }
                             // 暂时只适配String类型
                             writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
-                            if(cellAddress.isCellMultipleMatchTemplate()){
-                                this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
-                            }
+                            this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
                             cellAddress.setRowPosition(++rowPosition);
                             if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
                                 alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
                             }
                             isCurrentBatchData = true;
                         }
-                    }else if (nonWrittenAddress.containsKey(fieldMappingKey)){
+                    }else if (designConditions.getNonWrittenAddress().containsKey(fieldMappingKey)){
                         ExcelToolkit.cellAssignment(
                                 sheet, rowPosition, cellAddress.getColumnPosition(),
                                 cellAddress.getCellStyle(), cellAddress.getDefaultValue()
                         );
-                        if(cellAddress.isCellMultipleMatchTemplate()){
-                            this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
-                        }
+                        this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
                         cellAddress.setRowPosition(++rowPosition);
                         if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
                             alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
@@ -381,8 +451,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
 
                 }
                 // 填充非模板单元格
-                if (isCurrentBatchData && nonTemplateCellFill){
-                    List<CellAddress> nonTemplateCells = writeContext.getSheetNonTemplateCells().get(sheetIndex, writeFieldNamesList);
+                if (isCurrentBatchData && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL)){
+                    List<CellAddress> nonTemplateCells = writeContext.getSheetNonTemplateCells().get(sheetIndex, designConditions.getWriteFieldNamesList());
                     if (nonTemplateCells != null && !nonTemplateCells.isEmpty()) {
                         for (CellAddress nonTemplateCellAddress : nonTemplateCells){
                             Cell nonTemplateCell = nonTemplateCellAddress.get_nonTemplateCell();
@@ -407,63 +477,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         }
     }
 
-    /**
-     * 寻找非模板值
-     *
-     * @param initialWriting      是否初始写入
-     * @param nonTemplateCellFill 是否填充非模板值
-     * @param startShiftRow       起始行
-     * @param writeFieldNamesList 写入字段名
-     * @param sheet               工作表
-     * @param circleReferenceData 循环引用数据
-     * @return
-     */
-    private Map<String, CellAddress> findTemplateCell(boolean initialWriting, boolean nonTemplateCellFill,
-                                                      int startShiftRow, List<String> writeFieldNamesList,
-                                                      XSSFSheet sheet, Map<String, CellAddress> circleReferenceData
-    ){
-        int templateLineIdx = initialWriting ? startShiftRow - 1 : startShiftRow;
-        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
-        // 获取模板行次
-        XSSFRow templateRow = sheet.getRow(templateLineIdx);
-        Map<Integer,CellAddress > templateColumnMap = circleReferenceData.values()
-                .stream().filter(cellAddress -> cellAddress.getRowPosition() == templateLineIdx)
-                .collect(Collectors.toMap(CellAddress::getColumnPosition, cellAddress -> cellAddress));
-        List<CellAddress> nonTemplateCellAddressList = new ArrayList<>();
 
-        boolean alreadyFill = writeContext.getSheetNonTemplateCells().contains(sheetIndex, writeFieldNamesList);
-        Map<String,CellAddress> nonWrittenAddress = new HashMap<>();
-        for (int i = 0; i < templateRow.getLastCellNum(); i++) {
-            if(!templateColumnMap.containsKey(i)){
-                if (alreadyFill){
-                    continue;
-                }
-                // 将非模板列存储
-                if(initialWriting && nonTemplateCellFill){
-                    XSSFCell cell = templateRow.getCell(i);
-                    if(cell == null){continue;}
-                    CellAddress nonTempalteCellAddress = new CellAddress(null, templateLineIdx, i, cell.getCellStyle());
-                    nonTempalteCellAddress.set_nonTemplateCell(cell);
-                    nonTempalteCellAddress.setMergeRegion(ExcelToolkit.isCellMerged(sheet, templateLineIdx, i));
-                    nonTemplateCellAddressList.add(nonTempalteCellAddress);
-                }
-            }else{
-                // 本次未写入的地址
-                CellAddress cellAddress = templateColumnMap.get(i);
-                String name = cellAddress.getName();
-                if (!writeFieldNamesList.contains(name)) {
-                    nonWrittenAddress.put(name,cellAddress);
-                }
-            }
-        }
-        // 存储非模板列
-        if(!alreadyFill){
-            debug(LOGGER,"获取模板行[%s]个非模板列",nonTemplateCellAddressList.size());
-            writeContext.getSheetNonTemplateCells().put(sheetIndex,writeFieldNamesList,nonTemplateCellAddressList);
-        }
-
-        return nonWrittenAddress;
-    }
 
     /**
      * 设置合并单元格区域
@@ -489,16 +503,25 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     /**
      * 计算起始行
      * @param circleReferenceData 引用数据
-     * @param writeFieldNames 写入字段
+     * @param designConditions 参数条件
      * @param initialWriting 是否是第一次写入
      * @return 起始行
      */
-    private static int calculateStartShiftRow(Map<String, CellAddress> circleReferenceData, Map<String, Integer> writeFieldNames, boolean initialWriting) {
+    private int calculateStartShiftRow(Map<String, CellAddress> circleReferenceData, DesignConditions designConditions, boolean initialWriting) {
         int maxRowPosition = Integer.MIN_VALUE;
+        Map<String, Integer> writeFieldNames = designConditions.getWriteFieldNames();
         for (Map.Entry<String, CellAddress> addressEntry : circleReferenceData.entrySet()) {
             if (writeFieldNames.containsKey(addressEntry.getKey())){
                 maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());
             }
+        }
+        if (initialWriting){
+            // 设置模板行行高
+            int sheetIndex = designConditions.getSheetIndex();
+            XSSFSheet sheet = this.getWorkbookSheet(sheetIndex);
+            short templateRowHeight = sheet.getRow(maxRowPosition).getHeight();
+            debug(LOGGER,"设置模板行[%s]行高为[%s]",maxRowPosition,templateRowHeight);
+            writeContext.getLineHeightRecords().put(sheetIndex, designConditions.getWriteFieldNamesList(),templateRowHeight);
         }
         // 第一次写入需要跳过占位符那一行，所以移动需要少一行
         return initialWriting ? maxRowPosition + 1 : maxRowPosition;
@@ -597,7 +620,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             cellAddress.setPlaceholder(matcher.group());
             String matchTemplate = matcher.group(1);
             String[] defaultSplitContent = matchTemplate.split(StringPool.COLON);
-            cellAddress.setName(defaultSplitContent[0]);
+            String name = defaultSplitContent[0];
+            cellAddress.setName(name);
             if (defaultSplitContent.length > 1){
                 cellAddress.setDefaultValue(defaultSplitContent[1]);
             }
@@ -609,19 +633,19 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             boolean isCirclePattern = pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN);
             if (isCirclePattern || pattern.equals(TemplatePlaceholderPattern.SINGLE_REFERENCE_TEMPLATE_PATTERN)){
                 cellAddress.setPlaceholderType(isCirclePattern ? PlaceholderType.CIRCLE : PlaceholderType.MAPPING);
-                cellAddressMap.put(matchTemplate, cellAddress);
+                cellAddressMap.put(name, cellAddress);
             }else if (pattern.equals(TemplatePlaceholderPattern.AGGREGATE_REFERENCE_TEMPLATE_PATTERN)){
                 if (!isFinal){
                     cellAddress.setPlaceholderType(PlaceholderType.CALCULATE);
                     cellAddress.setCalculatedValue(BigDecimal.ZERO);
                 }else {
-                    if (cellAddressMap.containsKey(matchTemplate)){
-                        CellAddress originalAddress = cellAddressMap.get(matchTemplate);
+                    if (cellAddressMap.containsKey(name)){
+                        CellAddress originalAddress = cellAddressMap.get(name);
                         originalAddress.setRowPosition(cellAddress.getRowPosition());
-                        cellAddressMap.put(matchTemplate, originalAddress);
+                        cellAddressMap.put(name, originalAddress);
                     }
                 }
-                cellAddressMap.put(matchTemplate, cellAddress);
+                cellAddressMap.put(name, cellAddress);
             }
             cellAddressList.add(cellAddress);
         }
@@ -651,8 +675,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             this.resolveTemplate(getWorkbookSheet(writeContext.getSwitchSheetIndex()),false);
         }
     }
-
-
 
     @Override
     public void flush() {

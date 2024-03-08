@@ -28,7 +28,6 @@ public class WriteContext extends AbstractContext {
      */
     private int switchSheetIndex = -1;
 
-
     /**
      * 是否是第一批次
      * 此方法影响读取模板
