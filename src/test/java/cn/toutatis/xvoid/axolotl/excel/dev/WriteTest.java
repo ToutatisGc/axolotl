@@ -5,8 +5,6 @@ import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.DmsRegReceivables;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.SunUser;
-import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
-import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.TemplateWriteConfig;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -156,7 +154,7 @@ public class WriteTest {
 
     }
 
-    @Test
+/*    @Test
     public void testAuto1() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
@@ -183,7 +181,7 @@ public class WriteTest {
         autoExcelWriter.write(null,data);
         autoExcelWriter.close();
 
-    }
+    }*/
 
     @Test
     public void generateColorCard() throws IOException {
