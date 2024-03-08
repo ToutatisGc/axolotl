@@ -307,6 +307,11 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                                       int sheetIndex, Map<String, CellAddress> circleReferenceData
     ){
         int templateLineIdx = initialWriting ? startShiftRow - 1 : startShiftRow;
+        // 本行未在模板中的模板列（用于填充默认值或赋空值）
+        Map<String,CellAddress> nonWrittenAddress = new HashMap<>();
+        if(templateLineIdx < 0){
+            return nonWrittenAddress;
+        }
         XSSFSheet sheet = getWorkbookSheet(sheetIndex);
         // 获取到写入字段的行次，并转为列和地址的映射
         XSSFRow templateRow = sheet.getRow(templateLineIdx);
@@ -316,8 +321,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
 
         boolean alreadyFill = writeContext.getSheetNonTemplateCells().contains(sheetIndex, writeFieldNamesList);
         boolean nonTemplateCellFill = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL);
-        // 本行未在模板中的模板列（用于填充默认值或赋空值）
-        Map<String,CellAddress> nonWrittenAddress = new HashMap<>();
+
         // 模板行种非模板列
         List<CellAddress> nonTemplateCellAddressList = new ArrayList<>();
         for (int i = 0; i < templateRow.getLastCellNum(); i++) {
@@ -366,7 +370,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
                 // 最后一行大于起始行，则下移，否则为表底不下移
                 int lastRowNum = sheet.getLastRowNum();
-                if(lastRowNum >= startShiftRow){
+                if(startShiftRow >= 0 && lastRowNum >= startShiftRow){
                     int shiftRowNumber = initialWriting ? circleDataList.size() - 1 : circleDataList.size();
                     LoggerHelper.debug(LOGGER,"当前写入起始行次[%s],下移行次:[%s],",startShiftRow,shiftRowNumber);
                     if (shiftRowNumber > 0){
@@ -391,7 +395,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     int rowPosition = cellAddress.getRowPosition();
                     if(!alreadySetLineHeight){
                         Row templateRow = ExcelToolkit.createOrCatchRow(sheet, rowPosition);
-                        templateRow.setHeight(designConditions.getTemplateLineHeight());
+                        Short templateLineHeight = designConditions.getTemplateLineHeight();
+                        if (templateLineHeight != null && templateLineHeight != -1) {
+                            templateRow.setHeight(templateLineHeight);
+                        }
                         alreadySetLineHeight = true;
                     }
                     if(designConditions.getWriteFieldNames().containsKey(fieldMappingKey)){
@@ -515,12 +522,17 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             }
         }
         if (initialWriting){
-            // 设置模板行行高
             int sheetIndex = designConditions.getSheetIndex();
-            XSSFSheet sheet = this.getWorkbookSheet(sheetIndex);
-            short templateRowHeight = sheet.getRow(maxRowPosition).getHeight();
-            debug(LOGGER,"设置模板行[%s]行高为[%s]",maxRowPosition,templateRowHeight);
-            writeContext.getLineHeightRecords().put(sheetIndex, designConditions.getWriteFieldNamesList(),templateRowHeight);
+            if(maxRowPosition >= 0){
+                // 设置模板行行高
+                XSSFSheet sheet = this.getWorkbookSheet(sheetIndex);
+                short templateRowHeight = sheet.getRow(maxRowPosition).getHeight();
+                debug(LOGGER,"设置模板行[%s]行高为[%s]",maxRowPosition,templateRowHeight);
+                writeContext.getLineHeightRecords().put(sheetIndex, designConditions.getWriteFieldNamesList(),templateRowHeight);
+            }else{
+                writeContext.getLineHeightRecords().put(sheetIndex, designConditions.getWriteFieldNamesList(), (short) -1);
+                debug(LOGGER,"未找到任意占位符,取消设置行高.");
+            }
         }
         // 第一次写入需要跳过占位符那一行，所以移动需要少一行
         return initialWriting ? maxRowPosition + 1 : maxRowPosition;
