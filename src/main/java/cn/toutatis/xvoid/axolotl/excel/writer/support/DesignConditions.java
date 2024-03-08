@@ -17,7 +17,7 @@ public class DesignConditions {
     /**
      * 模板行高度
      */
-    private short templateLineHeight;
+    private Short templateLineHeight;
 
     /**
      * 开始写入行
