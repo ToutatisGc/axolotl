@@ -10,8 +10,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 
+import java.util.List;
+
 /**
- * 模板写入配置
+ * 自动写入的写入配置
  * @author Toutatis_Gc
  */
 @Data
@@ -25,21 +27,7 @@ public class AutoWriteConfig extends CommonWriteConfig {
     public AutoWriteConfig(Class<?> metaClass,boolean withDefaultConfig) {
         super(withDefaultConfig);
         this.metaClass = metaClass;
-        if(metaClass != null){
-            SheetTitle sheetTitle = metaClass.getDeclaredAnnotation(SheetTitle.class);
-            if(sheetTitle != null){
-                this.title = sheetTitle.value();
-                String sheetName = sheetTitle.sheetName();
-                if (Validator.strNotBlank(sheetName)){
-                    this.sheetName = sheetName;
-                }else{
-                    this.sheetName = this.title;
-                }
-            }
-        }else {
-            throw new AxolotlWriteException("元信息Class为空");
-        }
-
+        setClassMetaData(this.metaClass);
     }
 
     /**
@@ -76,6 +64,10 @@ public class AutoWriteConfig extends CommonWriteConfig {
         this.setStyleRender(ExcelWriteThemes.valueOf(themeName.toUpperCase()));
     }
 
+    /**
+     * 获取工作表名称
+     * @return 工作表名称
+     */
     public String getSheetName() {
         if (sheetName == null) {
             return title;
@@ -83,5 +75,33 @@ public class AutoWriteConfig extends CommonWriteConfig {
         return sheetName;
     }
 
+    /**
+     * 设置元数据类
+     * @param metaClass 元数据类
+     */
+    public void setClassMetaData(Class<?> metaClass){
+        if(metaClass != null){
+            SheetTitle sheetTitle = metaClass.getDeclaredAnnotation(SheetTitle.class);
+            if(sheetTitle != null){
+                this.title = sheetTitle.value();
+                String sheetName = sheetTitle.sheetName();
+                if (Validator.strNotBlank(sheetName)){
+                    this.sheetName = sheetName;
+                }
+            }
+        }else {
+            throw new AxolotlWriteException("元信息Class为空");
+        }
+    }
+
+    /**
+     * 设置元数据类
+     * @param datas 数据列表
+     */
+    public void setClassMetaData(List<?> datas){
+        if(datas != null && !datas.isEmpty()){
+            this.setClassMetaData(datas.get(0).getClass());
+        }
+    }
 
 }

@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.toutatis.xvoid.axolotl.common.CommonMimeType;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.CommonWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.WriteContext;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
@@ -16,9 +17,9 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.format;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
 
@@ -93,6 +94,24 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     public void switchSheet(int sheetIndex) {
         LoggerHelper.debug(LOGGER,"切换到工作表[%s]",sheetIndex);
         this.writeContext.setSwitchSheetIndex(sheetIndex);
+    }
+
+    /**
+     * 检查写入配置
+     * @param writeConfig 写入配置
+     */
+    protected void checkWriteConfig(CommonWriteConfig writeConfig){
+        if(writeConfig == null){
+            String message = "写入配置不能为空";
+            error(LOGGER,message);
+            throw new AxolotlWriteException(message);
+        }
+        OutputStream outputStream = writeConfig.getOutputStream();
+        if(outputStream == null){
+            String message = "输出流不能为空,请指定输出流";
+            error(LOGGER,message);
+            throw new AxolotlWriteException(message);
+        }
     }
 
 }

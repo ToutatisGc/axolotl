@@ -27,6 +27,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -63,12 +64,13 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * @param templateWriteConfig 写入配置
      */
     public AxolotlTemplateExcelWriter(TemplateWriteConfig templateWriteConfig) {
+        super.LOGGER = LOGGER;
         this.writeConfig = templateWriteConfig;
+        this.checkWriteConfig(this.writeConfig);
         TemplateWriteContext templateWriteContext = new TemplateWriteContext();
         super.writeContext = templateWriteContext;
         this.writeContext = templateWriteContext;
         this.writeContext.setSwitchSheetIndex(writeConfig.getSheetIndex());
-        super.LOGGER = LOGGER;
     }
 
     /**
@@ -401,6 +403,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         }
                         alreadySetLineHeight = true;
                     }
+                    boolean isWritten = false;
                     if(designConditions.getWriteFieldNames().containsKey(fieldMappingKey)){
                         Object value;
                         if (designConditions.isSimplePOJO()){
@@ -436,17 +439,15 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             // 暂时只适配String类型
                             writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
                         }
-                        this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
-                        cellAddress.setRowPosition(++rowPosition);
-                        if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
-                            alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
-                        }
-                        isCurrentBatchData = true;
+                        isWritten = true;
                     }else if (designConditions.getNonWrittenAddress().containsKey(fieldMappingKey)){
                         ExcelToolkit.cellAssignment(
                                 sheet, rowPosition, cellAddress.getColumnPosition(),
                                 cellAddress.getCellStyle(), cellAddress.getDefaultValue()
                         );
+                        isWritten = true;
+                    }
+                    if (isWritten){
                         this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
                         cellAddress.setRowPosition(++rowPosition);
                         if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
@@ -454,7 +455,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         }
                         isCurrentBatchData = true;
                     }
-
                 }
                 // 填充非模板单元格
                 if (isCurrentBatchData && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL)){
@@ -702,10 +702,17 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     @Override
     public void close() {
         LoggerHelper.debug(LOGGER, "工作薄写入进入关闭阶段");
-        this.flush(true);
-        workbook.write(writeConfig.getOutputStream());
-        workbook.close();
-        writeConfig.getOutputStream().close();
+        OutputStream outputStream = writeConfig.getOutputStream();
+        if(outputStream != null){
+            this.flush(true);
+            workbook.write(writeConfig.getOutputStream());
+            workbook.close();
+            writeConfig.getOutputStream().close();
+        }else{
+            String message = "输出流为空,请指定输出流";
+            debug(LOGGER,message);
+            throw new AxolotlWriteException(message);
+        }
     }
 
     @Override

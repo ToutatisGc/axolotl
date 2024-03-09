@@ -10,12 +10,13 @@ import lombok.Setter;
  * 继承此抽象类可以获取环境变量实现自定义样式渲染
  * @author Toutatis_Gc
  */
+@Getter
 public abstract class AbstractStyleRender implements ExcelStyleRender{
 
-    @Setter @Getter
+    @Setter
     protected AutoWriteConfig writeConfig;
 
-    @Setter @Getter
+    @Setter
     protected AutoWriteContext context;
 
 }

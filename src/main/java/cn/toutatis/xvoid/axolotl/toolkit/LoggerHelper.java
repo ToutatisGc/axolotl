@@ -22,11 +22,6 @@ public class LoggerHelper {
         /*return String.format(message,args);*/
     }
 
-    /**
-     * 调试输出
-     * @param logger 日志对象
-     * @param message 消息内容
-     */
     public static void debug(Logger logger,String message) {
         LoggerToolkitKt.debugWithModule(logger, Meta.MODULE_NAME,message);
     }
@@ -37,5 +32,25 @@ public class LoggerHelper {
 
     public static void info(Logger logger,String message){
         LoggerToolkitKt.infoWithModule(logger,Meta.MODULE_NAME,message);
+    }
+
+    public static void info(Logger logger,String message,Object... args){
+        LoggerToolkitKt.infoWithModule(logger,Meta.MODULE_NAME,format(message, args));
+    }
+
+    public static void warn(Logger logger,String message){
+        LoggerToolkitKt.warnWithModule(logger,Meta.MODULE_NAME,message);
+    }
+
+    public static void warn(Logger logger,String message,Object... args){
+        LoggerToolkitKt.warnWithModule(logger,Meta.MODULE_NAME,format(message, args));
+    }
+
+    public static void error(Logger logger,String message){
+        LoggerToolkitKt.errorWithModule(logger,Meta.MODULE_NAME,message);
+    }
+
+    public static void error(Logger logger,String message,Object... args){
+        LoggerToolkitKt.errorWithModule(logger,Meta.MODULE_NAME,format(message, args));
     }
 }
