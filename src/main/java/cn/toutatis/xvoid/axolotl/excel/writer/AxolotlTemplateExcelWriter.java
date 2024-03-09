@@ -435,13 +435,13 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }
                             // 暂时只适配String类型
                             writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
-                            this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
-                            cellAddress.setRowPosition(++rowPosition);
-                            if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
-                                alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
-                            }
-                            isCurrentBatchData = true;
                         }
+                        this.setMergeRegion(sheet,cellAddress,rowPosition,alreadyWrittenMergeRegionColumns);
+                        cellAddress.setRowPosition(++rowPosition);
+                        if (!alreadyUsedDataMapping.containsKey(cellAddress.getPlaceholder())){
+                            alreadyUsedDataMapping.put(cellAddress.getPlaceholder(),true);
+                        }
+                        isCurrentBatchData = true;
                     }else if (designConditions.getNonWrittenAddress().containsKey(fieldMappingKey)){
                         ExcelToolkit.cellAssignment(
                                 sheet, rowPosition, cellAddress.getColumnPosition(),

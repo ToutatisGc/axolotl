@@ -5,6 +5,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.DmsRegReceivables;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.SunUser;
+import cn.toutatis.xvoid.axolotl.excel.entities.writer.MpOrgDataIssueNew;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.TemplateWriteConfig;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -30,7 +31,9 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,9 +64,7 @@ public class WriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
         AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
-        Map<String, String> map = new HashMap<>();
-        map.put("fix2", "测试内容2");
-        map.put( "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
+        Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             JSONObject json = new JSONObject(true);
@@ -97,17 +98,24 @@ public class WriteTest {
         commonWriteConfig.setOutputStream(fileOutputStream);
         try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig)) {
             ArrayList<JSONObject> datas1 = new ArrayList<>();
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 2; i++) {
                 JSONObject sch = new JSONObject();
                 sch.put("workPlace","北京-"+RandomStringUtils.randomAlphabetic(16));
                 sch.put("workYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
-                sch.put("salary", true);
+                sch.put("salary", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
                 datas1.add(sch);
             }
             axolotlAutoExcelWriter.write(null, datas1);
-            Map<String, Object> map = new HashMap<>();
-            map.put("name", "Toutatis");
-            map.put("nation","汉");
+            ArrayList<JSONObject> datas2 = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                JSONObject sch = new JSONObject();
+                sch.put("workPlace","北京-"+RandomStringUtils.randomAlphabetic(16));
+                sch.put("workYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+                sch.put("salary", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
+                datas2.add(sch);
+            }
+            axolotlAutoExcelWriter.write(null, datas2);
+            Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
             axolotlAutoExcelWriter.write(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
@@ -117,9 +125,7 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            Map<String, Object> map2 = new HashMap<>();
-            map2.put("age",50);
-            axolotlAutoExcelWriter.write(map2, datas);
+            axolotlAutoExcelWriter.write(Map.of("age",50), datas);
             datas.clear();
             for (int i = 0; i < 5; i++) {
                 JSONObject sch = new JSONObject();
@@ -154,36 +160,25 @@ public class WriteTest {
 
     }
 
-/*    @Test
-    public void testAuto1() throws IOException {
-        FileOutputStream fileOutputStream = new FileOutputStream(new File("D:\\" + IdUtil.randomUUID() + ".xlsx"));
-        AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
-        commonWriteConfig.setOutputStream(fileOutputStream);
-        commonWriteConfig.setTitle("测试生成表标题");
-        ArrayList<String> columnNames = new ArrayList<>();
-        columnNames.add("名称");
-        columnNames.add("姓名");
-        columnNames.add("性别");
-        columnNames.add("身份证号");
-        columnNames.add("地址");
-//        commonWriteConfig.setColumnNames(columnNames);
-        ArrayList<JSONObject> data = new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
-            JSONObject json = new JSONObject(true);
-            json.put("name", "name" + i);
-            json.put("age", i);
-            json.put("sex", i % 2 == 0? "男" : "女");
-            json.put("card", 555444114);
-            json.put("address", null);
-            data.add(json);
-        }
-        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
-        autoExcelWriter.write(null,data);
-        autoExcelWriter.close();
-
-    }*/
-
     @Test
+    public void testBlankFill() throws FileNotFoundException {
+        File file = FileToolkit.getResourceFileAsFile("workbook/write/空白占位符测试.xlsx");
+        TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        commonWriteConfig.setOutputStream(fileOutputStream);
+        // 创建写入器
+        try (AxolotlTemplateExcelWriter excelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
+            List list = new ArrayList();
+            for (int i = 0; i < 2; i++) {
+                JSONObject jsonObject = new JSONObject(true);
+                jsonObject.put("f1","tt");
+                list.add(jsonObject);
+            }
+            excelWriter.write(null,list);
+        }
+    }
+
+//    @Test
     public void generateColorCard() throws IOException {
         SXSSFWorkbook workbook = new SXSSFWorkbook();
         SXSSFSheet sheet = workbook.createSheet("内置色卡");
@@ -209,5 +204,30 @@ public class WriteTest {
 //        }
         workbook.write(new FileOutputStream("D:\\COLOR-CARD.xlsx"));
         workbook.close();
+    }
+
+    @Test
+    public void test1() throws FileNotFoundException {
+          File file = FileToolkit.getResourceFileAsFile("workbook/write/dataScheduleOther.xlsx");
+//        File file = new File("D:\\dataScheduleOther.xlsx");
+        TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        commonWriteConfig.setOutputStream(fileOutputStream);
+// 创建写入器
+        try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
+            List list = new ArrayList();
+
+            for (int i = 0; i < 20; i++) {
+                MpOrgDataIssueNew mpOrgDataIssueNew = new MpOrgDataIssueNew();
+                list.add(mpOrgDataIssueNew);
+            }
+            Map<String, String> map = new HashMap<>();
+            map.put("fileName","测试文件名");
+            map.put("bankName","山西省");
+//            map.put("dataIssue","2024-02");
+            map.put("operationTime", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            axolotlAutoExcelWriter.write(map,list);
+        }
+
     }
 }
