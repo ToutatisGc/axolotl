@@ -70,56 +70,25 @@ public class AutoWriteTest {
         List<Header> headers = new ArrayList<>();
         headers.add(new Header("名称"));
         headers.add(new Header("期限", List.of(new Header("年"),new Header("月"))));
-        headers.add(new Header("账面数", List.of(new Header("经济",List.of(new Header("数量"),new Header("金额"))),new Header("非经济"))));
-        int i = getMaxDepth(headers);
-        setColumnRanges(headers);
-        System.err.println(i);
+        headers.add(new Header("账面数", List.of(new Header("经济",List.of(new Header("数量"),new Header("金额"))),new Header("非经济",List.of(new Header("数量"),new Header("金额"))))));
+        int maxDepth = getMaxDepth(headers, 0);
+        System.err.println(maxDepth);
+        for (Header header : headers) {
+            System.err.println(header.getTotalBottomLevelCount());
+        }
     }
 
-    public static int getMaxDepth(List<Header> headers) {
-        if (headers == null || headers.isEmpty()) {
-            return 0;
-        }
-
-        int maxDepth = 1;
+    public static int getMaxDepth(List<Header> headers, int depth) {
+        int maxDepth = depth;
         for (Header header : headers) {
-            int depth = getMaxDepth(header, 1);
-            maxDepth = Math.max(maxDepth, depth);
+            if (header.getChilds() != null) {
+                int subDepth = getMaxDepth(header.getChilds(), depth + 1);
+                if (subDepth > maxDepth) {
+                    maxDepth = subDepth;
+                }
+            }
         }
         return maxDepth;
-    }
-
-    private static int getMaxDepth(Header header, int depth) {
-        if (header.getChilds().isEmpty()) {
-            return depth;
-        }
-        int maxChildDepth = depth;
-        for (Header child : header.getChilds()) {
-            int childDepth = getMaxDepth(child, depth + 1);
-            maxChildDepth = Math.max(maxChildDepth, childDepth);
-        }
-        return maxChildDepth;
-    }
-
-    public static void setColumnRanges(List<Header> headers) {
-        if (headers == null || headers.isEmpty()) {
-            return;
-        }
-
-        for (Header header : headers) {
-            setColumnRange(header);
-        }
-    }
-
-    private static int setColumnRange(Header header) {
-        if (header.getChilds().isEmpty()) {
-            header.setColumnRange(1);
-            return 1;
-        }
-
-        int childSize = header.getChilds().size();
-        header.setColumnRange(childSize);
-        return childSize;
     }
 
 }
