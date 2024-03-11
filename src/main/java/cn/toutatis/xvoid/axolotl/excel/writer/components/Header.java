@@ -17,19 +17,33 @@ public class Header {
         this.childs = childs;
     }
 
+    /**
+     * 表头标题
+     */
     private String title;
 
+    /**
+     * 当前表头的子表头
+     */
     private List<Header> childs = new ArrayList<>();
 
-    private int columnRange = -1;
+    /**
+     * 当前表头的列宽
+     * 仅最下层表头的列宽有效
+     */
+    private int columnWidth = -1;
 
-    public int getTotalBottomLevelCount() {
+    /**
+     * 计算当前表头的列数
+     * @return 列数
+     */
+    public int countOrlopCellNumber() {
         if (childs == null || childs.isEmpty()) {
             return 1; // 如果当前表头没有子表头，则返回1
         }
         int totalCount = 0;
         for (Header subHeader : childs) {
-            totalCount += subHeader.getTotalBottomLevelCount();
+            totalCount += subHeader.countOrlopCellNumber();
         }
         return totalCount;
     }

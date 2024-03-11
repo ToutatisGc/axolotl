@@ -19,4 +19,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     @Setter
     protected AutoWriteContext context;
 
+    /**
+     * 是否是第一批次数据
+     * @return true/false
+     */
+    public boolean isFirstBatch(){
+        return context.isFirstBatch(context.getSwitchSheetIndex());
+    }
+
 }

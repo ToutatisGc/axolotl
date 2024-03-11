@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.toolkit;
 
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Excel工具类
@@ -216,6 +218,25 @@ public class ExcelToolkit {
         }else {
             writableCell.setBlank();
         }
+    }
+
+    /**
+     * 获取表头最大深度
+     * @param headers 表头
+     * @param depth 深度
+     * @return 最大深度
+     */
+    public static int getMaxDepth(List<Header> headers, int depth) {
+        int maxDepth = depth;
+        for (Header header : headers) {
+            if (header.getChilds() != null) {
+                int subDepth = getMaxDepth(header.getChilds(), depth + 1);
+                if (subDepth > maxDepth) {
+                    maxDepth = subDepth;
+                }
+            }
+        }
+        return maxDepth;
     }
 
     /**

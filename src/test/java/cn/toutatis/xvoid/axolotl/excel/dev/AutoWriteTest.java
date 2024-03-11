@@ -6,6 +6,7 @@ import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.junit.Test;
 
@@ -14,7 +15,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AutoWriteTest {
@@ -71,24 +71,12 @@ public class AutoWriteTest {
         headers.add(new Header("名称"));
         headers.add(new Header("期限", List.of(new Header("年"),new Header("月"))));
         headers.add(new Header("账面数", List.of(new Header("经济",List.of(new Header("数量"),new Header("金额"))),new Header("非经济",List.of(new Header("数量"),new Header("金额"))))));
-        int maxDepth = getMaxDepth(headers, 0);
+        int maxDepth = ExcelToolkit.getMaxDepth(headers, 0);
         System.err.println(maxDepth);
         for (Header header : headers) {
-            System.err.println(header.getTotalBottomLevelCount());
+            System.err.println(header.countOrlopCellNumber());
         }
     }
 
-    public static int getMaxDepth(List<Header> headers, int depth) {
-        int maxDepth = depth;
-        for (Header header : headers) {
-            if (header.getChilds() != null) {
-                int subDepth = getMaxDepth(header.getChilds(), depth + 1);
-                if (subDepth > maxDepth) {
-                    maxDepth = subDepth;
-                }
-            }
-        }
-        return maxDepth;
-    }
 
 }

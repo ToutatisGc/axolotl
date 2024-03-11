@@ -7,6 +7,8 @@ import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
+import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -16,11 +18,14 @@ import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Map;
 
 public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelStyleRender {
+
+    private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlClassicalTheme.class);
 
     private SXSSFWorkbook workbook;
 
@@ -30,7 +35,16 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
 
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
-        return null;
+        AxolotlWriteResult axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
+        if(isFirstBatch()){
+            String sheetName = writeConfig.getSheetName();
+            if(Validator.strNotBlank(sheetName)){
+                int sheetIndex = writeConfig.getSheetIndex();
+                LoggerHelper.info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
+                workbook.setSheetName(sheetIndex,sheetName);
+            }
+        }
+        return axolotlWriteResult;
     }
 
     @Override

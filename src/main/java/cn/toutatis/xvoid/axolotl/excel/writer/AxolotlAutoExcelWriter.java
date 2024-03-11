@@ -8,6 +8,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import cn.toutatis.xvoid.toolkit.validator.Validator;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
@@ -62,26 +63,18 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
         writeContext.setHeaders(headers);
         writeContext.setDatas(datas);
+        if (styleRender instanceof AbstractStyleRender innerStyleRender){
+            innerStyleRender.setWriteConfig(writeConfig);
+        }
         if(writeContext.isFirstBatch(writeContext.getSwitchSheetIndex())){
             sheet = workbook.createSheet();
-            workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
-            styleRender.renderHeader(sheet);
         }else {
             sheet = workbook.getSheetAt(writeContext.getSwitchSheetIndex());
         }
-        // TODO 解析实体注解
-        // TODO 渲染实体数据到表
+        styleRender.init(sheet);
+        styleRender.renderHeader(sheet);
         // TODO 渲染结束数据
-
-
-        if (styleRender instanceof AbstractStyleRender innerStyleRender){
-            innerStyleRender.setWriteConfig(writeConfig);
-            innerStyleRender.renderHeader(sheet);
-        }else {
-            styleRender.renderHeader(sheet);
-        }
-
-        styleRender.renderData(sheet, datas);
+//        styleRender.renderData(sheet, datas);
         return null;
     }
 
