@@ -8,6 +8,14 @@ package cn.toutatis.xvoid.axolotl.excel.writer.components;
  */
 public @interface SheetSimpleHeader {
 
+    /**
+     * 表头名称
+     */
     String name();
+
+    /**
+     * 列宽
+     */
+    int width() default -1;
 
 }

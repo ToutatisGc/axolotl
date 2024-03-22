@@ -49,6 +49,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         autoWriteContext.setWorkbook(this.workbook);
         this.writeContext = autoWriteContext;
         super.writeContext = autoWriteContext;
+        writeContext.setSwitchSheetIndex(autoWriteContext.getSwitchSheetIndex());
     }
 
     /**
@@ -58,18 +59,21 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      * @throws AxolotlWriteException 写入异常
      */
     public AxolotlWriteResult write(List<Header> headers, List<?> datas) throws AxolotlWriteException {
-        info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
+        int switchSheetIndex = writeContext.getSwitchSheetIndex();
+        info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(switchSheetIndex));
         SXSSFSheet sheet;
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
         writeContext.setHeaders(headers);
         writeContext.setDatas(datas);
         if (styleRender instanceof AbstractStyleRender innerStyleRender){
             innerStyleRender.setWriteConfig(writeConfig);
+            innerStyleRender.setContext(writeContext);
         }
-        if(writeContext.isFirstBatch(writeContext.getSwitchSheetIndex())){
+        if(writeContext.isFirstBatch(switchSheetIndex)){
             sheet = workbook.createSheet();
+            writeContext.setWorkbook(workbook);
         }else {
-            sheet = workbook.getSheetAt(writeContext.getSwitchSheetIndex());
+            sheet = workbook.getSheetAt(switchSheetIndex);
         }
         styleRender.init(sheet);
         styleRender.renderHeader(sheet);

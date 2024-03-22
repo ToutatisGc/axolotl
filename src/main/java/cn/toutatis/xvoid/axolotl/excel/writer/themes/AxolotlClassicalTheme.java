@@ -7,12 +7,11 @@ import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
@@ -23,26 +22,37 @@ import org.slf4j.Logger;
 import java.util.List;
 import java.util.Map;
 
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
+
 public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelStyleRender {
 
     private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlClassicalTheme.class);
 
-    private SXSSFWorkbook workbook;
 
     private static final IndexedColors THEME_COLOR = AxolotlCommendatoryColors.BLUE_GREY;
 
     private int alreadyWriteRow = -1;
 
+    /**
+     * 是否已经写入标题
+     */
+    private boolean alraedyWirteTitle = false;
+
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
-        AxolotlWriteResult axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
+        AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
+            axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
             String sheetName = writeConfig.getSheetName();
             if(Validator.strNotBlank(sheetName)){
                 int sheetIndex = writeConfig.getSheetIndex();
-                LoggerHelper.info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
-                workbook.setSheetName(sheetIndex,sheetName);
+                info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
+                context.getWorkbook().setSheetName(sheetIndex,sheetName);
+            }else {
+                debug(LOGGER,"未设置工作表名称");
             }
+        }else{
+            axolotlWriteResult = new AxolotlWriteResult(true,"已初始化");
         }
         return axolotlWriteResult;
     }
@@ -50,14 +60,49 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     @Override
     public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
         // 1.渲染标题
-        String title = writeConfig.getTitle();
-        if(Validator.strNotBlank(title)){
-            this.createTitleRow(sheet);
-        }
-        SXSSFRow columnNamesRow = sheet.createRow(++alreadyWriteRow);
-        columnNamesRow.setHeight((short) 400);
-        CellStyle headerCellStyle = StyleHelper.createStandardCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TEXT_FONT_SIZE);
+        CellStyle titleRow = this.createTitleRow(sheet);
+        // 2.渲染表头
         List<Header> headers = context.getHeaders();
+        int headerMaxDepth = -1;
+        int headerColumnCount = 0;
+        if (headers != null && !headers.isEmpty()){
+            alreadyWriteRow++;
+            headerMaxDepth = ExcelToolkit.getMaxDepth(headers, 0);
+            //根节点渲染
+            for (Header header : headers) {
+                List<Header> childs = header.getChilds();
+                int orlopCellNumber = header.countOrlopCellNumber();
+                Row row = ExcelToolkit.createOrCatchRow(sheet, alreadyWriteRow);
+                Cell cell = row.createCell(headerColumnCount, CellType.STRING);
+                cell.setCellValue(header.getTitle());
+                if (childs != null && !childs.isEmpty()){
+                    CellRangeAddress cellAddresses = new CellRangeAddress(alreadyWriteRow, alreadyWriteRow, headerColumnCount, headerColumnCount+orlopCellNumber-1);
+                    StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
+                    sheet.addMergedRegion(cellAddresses);
+                    recursionRenderHeaders(sheet,childs,headerMaxDepth,++alreadyWriteRow,headerColumnCount-1);
+                }else{
+                    CellRangeAddress cellAddresses = new CellRangeAddress(alreadyWriteRow, alreadyWriteRow+headerMaxDepth-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
+                    StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
+                    sheet.addMergedRegion(cellAddresses);
+                }
+                headerColumnCount+=orlopCellNumber;
+            }
+            System.err.println("maxDepth:"+headerMaxDepth);
+        }else{
+            debug(LOGGER,"未设置表头");
+        }
+        System.err.println(headerColumnCount);
+
+        CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, headerColumnCount-1);
+        StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
+        sheet.addMergedRegion(cellAddresses);
+//        if (headerMaxDepth > 0){
+//
+//        }
+//        SXSSFRow columnNamesRow = sheet.createRow(++alreadyWriteRow);
+//        columnNamesRow.setHeight((short) 400);
+//        CellStyle headerCellStyle = StyleHelper.createStandardCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TEXT_FONT_SIZE);
+//        List<Header> headers = context.getHeaders();
 
 
 //        List<String> columnNames = writeConfig.getColumnNames();
@@ -68,28 +113,33 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
 //            cell.setCellStyle(headerCellStyle);
 //            sheet.setColumnWidth(i,StyleHelper.getPresetCellLength(name));
 //        }
+        // 合并标题列
+
         return null;
     }
 
-    private void renderHeaders(SXSSFSheet sheet,List<Header> headers){
-        calculateHeaderLevel(headers,0);
-    }
-
-    private int calculateHeaderLevel(List<Header> headers,int level){
-        if(headers != null && !headers.isEmpty()){
+    private void recursionRenderHeaders(SXSSFSheet sheet,List<Header> headers,int maxLevel,int row,int column){
+        if (headers != null && !headers.isEmpty()){
             for (Header header : headers) {
-                List<Header> childs = header.getChilds();
-                if(!childs.isEmpty()){
-                    level++;
-                    return calculateHeaderLevel(childs,level);
+                System.err.println(header);
+                int orlopCellNumber = header.countOrlopCellNumber();
+                if (orlopCellNumber == 1){
+                    Row row1 = ExcelToolkit.createOrCatchRow(sheet, row);
+                    Cell cell = row1.createCell(column, CellType.STRING);
+                    cell.setCellValue(header.getTitle());
+                    sheet.setColumnWidth(column,StyleHelper.getPresetCellLength(header.getTitle()));
+                    column++;
+                    continue;
                 }else{
-                    return 0;
+                    if (header.getChilds() != null && !header.getChilds().isEmpty()){
+                        recursionRenderHeaders(sheet,header.getChilds(),maxLevel,row++,column);
+                    }else{
+
+                    }
                 }
             }
-        }else{
-            return level;
         }
-        return level;
+//        calculateHeaderLevel(headers,0);
     }
 
     @Override
@@ -124,16 +174,20 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         return null;
     }
 
-    private void createTitleRow(SXSSFSheet sheet){
-        SXSSFRow titleRow = sheet.createRow(++alreadyWriteRow);
-        titleRow.setHeight((short) 600);
-        SXSSFCell startPositionCell = titleRow.createCell(0);
-        startPositionCell.setCellValue(writeConfig.getTitle());
-        CellStyle titleCellStyle = StyleHelper.createStandardCellStyle(workbook, BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TITLE_FONT_SIZE);
-        startPositionCell.setCellStyle(titleCellStyle);
-//        CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, writeConfig.getColumnNames().size() - 1);
-//        StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleCellStyle);
-//        sheet.addMergedRegion(cellAddresses);
+    private CellStyle createTitleRow(SXSSFSheet sheet){
+        String title = writeConfig.getTitle();
+        CellStyle cellStyle = null;
+        if (Validator.strNotBlank(title)){
+            debug(LOGGER,"设置工作表标题:[%s]",title);
+            SXSSFRow titleRow = sheet.createRow(++alreadyWriteRow);
+            titleRow.setHeight((short) 600);
+            SXSSFCell startPositionCell = titleRow.createCell(0);
+            startPositionCell.setCellValue(writeConfig.getTitle());
+            cellStyle = StyleHelper.createStandardCellStyle(context.getWorkbook(), BorderStyle.MEDIUM,THEME_COLOR,true,"宋体",StyleHelper.STANDARD_TITLE_FONT_SIZE);
+        }else{
+            debug(LOGGER,"未设置工作表标题");
+        }
+        return cellStyle;
     }
 
 }
