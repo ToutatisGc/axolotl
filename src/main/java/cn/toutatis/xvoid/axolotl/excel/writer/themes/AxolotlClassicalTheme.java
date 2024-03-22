@@ -68,34 +68,42 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         if (headers != null && !headers.isEmpty()){
             alreadyWriteRow++;
             headerMaxDepth = ExcelToolkit.getMaxDepth(headers, 0);
+            debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
             //根节点渲染
             for (Header header : headers) {
-                List<Header> childs = header.getChilds();
-                int orlopCellNumber = header.countOrlopCellNumber();
-                Row row = ExcelToolkit.createOrCatchRow(sheet, alreadyWriteRow);
+                int startRow = alreadyWriteRow;
+                Row row = ExcelToolkit.createOrCatchRow(sheet, startRow);
                 Cell cell = row.createCell(headerColumnCount, CellType.STRING);
-                cell.setCellValue(header.getTitle());
-                if (childs != null && !childs.isEmpty()){
-                    CellRangeAddress cellAddresses = new CellRangeAddress(alreadyWriteRow, alreadyWriteRow, headerColumnCount, headerColumnCount+orlopCellNumber-1);
-                    StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
-                    sheet.addMergedRegion(cellAddresses);
-                    recursionRenderHeaders(sheet,childs,headerMaxDepth,++alreadyWriteRow,headerColumnCount-1);
+                String title = header.getTitle();
+                cell.setCellValue(title);
+                int orlopCellNumber = header.countOrlopCellNumber();
+                debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title,startRow,headerColumnCount,orlopCellNumber);
+                // 有子节点说明需要向下迭代并合并
+                CellRangeAddress cellAddresses;
+                if (orlopCellNumber > 1){
+                    List<Header> childs = header.getChilds();
+                    int childMaxDepth = ExcelToolkit.getMaxDepth(childs, 0);
+                    cellAddresses = new CellRangeAddress(startRow, startRow+(headerMaxDepth-childMaxDepth)-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
+                    recursionRenderHeaders(sheet,childs,headerMaxDepth,++startRow,headerColumnCount);
                 }else{
-                    CellRangeAddress cellAddresses = new CellRangeAddress(alreadyWriteRow, alreadyWriteRow+headerMaxDepth-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
-                    StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
+                    cellAddresses = new CellRangeAddress(startRow, (startRow+headerMaxDepth)-1, headerColumnCount, headerColumnCount);
+                }
+                StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
+                if (headerMaxDepth > 1){
                     sheet.addMergedRegion(cellAddresses);
                 }
                 headerColumnCount+=orlopCellNumber;
             }
-            System.err.println("maxDepth:"+headerMaxDepth);
         }else{
             debug(LOGGER,"未设置表头");
         }
-        System.err.println(headerColumnCount);
-
+        debug(LOGGER,"合并标题栏单元格,共[%s]列",headerColumnCount);
         CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, headerColumnCount-1);
         StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
-        sheet.addMergedRegion(cellAddresses);
+        if (headerColumnCount > 1){
+            sheet.addMergedRegion(cellAddresses);
+        }
+
 //        if (headerMaxDepth > 0){
 //
 //        }
@@ -120,6 +128,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
 
     private void recursionRenderHeaders(SXSSFSheet sheet,List<Header> headers,int maxLevel,int row,int column){
         if (headers != null && !headers.isEmpty()){
+
             for (Header header : headers) {
                 System.err.println(header);
                 int orlopCellNumber = header.countOrlopCellNumber();
@@ -128,15 +137,16 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                     Cell cell = row1.createCell(column, CellType.STRING);
                     cell.setCellValue(header.getTitle());
                     sheet.setColumnWidth(column,StyleHelper.getPresetCellLength(header.getTitle()));
-                    column++;
-                    continue;
+
+//                    continue;
                 }else{
                     if (header.getChilds() != null && !header.getChilds().isEmpty()){
-                        recursionRenderHeaders(sheet,header.getChilds(),maxLevel,row++,column);
+                        recursionRenderHeaders(sheet,header.getChilds(),maxLevel,row,column);
                     }else{
 
                     }
                 }
+                column++;
             }
         }
 //        calculateHeaderLevel(headers,0);
