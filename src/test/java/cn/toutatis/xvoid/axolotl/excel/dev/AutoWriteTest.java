@@ -30,6 +30,7 @@ public class AutoWriteTest {
         headers.add(new Header("账面数",
                 List.of(new Header("经济",
                         List.of(new Header("数量"), new Header("金额"))), new Header("非经济", List.of(new Header("数量"), new Header("金额"))))));
+        headers.add(new Header("备注"));
 
         ArrayList<JSONObject> data = new ArrayList<>();
 //        for (int i = 0; i < 50; i++) {
@@ -73,6 +74,14 @@ public class AutoWriteTest {
         Assert.assertEquals(3,maxDepth);
         for (Header header : headers) {
             System.err.println(header.countOrlopCellNumber());
+        }
+    }
+
+    @Test
+    public void testAnnoGetHeaderList(){
+        List<Header> headers = ExcelToolkit.getHeaderList(AnnoEntity.class);
+        for (Header header : headers) {
+            System.err.println(header.getName());
         }
     }
 

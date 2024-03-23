@@ -8,19 +8,19 @@ import java.util.List;
 @Data
 public class Header {
 
-    public Header(String title) {
-        this.title = title;
+    public Header(String name) {
+        this.name = name;
     }
 
-    public Header(String title, List<Header> childs) {
-        this.title = title;
+    public Header(String name, List<Header> childs) {
+        this.name = name;
         this.childs = childs;
     }
 
     /**
      * 表头标题
      */
-    private String title;
+    private String name;
 
     /**
      * 当前表头的子表头

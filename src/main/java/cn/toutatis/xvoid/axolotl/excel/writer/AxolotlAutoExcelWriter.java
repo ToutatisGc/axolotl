@@ -63,6 +63,9 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(switchSheetIndex));
         SXSSFSheet sheet;
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
+        if (styleRender == null){
+            throw new AxolotlWriteException("请设置写入渲染器");
+        }
         writeContext.setHeaders(headers);
         writeContext.setDatas(datas);
         if (styleRender instanceof AbstractStyleRender innerStyleRender){
@@ -72,12 +75,11 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         if(writeContext.isFirstBatch(switchSheetIndex)){
             sheet = workbook.createSheet();
             writeContext.setWorkbook(workbook);
+            styleRender.init(sheet);
+            styleRender.renderHeader(sheet);
         }else {
             sheet = workbook.getSheetAt(switchSheetIndex);
         }
-        styleRender.init(sheet);
-        styleRender.renderHeader(sheet);
-        // TODO 渲染结束数据
 //        styleRender.renderData(sheet, datas);
         return null;
     }

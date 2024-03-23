@@ -3,6 +3,7 @@ package cn.toutatis.xvoid.axolotl.toolkit;
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetHeader;
 import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -11,12 +12,10 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Excel工具类
@@ -240,13 +239,22 @@ public class ExcelToolkit {
     }
 
     /**
-     *
-     * @param workbook
-     * @param sheetIndex
-     * @param sheetName
+     * 获取实体类表头
+     * @param clazz 类
+     * @return 表头
      */
-    public static void createAssignIndexSheet(Workbook workbook, int sheetIndex,String sheetName){
-
+    public static List<Header> getHeaderList(Class<?> clazz) {
+        ArrayList<Header> headerList = new ArrayList<>();
+        List<Field> list = ReflectToolkit.getAllFields(clazz, true);
+        for (Field field : list) {
+            SheetHeader sheetHeader = field.getDeclaredAnnotation(SheetHeader.class);
+            if (sheetHeader != null) {
+                Header header = new Header(sheetHeader.name());
+                header.setColumnWidth(sheetHeader.width());
+                headerList.add(header);
+            }
+        }
+        return headerList;
     }
 
 }
