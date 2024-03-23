@@ -33,15 +33,15 @@ public class AutoWriteTest {
         headers.add(new Header("备注"));
 
         ArrayList<JSONObject> data = new ArrayList<>();
-//        for (int i = 0; i < 50; i++) {
-//            JSONObject json = new JSONObject(true);
-//            json.put("name", "name" + i);
-//            json.put("age", i);
-//            json.put("sex", i % 2 == 0? "男" : "女");
-//            json.put("card", 555444114);
-//            json.put("address", null);
-//            data.add(json);
-//        }
+        for (int i = 0; i < 50; i++) {
+            JSONObject json = new JSONObject(true);
+            json.put("name", "name" + i);
+            json.put("age", i);
+            json.put("sex", i % 2 == 0? "男" : "女");
+            json.put("card", 555444114);
+            json.put("address", null);
+            data.add(json);
+        }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();

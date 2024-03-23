@@ -26,6 +26,9 @@ public class AutoWriteContext extends WriteContext{
      */
     private List<?> datas;
 
-
+    /**
+     * 已经写入的列数
+     */
+    private int alreadyWrittenColumns = 0;
 
 }

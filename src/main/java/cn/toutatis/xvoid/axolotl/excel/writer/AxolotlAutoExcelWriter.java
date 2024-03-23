@@ -80,7 +80,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         }else {
             sheet = workbook.getSheetAt(switchSheetIndex);
         }
-//        styleRender.renderData(sheet, datas);
+        styleRender.renderData(sheet, datas);
         return null;
     }
 
