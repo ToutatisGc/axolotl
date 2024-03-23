@@ -34,7 +34,9 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
 
     private static final AxolotlColor THEME_COLOR_XSSF = new AxolotlColor(68,114,199);
 
-    private static final String FONT_NAME = "微软雅黑";
+    private static final String FONT_NAME = "宋体";
+
+    private Font MAIN_TEXT_FONT;
 
     private int alreadyWriteRow = -1;
 
@@ -47,6 +49,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
+            MAIN_TEXT_FONT = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, false, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK);
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
             String sheetName = writeConfig.getSheetName();
             if(Validator.strNotBlank(sheetName)){
@@ -56,29 +59,14 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
             }else {
                 debug(LOGGER,"未设置工作表名称");
             }
-            // 创建一个默认单元格样式
-            CellStyle defaultStyle = context.getWorkbook().createCellStyle();
 
-            // 设置默认样式
-            defaultStyle.setFillForegroundColor(IndexedColors.WHITE.getIndex());
-            defaultStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-            // 设置边框样式
-            defaultStyle.setBorderBottom(BorderStyle.NONE);
-            defaultStyle.setBorderTop(BorderStyle.NONE);
-            defaultStyle.setBorderLeft(BorderStyle.NONE);
-            defaultStyle.setBorderRight(BorderStyle.NONE);
-
-            // 设置居中对齐
-            defaultStyle.setAlignment(HorizontalAlignment.CENTER);
-            defaultStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-
-            IndexedColorMap indexedColors = context.getWorkbook().getXSSFWorkbook().getStylesSource().getIndexedColors();
-
+            CellStyle defaultStyle = StyleHelper.createStandardCellStyle(
+                    context.getWorkbook(), BorderStyle.NONE, IndexedColors.WHITE, new AxolotlColor(255, 255, 255), MAIN_TEXT_FONT
+            );
             // 将默认样式应用到所有单元格
             for (int i = 0; i < 26; i++) {
                 sheet.setDefaultColumnStyle(i, defaultStyle);
-                sheet.setDefaultColumnWidth(10);
+                sheet.setDefaultColumnWidth(12);
             }
             sheet.setDefaultRowHeight((short) 350);
         }else{
@@ -129,7 +117,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         int headerColumnCount = 0;
         if (headers != null && !headers.isEmpty()){
             Font font = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.WHITE);
-            CellStyle headerCellStyle = StyleHelper.createCellStyle(
+            CellStyle headerCellStyle = StyleHelper.createStandardCellStyle(
                     context.getWorkbook(), BorderStyle.MEDIUM, IndexedColors.WHITE, THEME_COLOR_XSSF,font
             );
             alreadyWriteRow++;
@@ -148,7 +136,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                 debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title,startRow,headerColumnCount,orlopCellNumber);
                 // 有子节点说明需要向下迭代并合并
                 CellRangeAddress cellAddresses;
-                if (orlopCellNumber > 1){
+                if (header.getChilds()!=null && !header.getChilds().isEmpty()){
                     List<Header> childs = header.getChilds();
                     int childMaxDepth = ExcelToolkit.getMaxDepth(childs, 0);
                     cellAddresses = new CellRangeAddress(startRow, startRow+(headerMaxDepth-childMaxDepth)-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
@@ -196,7 +184,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                 cell.setCellValue(header.getName());
                 int childCount = header.countOrlopCellNumber();
                 int endColumnPosition = (alreadyWriteColumn + childCount);
-                if (childCount > 1){
+                if (header.getChilds()!=null && !header.getChilds().isEmpty()){
                     CellRangeAddress cellAddresses = new CellRangeAddress(startRow, startRow, alreadyWriteColumn, endColumnPosition-1);
                     StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, headerRecursiveInfo.getCellStyle());
                     sheet.addMergedRegion(cellAddresses);
@@ -221,12 +209,11 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         SXSSFWorkbook workbook = context.getWorkbook();
         BorderStyle borderStyle = BorderStyle.THIN;
         IndexedColors borderColor = IndexedColors.WHITE;
-        Font font = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, false, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK);
         CellStyle dataStyle = StyleHelper.createCellStyle(
-                workbook, borderStyle, borderColor, new AxolotlColor(217,226,243),font
+                workbook, borderStyle, borderColor, new AxolotlColor(217,226,243),MAIN_TEXT_FONT
         );
         CellStyle dataStyleOdd = StyleHelper.createCellStyle(
-                workbook ,borderStyle , borderColor, new AxolotlColor(181,197,230),font
+                workbook ,borderStyle , borderColor, new AxolotlColor(181,197,230),MAIN_TEXT_FONT
         );
         DataFormat dataFormat = workbook.createDataFormat();
         short textFormatIndex = dataFormat.getFormat("@");
@@ -234,7 +221,6 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         dataStyleOdd.setDataFormat(textFormatIndex);
         for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
             boolean isOdd = i % 2 == 0;
-
             Object datum = data.get(i);
             SXSSFRow dataRow = sheet.createRow(++alreadyWriteRow);
             System.err.println("写入：" + alreadyWriteRow + "=" + datum);
@@ -274,11 +260,9 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
             SXSSFCell startPositionCell = titleRow.createCell(0);
             startPositionCell.setCellValue(writeConfig.getTitle());
             Font font = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, true, StyleHelper.STANDARD_TITLE_FONT_SIZE, IndexedColors.WHITE);
-            cellStyle = StyleHelper.createCellStyle(
+            cellStyle = StyleHelper.createStandardCellStyle(
                     context.getWorkbook(), BorderStyle.THICK, IndexedColors.WHITE, THEME_COLOR_XSSF,font
             );
-            StyleHelper.setCellStyleAlignmentCenter(cellStyle);
-            cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         }else{
             debug(LOGGER,"未设置工作表标题");
         }

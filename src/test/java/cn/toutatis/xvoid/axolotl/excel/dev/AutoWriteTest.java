@@ -25,7 +25,7 @@ public class AutoWriteTest {
         commonWriteConfig.setTitle("测试表");
         commonWriteConfig.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
-        headers.add(new Header("名称"));
+        headers.add(new Header("名称",List.of(new Header("姓名"))));
         headers.add(new Header("期限", List.of(new Header("年"), new Header("月"))));
         headers.add(new Header("账面数",
                 List.of(new Header("经济",

@@ -16,10 +16,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import lombok.SneakyThrows;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -623,11 +620,15 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         int cellMultipleMatchTemplate = -1;
         String stringCellValue = cell.getStringCellValue();
         Matcher matcher = pattern.matcher(stringCellValue);
+        DataFormat dataFormat = workbook.createDataFormat();
+        short textFormatIndex = dataFormat.getFormat("@");
         while (matcher.find()){
             cellMultipleMatchTemplate++;
             int rowIndex = cell.getRowIndex();
             int columnIndex = cell.getColumnIndex();
-            CellAddress cellAddress = new CellAddress(stringCellValue,rowIndex ,columnIndex , cell.getCellStyle());
+            CellStyle cellStyle = cell.getCellStyle();
+            cellStyle.setDataFormat(textFormatIndex);
+            CellAddress cellAddress = new CellAddress(stringCellValue,rowIndex ,columnIndex , cellStyle);
             cellAddress.setPlaceholder(matcher.group());
             String matchTemplate = matcher.group(1);
             String[] defaultSplitContent = matchTemplate.split(StringPool.COLON);

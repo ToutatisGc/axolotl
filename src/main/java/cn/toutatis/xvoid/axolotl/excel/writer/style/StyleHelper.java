@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
@@ -143,9 +144,32 @@ public class StyleHelper {
         cellStyle.setRightBorderColor(borderColor.getIndex());
         cellStyle.setBottomBorderColor(borderColor.getIndex());
         cellStyle.setLeftBorderColor(borderColor.getIndex());
-        cellStyle.setFont(font);
+        if (font != null){
+            cellStyle.setFont(font);
+        }
         cellStyle.setFillForegroundColor(foregroundColor.toXSSFColor());
         cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return cellStyle;
+    }
+
+    public static CellStyle createCellStyle(
+            Workbook workbook,
+            BorderStyle borderStyle,
+            IndexedColors borderColor,
+            AxolotlColor foregroundColor
+    ){
+        return createCellStyle(workbook, borderStyle, borderColor, foregroundColor,null);
+    }
+
+    public static CellStyle createStandardCellStyle(
+            Workbook workbook,
+            BorderStyle borderStyle,
+            IndexedColors borderColor,
+            AxolotlColor foregroundColor,
+            Font font
+    ){
+        CellStyle cellStyle = createCellStyle(workbook, borderStyle, borderColor, foregroundColor, font);
+        StyleHelper.setCellStyleAlignmentCenter(cellStyle);
         return cellStyle;
     }
 
