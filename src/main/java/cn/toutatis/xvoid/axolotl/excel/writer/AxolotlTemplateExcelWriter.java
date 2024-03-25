@@ -111,7 +111,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             axolotlWriteResult.setMessage("写入完成");
         }else{
             String message = "非模板写入请使用AxolotlAutoExcelWriter.write()方法";
-            if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.EXCEPTION_RETURN_RESULT)){
+            if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT)){
                 axolotlWriteResult.setMessage(message);
                 return axolotlWriteResult;
             }
@@ -186,7 +186,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * 未使用的单次占位符填充默认值
      */
     private void gatherUnusedSingleReferenceDataAndFillDefault() {
-        if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
+        if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_PLACEHOLDER_FILL_DEFAULT)){
             int sheetIndex = writeContext.getSwitchSheetIndex();
             Sheet sheet = this.getWorkbookSheet(writeContext.getSwitchSheetIndex());
             Map<String, CellAddress> singleReferenceMapping =  writeContext.getSingleReferenceData().row(sheetIndex);
@@ -199,7 +199,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * 未使用的列表占位符填充默认值
      */
     private void gatherUnusedCircleReferenceDataAndFillDefault() {
-        if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.PLACEHOLDER_FILL_DEFAULT)){
+        if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_PLACEHOLDER_FILL_DEFAULT)){
             int sheetIndex = writeContext.getSwitchSheetIndex();
             Sheet sheet = this.getWorkbookSheet(sheetIndex);
             Map<String, CellAddress> circleReferenceData =  writeContext.getCircleReferenceData().row(sheetIndex);
@@ -319,7 +319,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 .collect(Collectors.toMap(CellAddress::getColumnPosition, cellAddress -> cellAddress));
 
         boolean alreadyFill = writeContext.getSheetNonTemplateCells().contains(sheetIndex, writeFieldNamesList);
-        boolean nonTemplateCellFill = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL);
+        boolean nonTemplateCellFill = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL);
 
         // 模板行种非模板列
         List<CellAddress> nonTemplateCellAddressList = new ArrayList<>();
@@ -366,7 +366,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             boolean initialWriting = designConditions.isFieldsInitialWriting();
             int startShiftRow = designConditions.getStartShiftRow();
             if ((circleDataList.size() > 1 || (circleDataList.size() == 1 && initialWriting)) &&
-                    writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SHIFT_WRITE_ROW)){
+                    writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_SHIFT_WRITE_ROW)){
                 // 最后一行大于起始行，则下移，否则为表底不下移
                 int lastRowNum = sheet.getLastRowNum();
                 if(startShiftRow >= 0 && lastRowNum >= startShiftRow){
@@ -419,7 +419,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             if (defaultValue != null){
                                 writableCell.setCellValue(cellAddress.replacePlaceholder(defaultValue));
                             }else{
-                                if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NULL_VALUE_WITH_TEMPLATE_FILL)){
+                                if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL)){
                                     writableCell.setCellValue(cellAddress.replacePlaceholder(""));
                                 }else{
                                     writableCell.setBlank();
@@ -454,7 +454,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     }
                 }
                 // 填充非模板单元格
-                if (isCurrentBatchData && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.NON_TEMPLATE_CELL_FILL)){
+                if (isCurrentBatchData && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL)){
                     List<CellAddress> nonTemplateCells = writeContext.getSheetNonTemplateCells().get(sheetIndex, designConditions.getWriteFieldNamesList());
                     if (nonTemplateCells != null && !nonTemplateCells.isEmpty()) {
                         for (CellAddress nonTemplateCellAddress : nonTemplateCells){

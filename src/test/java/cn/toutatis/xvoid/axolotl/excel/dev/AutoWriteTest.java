@@ -6,6 +6,7 @@ import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.junit.Assert;
@@ -22,14 +23,15 @@ public class AutoWriteTest {
     public void testAuto1() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
         commonWriteConfig.setTitle("测试表");
         commonWriteConfig.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
-        headers.add(new Header("名称",List.of(new Header("姓名"))));
+        headers.add(new Header("名称",List.of(new Header("姓名"),new Header("花名"))));
         headers.add(new Header("期限", List.of(new Header("年"), new Header("月"))));
         headers.add(new Header("账面数",
                 List.of(new Header("经济",
-                        List.of(new Header("数量"), new Header("金额"))), new Header("非经济", List.of(new Header("数量"), new Header("金额"))))));
+                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), new Header("金额"))));
         headers.add(new Header("备注"));
 
         ArrayList<JSONObject> data = new ArrayList<>();

@@ -52,6 +52,16 @@ public class CommonWriteConfig {
 
 
     /**
+     * 添加读取策略
+     */
+    public void setWritePolicy(ExcelWritePolicy policy,boolean value) {
+        if (policy.getType() != ExcelWritePolicy.Type.BOOLEAN){
+            throw new IllegalArgumentException("读取特性不是一个布尔类型");
+        }
+        writePolicies.put(policy,value);
+    }
+
+    /**
      * 获取一个布尔值类型的读取策略
      */
     public boolean getWritePolicyAsBoolean(ExcelWritePolicy policy) {

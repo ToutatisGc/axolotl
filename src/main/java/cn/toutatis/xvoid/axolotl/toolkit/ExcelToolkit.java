@@ -250,6 +250,7 @@ public class ExcelToolkit {
             SheetHeader sheetHeader = field.getDeclaredAnnotation(SheetHeader.class);
             if (sheetHeader != null) {
                 Header header = new Header(sheetHeader.name());
+                header.setFieldName(field.getName());
                 header.setColumnWidth(sheetHeader.width());
                 headerList.add(header);
             }

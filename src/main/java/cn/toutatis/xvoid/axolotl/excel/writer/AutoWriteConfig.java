@@ -50,6 +50,12 @@ public class AutoWriteConfig extends CommonWriteConfig {
      */
     private ExcelStyleRender styleRender = ExcelWriteThemes.$DEFAULT.getRender();
 
+    /**
+     * 空值填充字符
+     * null值将被填充为空字符串，常用的字符串有"-","未填写","无"
+     */
+    private String blankValue = "";
+
 
     public void setStyleRender(ExcelStyleRender styleRender) {
         this.styleRender = styleRender;

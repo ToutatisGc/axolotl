@@ -27,8 +27,22 @@ public class AutoWriteContext extends WriteContext{
     private List<?> datas;
 
     /**
+     * 已经写入的行数
+     */
+    private int alreadyWriteRow = -1;
+
+    /**
      * 已经写入的列数
      */
     private int alreadyWrittenColumns = 0;
+
+    /**
+     * 当前写入数据序号
+     */
+    private int serialNumber = 1;
+
+    public int getAndIncrementSerialNumber(){
+        return serialNumber++;
+    }
 
 }

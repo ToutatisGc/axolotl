@@ -17,10 +17,27 @@ public class Header {
         this.childs = childs;
     }
 
+    public Header(String name, Header... childs) {
+        this.name = name;
+        this.childs = List.of(childs);
+    }
+
     /**
      * 表头标题
      */
     private String name;
+
+    /**
+     * 写入数据字段映射
+     * [最底层节点生效]
+     */
+    private String fieldName;
+
+    /**
+     * 字段位置
+     * [最底层节点生效]
+     */
+    private int columnPosition = -1;
 
     /**
      * 当前表头的子表头
@@ -39,7 +56,7 @@ public class Header {
      */
     public int countOrlopCellNumber() {
         if (childs == null || childs.isEmpty()) {
-            return 1; // 如果当前表头没有子表头，则返回1
+            return 1; // 如果当前表头没有子表头，则返回本身
         }
         int totalCount = 0;
         for (Header subHeader : childs) {

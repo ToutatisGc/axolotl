@@ -2,11 +2,14 @@ package cn.toutatis.xvoid.axolotl.excel.writer.themes;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Data;
@@ -23,8 +26,8 @@ import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.*;
 
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
@@ -37,13 +40,6 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     private static final String FONT_NAME = "宋体";
 
     private Font MAIN_TEXT_FONT;
-
-    private int alreadyWriteRow = -1;
-
-    /**
-     * 是否已经写入标题
-     */
-    private boolean alreadyWriteTitle = false;
 
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
@@ -115,16 +111,25 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         List<Header> headers = context.getHeaders();
         int headerMaxDepth = -1;
         int headerColumnCount = 0;
+        int alreadyWriteRow = context.getAlreadyWriteRow();
         if (headers != null && !headers.isEmpty()){
+            List<Header> tmpHeaders;
+            if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
+                tmpHeaders = new ArrayList<>();
+                tmpHeaders.add(new Header("序号"));
+                tmpHeaders.addAll(headers);
+            }else{
+                tmpHeaders = headers;
+            }
             Font font = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.WHITE);
             CellStyle headerCellStyle = StyleHelper.createStandardCellStyle(
                     context.getWorkbook(), BorderStyle.MEDIUM, IndexedColors.WHITE, THEME_COLOR_XSSF,font
             );
-            alreadyWriteRow++;
+            context.setAlreadyWriteRow(++alreadyWriteRow);
             headerMaxDepth = ExcelToolkit.getMaxDepth(headers, 0);
             debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
             //根节点渲染
-            for (Header header : headers) {
+            for (Header header : tmpHeaders) {
                 int startRow = alreadyWriteRow;
                 Row row = ExcelToolkit.createOrCatchRow(sheet, startRow);
                 row.setHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
@@ -160,6 +165,8 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
             debug(LOGGER,"未设置表头");
         }
         alreadyWriteRow+=(headerMaxDepth-1);
+        context.setAlreadyWriteRow(alreadyWriteRow);
+        context.setAlreadyWrittenColumns(headerColumnCount);
         debug(LOGGER,"合并标题栏单元格,共[%s]列",headerColumnCount);
         CellRangeAddress cellAddresses = new CellRangeAddress(0, 0, 0, headerColumnCount-1);
         StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleRow);
@@ -184,12 +191,17 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                 cell.setCellValue(header.getName());
                 int childCount = header.countOrlopCellNumber();
                 int endColumnPosition = (alreadyWriteColumn + childCount);
+                CellRangeAddress cellAddresses;
+                int mergeRowNumber = startRow + maxDepth - 1;
                 if (header.getChilds()!=null && !header.getChilds().isEmpty()){
-                    CellRangeAddress cellAddresses = new CellRangeAddress(startRow, startRow, alreadyWriteColumn, endColumnPosition-1);
-                    StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, headerRecursiveInfo.getCellStyle());
-                    sheet.addMergedRegion(cellAddresses);
+                    cellAddresses = new CellRangeAddress(startRow, startRow, alreadyWriteColumn, endColumnPosition-1);
                 }else{
+                    cellAddresses = new CellRangeAddress(startRow, startRow + maxDepth-1, alreadyWriteColumn, endColumnPosition-1);
                     cell.setCellStyle(headerRecursiveInfo.getCellStyle());
+                }
+                StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, headerRecursiveInfo.getCellStyle());
+                if (mergeRowNumber !=  startRow){
+                    sheet.addMergedRegion(cellAddresses);
                 }
                 headerRecursiveInfo.setAlreadyWriteColumn(endColumnPosition);
                 headerRecursiveInfo.setStartColumn(alreadyWriteColumn);
@@ -204,41 +216,70 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes","unchecked"})
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
         SXSSFWorkbook workbook = context.getWorkbook();
         BorderStyle borderStyle = BorderStyle.THIN;
         IndexedColors borderColor = IndexedColors.WHITE;
-        CellStyle dataStyle = StyleHelper.createCellStyle(
-                workbook, borderStyle, borderColor, new AxolotlColor(217,226,243),MAIN_TEXT_FONT
-        );
-        CellStyle dataStyleOdd = StyleHelper.createCellStyle(
-                workbook ,borderStyle , borderColor, new AxolotlColor(181,197,230),MAIN_TEXT_FONT
-        );
+        // 交叉样式
         DataFormat dataFormat = workbook.createDataFormat();
         short textFormatIndex = dataFormat.getFormat("@");
+        CellStyle dataStyle = StyleHelper.createStandardCellStyle(workbook, borderStyle, borderColor, new AxolotlColor(217,226,243),MAIN_TEXT_FONT);
+        CellStyle dataStyleOdd = StyleHelper.createStandardCellStyle(workbook ,borderStyle , borderColor, new AxolotlColor(181,197,230),MAIN_TEXT_FONT);
         dataStyle.setDataFormat(textFormatIndex);
         dataStyleOdd.setDataFormat(textFormatIndex);
+        boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
         for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
-            boolean isOdd = i % 2 == 0;
-            Object datum = data.get(i);
-            SXSSFRow dataRow = sheet.createRow(++alreadyWriteRow);
-            System.err.println("写入：" + alreadyWriteRow + "=" + datum);
-            dataRow.setHeight((short) 400);
-            if (datum instanceof Map map) {
-                int colIdx = 0;
-                for (Object o : map.keySet()) {
-                    SXSSFCell cell = dataRow.createCell(colIdx);
-                    Object dataObj = map.get(o);
-                    String innerData = dataObj == null ? "" : dataObj.toString();
-                    cell.setCellValue(innerData);
-                    if (isOdd){
-                        cell.setCellStyle(dataStyleOdd);
-                    }else{
-                        cell.setCellStyle(dataStyle);
+            // 获取对象属性
+            Object dataObj = data.get(i);
+            HashMap<String, Object> dataMap = new LinkedHashMap<>();
+            if (dataObj instanceof Map map) {
+                dataMap.putAll(map);
+            }else{
+                List<Field> fields = ReflectToolkit.getAllFields(dataObj.getClass(), true);
+                fields.forEach(field -> {
+                    field.setAccessible(true);
+                    String fieldName = field.getName();
+                    try {
+                        dataMap.put(fieldName,field.get(dataObj));
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                        throw new AxolotlWriteException("获取对象字段错误");
                     }
-
-                    colIdx++;
+                });
+            }
+            // 初始化内容
+            CellStyle innerStyle = i % 2 == 0 ? dataStyle : dataStyleOdd;
+            HashMap<Integer, Integer> writtenColumnMap = new HashMap<>();
+            int alreadyWriteRow = context.getAlreadyWriteRow();
+            context.setAlreadyWriteRow(++alreadyWriteRow);
+            SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
+            int writtenColumn = 0;
+            int serialNumber = context.getAndIncrementSerialNumber();
+            // 写入序号
+            if (autoInsertSerialNumber){
+                SXSSFCell cell = dataRow.createCell(writtenColumn);
+                cell.setCellValue(serialNumber);
+                cell.setCellStyle(innerStyle);
+                writtenColumnMap.put(writtenColumn++,1);
+            }
+            // 写入数据
+            for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
+                Object value = dataEntry.getValue();
+                SXSSFCell cell = dataRow.createCell(writtenColumn);
+                if (value == null){
+                    cell.setCellValue(writeConfig.getBlankValue());
+                }else{
+                    cell.setCellValue(value.toString());
+                }
+                cell.setCellStyle(innerStyle);
+                writtenColumnMap.put(writtenColumn++,1);
+            }
+            for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns(); alreadyColumnIdx++) {
+                if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
+                    SXSSFCell cell = dataRow.createCell(alreadyColumnIdx);
+                    cell.setBlank();
+                    cell.setCellStyle(innerStyle);
                 }
             }
         }
@@ -255,7 +296,9 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         CellStyle cellStyle = null;
         if (Validator.strNotBlank(title)){
             debug(LOGGER,"设置工作表标题:[%s]",title);
-            SXSSFRow titleRow = sheet.createRow(++alreadyWriteRow);
+            int alreadyWriteRow = context.getAlreadyWriteRow();
+            context.setAlreadyWriteRow(++alreadyWriteRow);
+            SXSSFRow titleRow = sheet.createRow(alreadyWriteRow);
             titleRow.setHeight(StyleHelper.STANDARD_TITLE_ROW_HEIGHT);
             SXSSFCell startPositionCell = titleRow.createCell(0);
             startPositionCell.setCellValue(writeConfig.getTitle());
