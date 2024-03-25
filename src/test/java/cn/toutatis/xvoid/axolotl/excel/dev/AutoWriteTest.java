@@ -35,9 +35,11 @@ public class AutoWriteTest {
         headers.add(new Header("期限", List.of(new Header("年"), new Header("月"))));
         AxolotlCellStyle axolotlCellStyle1 = new AxolotlCellStyle();
         axolotlCellStyle1.setForegroundColor(new AxolotlColor(0,231,185));
+        Header header1 = new Header("金额");
+        header1.setColumnWidth(10000);
         Header header = new Header("账面数",
                 List.of(new Header("经济",
-                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), new Header("金额")));
+                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), header1));
         header.setAxolotlCellStyle(axolotlCellStyle1);
         headers.add(header);
         Header remark = new Header("备注");

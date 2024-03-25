@@ -155,7 +155,6 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                     headerRecursiveInfo.setRowHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
                     recursionRenderHeaders(sheet,childs, headerRecursiveInfo);
                 }else{
-                    System.err.println(header);
                     cellAddresses = new CellRangeAddress(alreadyWriteRow, (alreadyWriteRow +headerMaxDepth)-1, headerColumnCount, headerColumnCount);
                     int columnWidth = header.getColumnWidth();
                     if (columnWidth == -1){
@@ -209,6 +208,12 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                     cellAddresses = new CellRangeAddress(startRow, startRow, alreadyWriteColumn, endColumnPosition-1);
                 }else{
                     cellAddresses = new CellRangeAddress(startRow, startRow + maxDepth-1, alreadyWriteColumn, endColumnPosition-1);
+                    int columnWidth = header.getColumnWidth();
+                    if (columnWidth == -1){
+                        columnWidth = StyleHelper.getPresetCellLength(header.getName());
+                    }
+                    debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),columnWidth);
+                    sheet.setColumnWidth(alreadyWriteColumn, columnWidth);
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, usedCellStyle);
                 if (mergeRowNumber !=  startRow){
