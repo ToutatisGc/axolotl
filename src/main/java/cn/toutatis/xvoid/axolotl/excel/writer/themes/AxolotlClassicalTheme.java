@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.themes;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
@@ -122,7 +123,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                 tmpHeaders = headers;
             }
             Font font = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.WHITE);
-            CellStyle headerCellStyle = StyleHelper.createStandardCellStyle(
+            CellStyle headerDefaultCellStyle = StyleHelper.createStandardCellStyle(
                     context.getWorkbook(), BorderStyle.MEDIUM, IndexedColors.WHITE, THEME_COLOR_XSSF,font
             );
             context.setAlreadyWriteRow(++alreadyWriteRow);
@@ -130,32 +131,41 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
             debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
             //根节点渲染
             for (Header header : tmpHeaders) {
-                int startRow = alreadyWriteRow;
-                Row row = ExcelToolkit.createOrCatchRow(sheet, startRow);
+                CellStyle usedCellStyle = headerDefaultCellStyle;
+                usedCellStyle = getCellStyle(header, usedCellStyle);
+                Row row = ExcelToolkit.createOrCatchRow(sheet, alreadyWriteRow);
                 row.setHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
                 Cell cell = row.createCell(headerColumnCount, CellType.STRING);
                 String title = header.getName();
                 cell.setCellValue(title);
                 int orlopCellNumber = header.countOrlopCellNumber();
                 context.setAlreadyWrittenColumns(context.getAlreadyWrittenColumns()+orlopCellNumber);
-                debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title,startRow,headerColumnCount,orlopCellNumber);
+                debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title, alreadyWriteRow,headerColumnCount,orlopCellNumber);
                 // 有子节点说明需要向下迭代并合并
                 CellRangeAddress cellAddresses;
                 if (header.getChilds()!=null && !header.getChilds().isEmpty()){
                     List<Header> childs = header.getChilds();
                     int childMaxDepth = ExcelToolkit.getMaxDepth(childs, 0);
-                    cellAddresses = new CellRangeAddress(startRow, startRow+(headerMaxDepth-childMaxDepth)-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
+                    cellAddresses = new CellRangeAddress(alreadyWriteRow, alreadyWriteRow +(headerMaxDepth-childMaxDepth)-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
                     HeaderRecursiveInfo headerRecursiveInfo = new HeaderRecursiveInfo();
                     headerRecursiveInfo.setAllRow(alreadyWriteRow+headerMaxDepth+1);
                     headerRecursiveInfo.setStartColumn(headerColumnCount);
                     headerRecursiveInfo.setAlreadyWriteColumn(headerColumnCount);
-                    headerRecursiveInfo.setCellStyle(headerCellStyle);
+                    headerRecursiveInfo.setCellStyle(headerDefaultCellStyle);
                     headerRecursiveInfo.setRowHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
                     recursionRenderHeaders(sheet,childs, headerRecursiveInfo);
                 }else{
-                    cellAddresses = new CellRangeAddress(startRow, (startRow+headerMaxDepth)-1, headerColumnCount, headerColumnCount);
+                    System.err.println(header);
+                    cellAddresses = new CellRangeAddress(alreadyWriteRow, (alreadyWriteRow +headerMaxDepth)-1, headerColumnCount, headerColumnCount);
+                    int columnWidth = header.getColumnWidth();
+                    if (columnWidth == -1){
+                        columnWidth = StyleHelper.getPresetCellLength(title);
+                    }
+                    debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),columnWidth);
+
+                    sheet.setColumnWidth(headerColumnCount, columnWidth);
                 }
-                StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,headerCellStyle);
+                StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,usedCellStyle);
                 if (headerMaxDepth > 1){
                     sheet.addMergedRegion(cellAddresses);
                 }
@@ -186,6 +196,8 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
             Row row = ExcelToolkit.createOrCatchRow(sheet,startRow);
             row.setHeight(headerRecursiveInfo.getRowHeight());
             for (Header header : headers) {
+                CellStyle usedCellStyle = headerRecursiveInfo.getCellStyle();
+                usedCellStyle = getCellStyle(header, usedCellStyle);
                 int alreadyWriteColumn = headerRecursiveInfo.getAlreadyWriteColumn();
                 Cell cell = ExcelToolkit.createOrCatchCell(sheet, row.getRowNum(), alreadyWriteColumn, null);
                 cell.setCellValue(header.getName());
@@ -197,9 +209,8 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                     cellAddresses = new CellRangeAddress(startRow, startRow, alreadyWriteColumn, endColumnPosition-1);
                 }else{
                     cellAddresses = new CellRangeAddress(startRow, startRow + maxDepth-1, alreadyWriteColumn, endColumnPosition-1);
-                    cell.setCellStyle(headerRecursiveInfo.getCellStyle());
                 }
-                StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, headerRecursiveInfo.getCellStyle());
+                StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, usedCellStyle);
                 if (mergeRowNumber !=  startRow){
                     sheet.addMergedRegion(cellAddresses);
                 }
@@ -213,6 +224,28 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
                 }
             }
         }
+    }
+
+    private CellStyle getCellStyle(Header header, CellStyle usedCellStyle) {
+        if (header.getCustomCellStyle() != null){
+            usedCellStyle = header.getCustomCellStyle();
+        }else{
+            AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
+            if (axolotlCellStyle != null){
+                Font axolotlFont = StyleHelper.createWorkBookFont(
+                        context.getWorkbook(),
+                        axolotlCellStyle.getFontName(),
+                        axolotlCellStyle.isFontBold(),
+                        axolotlCellStyle.getFontSize(),
+                        axolotlCellStyle.getFontColor());
+                usedCellStyle = StyleHelper.createStandardCellStyle(
+                        context.getWorkbook(),
+                        axolotlCellStyle.getBorderStyle(),
+                        axolotlCellStyle.getBorderColor(), axolotlCellStyle.getForegroundColor(),axolotlFont
+                );
+            }
+        }
+        return usedCellStyle;
     }
 
     @Override

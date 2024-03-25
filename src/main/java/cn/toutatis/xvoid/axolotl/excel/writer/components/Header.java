@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
 import lombok.Data;
+import org.apache.poi.ss.usermodel.CellStyle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,18 @@ public class Header {
      * 当前表头的子表头
      */
     private List<Header> childs = new ArrayList<>();
+
+    /**
+     * 自定义样式
+     * 优先级:高
+     */
+    private CellStyle customCellStyle;
+
+    /**
+     * 自定义样式
+     * 优先级:低
+     */
+    private AxolotlCellStyle axolotlCellStyle;
 
     /**
      * 当前表头的列宽

@@ -5,10 +5,14 @@ import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,11 +33,19 @@ public class AutoWriteTest {
         List<Header> headers = new ArrayList<>();
         headers.add(new Header("名称",List.of(new Header("姓名"),new Header("花名"))));
         headers.add(new Header("期限", List.of(new Header("年"), new Header("月"))));
-        headers.add(new Header("账面数",
+        AxolotlCellStyle axolotlCellStyle1 = new AxolotlCellStyle();
+        axolotlCellStyle1.setForegroundColor(new AxolotlColor(0,231,185));
+        Header header = new Header("账面数",
                 List.of(new Header("经济",
-                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), new Header("金额"))));
-        headers.add(new Header("备注"));
-
+                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), new Header("金额")));
+        header.setAxolotlCellStyle(axolotlCellStyle1);
+        headers.add(header);
+        Header remark = new Header("备注");
+        remark.setColumnWidth(10000);
+        AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
+        axolotlCellStyle.setForegroundColor(new AxolotlColor(155,231,185));
+        remark.setAxolotlCellStyle(axolotlCellStyle);
+        headers.add(remark);
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             JSONObject json = new JSONObject(true);

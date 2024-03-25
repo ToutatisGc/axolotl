@@ -35,11 +35,6 @@ public class StyleHelper {
     public static final Short STANDARD_HEADER_ROW_HEIGHT = 350;
 
     /**
-     * 默认使用字体
-     */
-    public static final String STANDARD_FONT_NAME = "宋体";
-
-    /**
      * 默认文本字体大小
      */
     public static final Short STANDARD_TEXT_FONT_SIZE = 12;
