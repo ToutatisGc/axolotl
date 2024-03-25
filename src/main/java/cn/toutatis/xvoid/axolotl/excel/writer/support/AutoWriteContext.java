@@ -41,6 +41,11 @@ public class AutoWriteContext extends WriteContext{
      */
     private int serialNumber = 1;
 
+    /**
+     * 写入类信息
+     */
+    private Class<?> metaClass;
+
     public int getAndIncrementSerialNumber(){
         return serialNumber++;
     }

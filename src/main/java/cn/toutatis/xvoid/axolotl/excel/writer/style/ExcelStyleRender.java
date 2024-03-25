@@ -49,5 +49,5 @@ public interface ExcelStyleRender {
      * 在渲染完成后，调用该方法。
      * 在Close()方法中调用。
      */
-    AxolotlWriteResult finish();
+    AxolotlWriteResult finish(SXSSFSheet sheet);
 }

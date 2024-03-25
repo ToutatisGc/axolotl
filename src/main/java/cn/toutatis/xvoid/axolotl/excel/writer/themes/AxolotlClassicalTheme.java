@@ -316,7 +316,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
             for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns(); alreadyColumnIdx++) {
                 if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
                     SXSSFCell cell = dataRow.createCell(alreadyColumnIdx);
-                    cell.setBlank();
+                    cell.setCellValue(writeConfig.getBlankValue());
                     cell.setCellStyle(innerStyle);
                 }
             }
@@ -325,7 +325,13 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     }
 
     @Override
-    public AxolotlWriteResult finish() {
+    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+        int alreadyWrittenColumns = context.getAlreadyWrittenColumns();
+        for (int i = 0; i < alreadyWrittenColumns; i++) {
+            sheet.trackColumnForAutoSizing(i);
+            sheet.autoSizeColumn(i,true);
+        }
+
         return null;
     }
 
