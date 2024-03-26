@@ -1,24 +1,17 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.themes;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
-import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.streaming.SXSSFCell;
-import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.info;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
@@ -47,6 +40,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     @Override
     public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
         // 1.渲染标题
+        int switchSheetIndex = context.getSwitchSheetIndex();
         AxolotlWriteResult isCreateTitleRow = this.createTitleRow(sheet);
 
         // 2.渲染表头
@@ -58,11 +52,11 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         if (isCreateTitleRow.isWrite()){
             Font titleFont = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, true, StyleHelper.STANDARD_TITLE_FONT_SIZE, IndexedColors.WHITE);
             CellStyle titleRowStyle = StyleHelper.createStandardCellStyle(context.getWorkbook(), BorderStyle.THICK, IndexedColors.WHITE, THEME_COLOR_XSSF,titleFont);
-            this.mergeTitleRegion(sheet,context.getAlreadyWrittenColumns(),titleRowStyle);
+            this.mergeTitleRegion(sheet,context.getAlreadyWrittenColumns().get(switchSheetIndex),titleRowStyle);
         }
 
         // 4.创建冻结窗格
-        sheet.createFreezePane(START_POSITION, context.getAlreadyWriteRow()+1);
+        sheet.createFreezePane(START_POSITION, context.getAlreadyWriteRow().get(switchSheetIndex)+1);
 
         return headerWriteResult;
     }

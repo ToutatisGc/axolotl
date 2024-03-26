@@ -1,11 +1,13 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoWriteContext;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlConstant;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
@@ -22,10 +24,13 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
@@ -117,8 +122,10 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         String title = writeConfig.getTitle();
         if (Validator.strNotBlank(title)){
             debug(LOGGER,"设置工作表标题:[%s]",title);
-            int alreadyWriteRow = context.getAlreadyWriteRow();
-            context.setAlreadyWriteRow(++alreadyWriteRow);
+            int switchSheetIndex = context.getSwitchSheetIndex();
+            Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
+            int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
+            alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
             SXSSFRow titleRow = sheet.createRow(alreadyWriteRow);
             titleRow.setHeight(StyleHelper.STANDARD_TITLE_ROW_HEIGHT);
             SXSSFCell startPositionCell = titleRow.createCell(START_POSITION);
@@ -154,10 +161,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param headerDefaultCellStyle 表头默认样式
      */
     public AxolotlWriteResult defaultRenderHeaders(SXSSFSheet sheet, CellStyle headerDefaultCellStyle){
-        List<Header> headers = context.getHeaders();
+        int switchSheetIndex = context.getSwitchSheetIndex();
+        List<Header> headers = context.getHeaders().get(switchSheetIndex);
         int headerMaxDepth = -1;
         int headerColumnCount = 0;
-        int alreadyWriteRow = context.getAlreadyWriteRow();
+        int alreadyWriteRow = context.getAlreadyWriteRow().getOrDefault(context.getSwitchSheetIndex(),-1);
         if (headers != null && !headers.isEmpty()){
             List<Header> cacheHeaders;
             if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
@@ -167,7 +175,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }else{
                 cacheHeaders = headers;
             }
-            context.setAlreadyWriteRow(++alreadyWriteRow);
+            context.getAlreadyWriteRow().put(switchSheetIndex,++alreadyWriteRow);
             headerMaxDepth = ExcelToolkit.getMaxDepth(headers, 0);
             debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
             int sheetIndex = writeConfig.getSheetIndex();
@@ -183,7 +191,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 String title = header.getName();
                 cell.setCellValue(title);
                 int orlopCellNumber = header.countOrlopCellNumber();
-                context.setAlreadyWrittenColumns(context.getAlreadyWrittenColumns()+orlopCellNumber);
+                context.getAlreadyWrittenColumns().put(switchSheetIndex,context.getAlreadyWrittenColumns().getOrDefault(switchSheetIndex,0)+orlopCellNumber);
                 debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title, alreadyWriteRow,headerColumnCount,orlopCellNumber);
                 // 有子节点说明需要向下迭代并合并
                 CellRangeAddress cellAddresses;
@@ -219,11 +227,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 headerColumnCount+=orlopCellNumber;
             }
         }else{
+            headerMaxDepth = 0;
             debug(LOGGER,"未设置表头");
         }
+        context.getHeaderRowCount().put(switchSheetIndex,headerMaxDepth);
         alreadyWriteRow+=(headerMaxDepth-1);
-        context.setAlreadyWriteRow(alreadyWriteRow);
-        context.setAlreadyWrittenColumns(headerColumnCount);
+        context.getAlreadyWriteRow().put(switchSheetIndex,alreadyWriteRow);
+        context.getAlreadyWrittenColumns().put(switchSheetIndex,headerColumnCount);
         return new AxolotlWriteResult(true, "渲染表头成功");
     }
 
@@ -375,11 +385,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
         // 初始化内容
         HashMap<Integer, Integer> writtenColumnMap = new HashMap<>();
-        int alreadyWriteRow = context.getAlreadyWriteRow();
-        context.setAlreadyWriteRow(++alreadyWriteRow);
+        int switchSheetIndex = getContext().getSwitchSheetIndex();
+        Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
+        int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
+        alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
         SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
         int writtenColumn = START_POSITION;
-        int serialNumber = context.getAndIncrementSerialNumber();
+        int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
         // 写入序号
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
             SXSSFCell cell = dataRow.createCell(writtenColumn);
@@ -413,13 +425,24 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             if (value == null){
                 cell.setCellValue(writeConfig.getBlankValue());
             }else{
-                cell.setCellValue(value.toString());
+                String valueString = value.toString();
+                if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(valueString)){
+                    Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(switchSheetIndex);
+                    int columnIndex = cell.getColumnIndex();
+                    if (endingTotalMapping.containsKey(columnIndex)){
+                        BigDecimal newValue = endingTotalMapping.get(columnIndex).add(BigDecimal.valueOf(Double.parseDouble(valueString)));
+                        endingTotalMapping.put(columnIndex,newValue);
+                    }else{
+                        endingTotalMapping.put(columnIndex,BigDecimal.valueOf(Double.parseDouble(valueString)));
+                    }
+                }
+                cell.setCellValue(valueString);
             }
             unmappedColumnCount.remove(cell.getColumnIndex());
             cell.setCellStyle(rowStyle);
             writtenColumnMap.put(writtenColumn++,1);
         }
-        for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns(); alreadyColumnIdx++) {
+        for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {
             SXSSFCell cell = null;
             if (useOrderField){
                 if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
@@ -443,7 +466,48 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     @Override
     public AxolotlWriteResult finish(SXSSFSheet sheet) {
         debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
-        int alreadyWrittenColumns = context.getAlreadyWrittenColumns();
+        int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(context.getSwitchSheetIndex());
+        // 创建结尾合计行
+        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
+            Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(context.getSwitchSheetIndex());
+            debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
+            SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
+            row.setHeight((short) 600);
+            for (int i = 0; i < alreadyWrittenColumns; i++) {
+                SXSSFCell cell = row.createCell(i);
+                String cellValue = "-";
+                if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
+                    cellValue = "合计";
+                }
+                if (endingTotalMapping.containsKey(i)){
+                    BigDecimal scale =
+                            endingTotalMapping.get(i)
+                                    .setScale(AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP);
+                    cellValue = scale.toString();
+                }
+                cell.setCellValue(cellValue);
+                CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
+                SXSSFWorkbook workbook = sheet.getWorkbook();
+                CellStyle totalCellStyle = workbook.createCellStyle();
+                Font font = StyleHelper.createWorkBookFont(
+                        workbook, StyleHelper.STANDARD_FONT_NAME, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
+                );
+                StyleHelper.setCellStyleAlignmentCenter(totalCellStyle);
+                totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
+                totalCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                totalCellStyle.setFont(font);
+                BorderStyle borderStyle = BorderStyle.MEDIUM;
+                totalCellStyle.setBorderBottom(borderStyle);
+                totalCellStyle.setBorderLeft(borderStyle);
+                totalCellStyle.setBorderRight(borderStyle);
+                totalCellStyle.setBorderTop(borderStyle);
+                totalCellStyle.setLeftBorderColor(cellStyle.getLeftBorderColor());
+                totalCellStyle.setRightBorderColor(cellStyle.getRightBorderColor());
+                totalCellStyle.setTopBorderColor(cellStyle.getTopBorderColor());
+                totalCellStyle.setBottomBorderColor(cellStyle.getBottomBorderColor());
+                cell.setCellStyle(totalCellStyle);
+            }
+        }
         sheet.trackAllColumnsForAutoSizing();
         for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
             sheet.autoSizeColumn(columnIdx,true);

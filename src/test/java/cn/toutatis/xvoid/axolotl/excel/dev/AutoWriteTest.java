@@ -43,7 +43,7 @@ public class AutoWriteTest {
         header.setAxolotlCellStyle(axolotlCellStyle1);
         headers.add(header);
         Header remark = new Header("备注");
-        remark.setFieldName("remark");
+//        remark.setFieldName("remark");
         remark.setColumnWidth(10000);
         AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
         axolotlCellStyle.setForegroundColor(new AxolotlColor(155,231,185));

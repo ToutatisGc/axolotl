@@ -7,7 +7,9 @@ import lombok.EqualsAndHashCode;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -21,7 +23,12 @@ public class AutoWriteContext extends WriteContext{
     /**
      * 表头信息
      */
-    private List<Header> headers;
+    private Map<Integer,List<Header>> headers = new HashMap<>();
+
+    /**
+     * 表头行数(包含标题)
+     */
+    private Map<Integer,Integer> headerRowCount = new HashMap<>();
 
     /**
      * 数据
@@ -30,23 +37,26 @@ public class AutoWriteContext extends WriteContext{
 
     /**
      * 已经写入的行数
+     * 注意:起始为-1
      */
-    private int alreadyWriteRow = -1;
+    private Map<Integer,Integer> alreadyWriteRow = new HashMap<>();
 
     /**
      * 已经写入的列数
+     * 注意:起始为0
      */
-    private int alreadyWrittenColumns = 0;
+    private Map<Integer,Integer> alreadyWrittenColumns = new HashMap<>();
 
     /**
      * 当前写入数据序号
+     * 注意:起始为-1
      */
-    private int serialNumber = 1;
+    private Map<Integer,Integer> serialNumber = new HashMap<>();
 
     /**
      * 写入类信息
      */
-    private Class<?> metaClass;
+    private Map<Integer,Class<?>> metaClass = new HashMap<>();
 
     /**
      * 表头列索引映射
@@ -64,7 +74,9 @@ public class AutoWriteContext extends WriteContext{
     private List<AxolotlWriteResult> executeResults;
 
     public int getAndIncrementSerialNumber(){
-        return serialNumber++;
+        Integer serialNumber = alreadyWriteRow.getOrDefault(getSwitchSheetIndex(), -1);
+        this.serialNumber.put(getSwitchSheetIndex(),serialNumber+1);
+        return serialNumber;
     }
 
 }
