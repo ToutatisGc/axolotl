@@ -15,6 +15,8 @@ import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.IndexedColorMap;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.slf4j.Logger;
 
@@ -24,7 +26,7 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
 
     private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlAdministrationRedTheme.class);
 
-    private static final AxolotlColor THEME_COLOR_XSSF = new AxolotlColor(255,255,255);
+    private static final AxolotlColor THEME_COLOR_XSSF = new AxolotlColor(191,56,55);
 
     private static final String FONT_NAME = "黑体";
 
@@ -35,31 +37,51 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
     }
 
     @Override
-    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
-        AxolotlWriteResult writeTitle = createTitleRow(sheet);
-        // 创建调色板
-        StylesTable stylesSource = sheet.getWorkbook().getXSSFWorkbook().getStylesSource();
-        XSSFFont xssfFont = new XSSFFont();
-        xssfFont.setColor(new AxolotlColor(255,0,255).toXSSFColor());
-        SXSSFWorkbook workbook = context.getWorkbook();
-        xssfFont.registerTo(stylesSource);
-        CellStyle cellStyle = workbook.createCellStyle();
-        workbook.createFont();
-        cellStyle.setFont(xssfFont);
-        // 2.渲染表头
-        Font headerFont = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.RED);
-        CellStyle headerDefaultCellStyle = StyleHelper.createStandardCellStyle(context.getWorkbook(), BorderStyle.THIN, IndexedColors.WHITE, THEME_COLOR_XSSF,headerFont);
-        AxolotlWriteResult headerWriteResult = this.defaultRenderHeaders(sheet, cellStyle);
-
-        if (writeTitle.isWrite()){
-            SXSSFRow titleRow = sheet.getRow(StyleHelper.START_POSITION);
+    public AxolotlWriteResult init(SXSSFSheet sheet) {
+        if (isFirstBatch()){
+            // 创建调色板
+            StylesTable stylesSource = context.getWorkbook().getXSSFWorkbook().getStylesSource();
+            XSSFCellStyle xssfCellStyle = new XSSFCellStyle(stylesSource);
+            xssfCellStyle.setBottomBorderColor(THEME_COLOR_XSSF.toXSSFColor());
+            stylesSource.putStyle(xssfCellStyle);
+            XSSFFont mainFont = new XSSFFont();
+            mainFont.setBold(true);
+            mainFont.setColor(THEME_COLOR_XSSF.toXSSFColor());
+            mainFont.setFontName(FONT_NAME);
+            mainFont.registerTo(stylesSource);
+            MAIN_TEXT_FONT = mainFont;
         }
-
         return super.init(sheet);
     }
 
     @Override
+    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
+        AxolotlWriteResult writeTitle = createTitleRow(sheet);
+
+        // 2.渲染表头
+        AxolotlColor whiteColor = new AxolotlColor(255, 255, 255);
+        XSSFCellStyle headerDefaultCellStyle = (XSSFCellStyle) StyleHelper.createStandardCellStyle(context.getWorkbook(), BorderStyle.THIN, IndexedColors.WHITE,whiteColor,MAIN_TEXT_FONT);
+        headerDefaultCellStyle.setBottomBorderColor(IndexedColors.RED.index);
+        headerDefaultCellStyle.setBorderBottom(BorderStyle.MEDIUM);
+        headerDefaultCellStyle.setBottomBorderColor(THEME_COLOR_XSSF.toXSSFColor());
+        headerDefaultCellStyle.setWrapText(true);
+        AxolotlWriteResult headerWriteResult = this.defaultRenderHeaders(sheet, headerDefaultCellStyle);
+
+        if (writeTitle.isWrite()){
+            this.mergeTitleRegion(sheet,context.getAlreadyWrittenColumns().get(context.getSwitchSheetIndex()),headerDefaultCellStyle);
+        }
+
+        return headerWriteResult;
+    }
+
+    @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
+        return null;
+    }
+
+    @Override
+    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+//        return super.finish(sheet);
         return null;
     }
 }

@@ -22,7 +22,7 @@ public class StyleHelper {
     /**
      * 默认使用字体
      */
-    public static final String STANDARD_FONT_NAME = "宋体";
+    public static final String STANDARD_FONT_NAME = "Arial";
 
     /**
      * 默认起始位置
@@ -56,7 +56,7 @@ public class StyleHelper {
     /**
      * 默认文本格式化索引
      */
-    public static short DATA_FORMAT_PLAIN_TEXT_INDEX = 49;
+    public static final short DATA_FORMAT_PLAIN_TEXT_INDEX = 49;
 
 
     static {

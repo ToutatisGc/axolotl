@@ -516,8 +516,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 totalCellStyle.setRightBorderColor(cellStyle.getRightBorderColor());
                 totalCellStyle.setTopBorderColor(cellStyle.getTopBorderColor());
                 totalCellStyle.setBottomBorderColor(cellStyle.getBottomBorderColor());
-                // TODO 字体样式
-//                totalCellStyle.setDataFormat();
+                totalCellStyle.setDataFormat(StyleHelper.DATA_FORMAT_PLAIN_TEXT_INDEX);
                 cell.setCellStyle(totalCellStyle);
             }
         }
