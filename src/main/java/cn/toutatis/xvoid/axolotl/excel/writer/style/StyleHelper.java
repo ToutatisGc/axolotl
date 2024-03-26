@@ -128,6 +128,7 @@ public class StyleHelper {
         font.setFontName(fontName);
         font.setBold(bold);
         font.setFontHeightInPoints(fontSize);
+
         font.setColor(fontColor.getIndex());
         return font;
     }

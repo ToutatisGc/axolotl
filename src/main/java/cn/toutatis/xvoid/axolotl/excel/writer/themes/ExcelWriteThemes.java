@@ -11,7 +11,8 @@ import lombok.SneakyThrows;
 @Getter
 public enum ExcelWriteThemes {
 
-    $DEFAULT("默认主题样式", AxolotlClassicalTheme.class);
+    $DEFAULT("默认主题样式", AxolotlClassicalTheme.class),
+    ADMINISTRATION_RED("行政红", AxolotlAdministrationRedTheme.class);
 
     /**
      * 样式名称

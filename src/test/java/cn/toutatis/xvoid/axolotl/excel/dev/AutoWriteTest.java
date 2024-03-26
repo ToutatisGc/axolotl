@@ -9,6 +9,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -48,6 +49,40 @@ public class AutoWriteTest {
         AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
         axolotlCellStyle.setForegroundColor(new AxolotlColor(155,231,185));
         remark.setAxolotlCellStyle(axolotlCellStyle);
+        headers.add(remark);
+        ArrayList<JSONObject> data = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            JSONObject json = new JSONObject(true);
+            json.put("remark", "name" + i);
+            json.put("age", i);
+            json.put("sex", i % 2 == 0? "男" : "女");
+            json.put("card", 555444114);
+            json.put("address", null);
+            data.add(json);
+        }
+        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
+        autoExcelWriter.write(headers,data);
+        autoExcelWriter.close();
+
+    }
+    @Test
+    public void testAuto2() throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
+        commonWriteConfig.setStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
+        commonWriteConfig.setTitle("测试表");
+        commonWriteConfig.setOutputStream(fileOutputStream);
+        List<Header> headers = new ArrayList<>();
+        headers.add(new Header("名称",List.of(new Header("姓名"),new Header("花名"))));
+        headers.add(new Header("期限", List.of(new Header("年"), new Header("月"))));
+        Header header1 = new Header("金额");
+        Header header = new Header("账面数",
+                List.of(new Header("经济",
+                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), header1));
+        headers.add(header);
+        Header remark = new Header("备注");
+        AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
         headers.add(remark);
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {

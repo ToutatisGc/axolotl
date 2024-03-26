@@ -22,7 +22,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
 
     private static final AxolotlColor THEME_COLOR_XSSF = new AxolotlColor(68,114,199);
 
-    private static final String FONT_NAME = "宋体";
+    private static final String FONT_NAME = "Arial";
 
     private Font MAIN_TEXT_FONT;
 

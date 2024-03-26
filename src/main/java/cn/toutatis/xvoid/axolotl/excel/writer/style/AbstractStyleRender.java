@@ -53,12 +53,23 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     private Logger LOGGER;
 
     /**
+     * 字体名称
+     */
+    private String fontName;
+
+    /**
      * 数据写入已进行错误提示
      */
     private boolean alreadyNotice = false;
 
     public AbstractStyleRender(Logger LOGGER) {
         this.LOGGER = LOGGER;
+        this.fontName = StyleHelper.STANDARD_FONT_NAME;
+    }
+
+    public AbstractStyleRender(Logger LOGGER,String fontName) {
+        this.LOGGER = LOGGER;
+        this.fontName = fontName;
     }
 
     public static final String TOTAL_HEADER_COUNT_KEY = "";
@@ -86,7 +97,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
             boolean fillWhite = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_FILL_DEFAULT_CELL_WHITE);
             if (fillWhite){
-                fillWhiteCell(sheet,StyleHelper.STANDARD_FONT_NAME);
+                fillWhiteCell(sheet,fontName);
             }
         }else {
             axolotlWriteResult = new AxolotlWriteResult(true,"已初始化");
@@ -490,7 +501,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 SXSSFWorkbook workbook = sheet.getWorkbook();
                 CellStyle totalCellStyle = workbook.createCellStyle();
                 Font font = StyleHelper.createWorkBookFont(
-                        workbook, StyleHelper.STANDARD_FONT_NAME, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
+                        workbook, fontName, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
                 );
                 StyleHelper.setCellStyleAlignmentCenter(totalCellStyle);
                 totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
@@ -505,6 +516,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 totalCellStyle.setRightBorderColor(cellStyle.getRightBorderColor());
                 totalCellStyle.setTopBorderColor(cellStyle.getTopBorderColor());
                 totalCellStyle.setBottomBorderColor(cellStyle.getBottomBorderColor());
+                // TODO 字体样式
+//                totalCellStyle.setDataFormat();
                 cell.setCellStyle(totalCellStyle);
             }
         }
