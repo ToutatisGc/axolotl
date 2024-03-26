@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -51,6 +52,11 @@ public class AutoWriteContext extends WriteContext{
      * 表头列索引映射
      */
     private HashBasedTable<Integer,String,Integer> headerColumnIndexMapping = HashBasedTable.create();
+
+    /**
+     * 结尾合计
+     */
+    private HashBasedTable<Integer,Integer, BigDecimal> endingTotalMapping = HashBasedTable.create();
 
     /**
      * 执行结果

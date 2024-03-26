@@ -15,6 +15,8 @@ import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.info;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -66,7 +68,6 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     }
 
     @Override
-
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
         SXSSFWorkbook workbook = context.getWorkbook();
         BorderStyle borderStyle = BorderStyle.THIN;
@@ -76,6 +77,10 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         CellStyle dataStyleOdd = StyleHelper.createStandardCellStyle(workbook ,borderStyle , borderColor, new AxolotlColor(181,197,230),MAIN_TEXT_FONT);
         StyleHelper.setCellAsPlainText(dataStyle);
         StyleHelper.setCellAsPlainText(dataStyleOdd);
+        Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
+        if (!columnMapping.isEmpty()){
+            debug(LOGGER,"已有字段映射表,将按照字段映射渲染数据[%s]",columnMapping);
+        }
         for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
             CellStyle innerStyle = i % 2 == 0 ? dataStyle : dataStyleOdd;
             this.defaultRenderNextData(sheet, data.get(i), innerStyle);

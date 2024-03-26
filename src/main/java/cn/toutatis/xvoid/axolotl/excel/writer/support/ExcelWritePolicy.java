@@ -25,6 +25,11 @@ public enum ExcelWritePolicy {
     AUTO_FILL_DEFAULT_CELL_WHITE(Type.BOOLEAN, true, true),
 
     /**
+     * 自动在结尾插入合计行
+     */
+    AUTO_INSERT_TOTAL_IN_ENDING(Type.BOOLEAN, true, true),
+
+    /**
      * 数据写入时，自动将数据写入到下一行
      * 不会影响原有模板数据的位置
      */

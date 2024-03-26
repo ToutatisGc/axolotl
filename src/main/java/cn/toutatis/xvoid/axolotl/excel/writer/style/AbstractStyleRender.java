@@ -29,8 +29,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.info;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 /**
  * 样式渲染器抽象类
@@ -47,6 +46,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     protected AutoWriteContext context;
 
     private Logger LOGGER;
+
+    /**
+     * 数据写入已进行错误提示
+     */
+    private boolean alreadyNotice = false;
 
     public AbstractStyleRender(Logger LOGGER) {
         this.LOGGER = LOGGER;
@@ -348,7 +352,6 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     /**
      * 默认行为渲染数据
      * @param sheet 工作表
-     * @param dataList 数据集合
      * @return 写入结果
      */
     @SuppressWarnings({"rawtypes","unchecked"})
@@ -385,20 +388,52 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             writtenColumnMap.put(writtenColumn++,1);
         }
         // 写入数据
+        Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
+        Map<Integer, Integer> unmappedColumnCount =  new HashMap<>();
+        columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
+        boolean columnMappingEmpty = columnMapping.isEmpty();
+        boolean useOrderField = true;
         for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
+            SXSSFCell cell;
+            if (columnMappingEmpty){
+                cell = dataRow.createCell(writtenColumn);
+            }else{
+                useOrderField = false;
+                if (columnMapping.containsKey(dataEntry.getKey())){
+                    cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(dataEntry.getKey()),null);
+                }else {
+                    if (!alreadyNotice){
+                        warn(LOGGER,"未映射字段[%s]请在表头Header中映射字段!",dataEntry.getKey());
+                        alreadyNotice = true;
+                    }
+                    continue;
+                }
+            }
             Object value = dataEntry.getValue();
-            SXSSFCell cell = dataRow.createCell(writtenColumn);
             if (value == null){
                 cell.setCellValue(writeConfig.getBlankValue());
             }else{
                 cell.setCellValue(value.toString());
             }
+            unmappedColumnCount.remove(cell.getColumnIndex());
             cell.setCellStyle(rowStyle);
             writtenColumnMap.put(writtenColumn++,1);
         }
         for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns(); alreadyColumnIdx++) {
-            if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
-                SXSSFCell cell = dataRow.createCell(alreadyColumnIdx);
+            SXSSFCell cell = null;
+            if (useOrderField){
+                if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
+                    cell = dataRow.createCell(alreadyColumnIdx);
+                }
+            }else{
+                if (!columnMapping.containsValue(alreadyColumnIdx)){
+                    cell = dataRow.createCell(alreadyColumnIdx);
+                }
+                if (unmappedColumnCount.containsKey(alreadyColumnIdx)){
+                    cell = dataRow.createCell(alreadyColumnIdx);
+                }
+            }
+            if (cell != null){
                 cell.setCellValue(writeConfig.getBlankValue());
                 cell.setCellStyle(rowStyle);
             }

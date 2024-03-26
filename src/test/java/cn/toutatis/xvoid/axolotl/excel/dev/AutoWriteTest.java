@@ -43,6 +43,7 @@ public class AutoWriteTest {
         header.setAxolotlCellStyle(axolotlCellStyle1);
         headers.add(header);
         Header remark = new Header("备注");
+        remark.setFieldName("remark");
         remark.setColumnWidth(10000);
         AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
         axolotlCellStyle.setForegroundColor(new AxolotlColor(155,231,185));
@@ -51,7 +52,7 @@ public class AutoWriteTest {
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             JSONObject json = new JSONObject(true);
-            json.put("name", "name" + i);
+            json.put("remark", "name" + i);
             json.put("age", i);
             json.put("sex", i % 2 == 0? "男" : "女");
             json.put("card", 555444114);

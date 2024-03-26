@@ -49,7 +49,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         autoWriteContext.setWorkbook(this.workbook);
         this.writeContext = autoWriteContext;
         super.writeContext = autoWriteContext;
-        writeContext.setSwitchSheetIndex(autoWriteContext.getSwitchSheetIndex());
+        writeContext.setSwitchSheetIndex(autoWriteConfig.getSheetIndex());
     }
 
     /**
