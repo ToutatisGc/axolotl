@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 
 /**
@@ -25,5 +26,22 @@ public class AxolotlWriteResult {
      * 写入结果信息
      */
     private String message;
+
+    /**
+     * 额外信息
+     */
+    private JSONObject extraInfo;
+
+    public void setExtraInfo(String key ,Object value){
+        if (this.extraInfo == null){
+            this.extraInfo = new JSONObject();
+        }
+        this.extraInfo.put(key,value);
+    }
+
+    public Object getExtraInfo(String key){
+        if (this.extraInfo == null){return null;}
+        return this.extraInfo.get(key);
+    }
 
 }

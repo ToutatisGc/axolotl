@@ -20,6 +20,16 @@ public class StyleHelper {
     public static final Map<String,Integer> PRESET_CELL_LENGTH_MAP = new HashMap<>();
 
     /**
+     * 默认使用字体
+     */
+    public static final String STANDARD_FONT_NAME = "宋体";
+
+    /**
+     * 默认起始位置
+     */
+    public static final int START_POSITION = 0;
+
+    /**
      * 默认标题字体大小
      */
     public static final Short STANDARD_TITLE_FONT_SIZE = 18;
@@ -42,6 +52,12 @@ public class StyleHelper {
      * 身份证号长度
      */
     public static final Integer SERIAL_NUMBER_LENGTH = 5120;
+
+    /**
+     * 默认文本格式化索引
+     */
+    public static short DATA_FORMAT_PLAIN_TEXT_INDEX = 49;
+
 
     static {
         PRESET_CELL_LENGTH_MAP.put("姓名",3500);
@@ -147,6 +163,15 @@ public class StyleHelper {
         return cellStyle;
     }
 
+    /**
+     * 创建具有指定边框样式、边框颜色、前景色的单元格样式。
+     *
+     * @param workbook 工作簿对象，用于创建单元格样式。
+     * @param borderStyle 边框样式，定义单元格边框的样式。
+     * @param borderColor 边框颜色，从IndexedColors中选择颜色。
+     * @param foregroundColor 前景色，定义单元格内的文字或图案颜色。
+     * @return 返回配置好的单元格样式对象。
+     */
     public static CellStyle createCellStyle(
             Workbook workbook,
             BorderStyle borderStyle,
@@ -156,6 +181,15 @@ public class StyleHelper {
         return createCellStyle(workbook, borderStyle, borderColor, foregroundColor,null);
     }
 
+    /**
+     * 创建标准单元格样式
+     * @param workbook 工作簿
+     * @param borderStyle 边框样式
+     * @param borderColor 边框颜色
+     * @param foregroundColor 背景颜色
+     * @param font 字体
+     * @return
+     */
     public static CellStyle createStandardCellStyle(
             Workbook workbook,
             BorderStyle borderStyle,
@@ -166,6 +200,14 @@ public class StyleHelper {
         CellStyle cellStyle = createCellStyle(workbook, borderStyle, borderColor, foregroundColor, font);
         StyleHelper.setCellStyleAlignmentCenter(cellStyle);
         return cellStyle;
+    }
+
+    /**
+     * 设置单元格为纯文本
+     * @param cellStyle 单元格样式
+     */
+    public static void setCellAsPlainText(CellStyle cellStyle){
+        cellStyle.setDataFormat(DATA_FORMAT_PLAIN_TEXT_INDEX);
     }
 
 }

@@ -81,7 +81,6 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
             sheet = workbook.getSheetAt(switchSheetIndex);
         }
         styleRender.renderData(sheet, datas);
-        styleRender.finish(sheet);
         return null;
     }
 
@@ -103,12 +102,17 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
 
     @Override
     public void flush() {
-
+        ExcelStyleRender styleRender = writeConfig.getStyleRender();
+        int numberOfSheets = workbook.getNumberOfSheets();
+        for (int i = 0; i < numberOfSheets; i++) {
+            styleRender.finish(getWorkbook().getSheetAt(i));
+        }
     }
 
     @Override
     public void close() throws IOException {
         OutputStream outputStream = writeConfig.getOutputStream();
+        this.flush();
         workbook.write(outputStream);
         workbook.close();
     }

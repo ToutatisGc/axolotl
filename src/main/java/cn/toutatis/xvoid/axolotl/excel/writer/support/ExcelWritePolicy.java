@@ -12,12 +12,17 @@ public enum ExcelWritePolicy {
     /**
      * 自动计算列长度
      */
-    AUTO_CATCH_COLUMN_LENGTH(Type.BOOLEAN, true, true),
+    AUTO_CATCH_COLUMN_LENGTH(Type.BOOLEAN, true, false),
 
     /**
      * 自动在第一列插入编号
      */
     AUTO_INSERT_SERIAL_NUMBER(Type.BOOLEAN, true, false),
+
+    /**
+     * 默认填充单元格为白色
+     */
+    AUTO_FILL_DEFAULT_CELL_WHITE(Type.BOOLEAN, true, true),
 
     /**
      * 数据写入时，自动将数据写入到下一行

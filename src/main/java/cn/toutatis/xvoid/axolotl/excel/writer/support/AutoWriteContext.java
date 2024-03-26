@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -45,6 +46,16 @@ public class AutoWriteContext extends WriteContext{
      * 写入类信息
      */
     private Class<?> metaClass;
+
+    /**
+     * 表头列索引映射
+     */
+    private HashBasedTable<Integer,String,Integer> headerColumnIndexMapping = HashBasedTable.create();
+
+    /**
+     * 执行结果
+     */
+    private List<AxolotlWriteResult> executeResults;
 
     public int getAndIncrementSerialNumber(){
         return serialNumber++;
