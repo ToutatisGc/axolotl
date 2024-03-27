@@ -1,5 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
+import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
+import cn.toutatis.xvoid.toolkit.clazz.XFunc;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
 
@@ -13,13 +15,35 @@ public class Header {
         this.name = name;
     }
 
+    public Header(String name, String fieldName) {
+        this(name);
+        this.fieldName = fieldName;
+    }
+
+    public <T,D> Header(String name, XFunc<T,D> fieldName) {
+        this(name);
+        this.fieldName = LambdaToolkit.getFieldName(fieldName);
+    }
+
     public Header(String name, List<Header> childs) {
         this.name = name;
         this.childs = childs;
     }
 
+    public Header(String name, String fieldName, List<Header> childs) {
+        this.name = name;
+        this.fieldName = fieldName;
+        this.childs = childs;
+    }
+
     public Header(String name, Header... childs) {
         this.name = name;
+        this.childs = List.of(childs);
+    }
+
+    public Header(String name, String fieldName, Header... childs) {
+        this.name = name;
+        this.fieldName = fieldName;
         this.childs = List.of(childs);
     }
 

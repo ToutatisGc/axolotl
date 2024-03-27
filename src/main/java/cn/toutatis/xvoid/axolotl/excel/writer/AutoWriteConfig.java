@@ -4,6 +4,8 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetTitle;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.CommonWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.DataInverter;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DefaultDataInverter;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Data;
@@ -56,6 +58,11 @@ public class AutoWriteConfig extends CommonWriteConfig {
      * 样式渲染器
      */
     private ExcelStyleRender styleRender = ExcelWriteThemes.$DEFAULT.getRender();
+
+    /**
+     * 数据转换器
+     */
+    private DataInverter<?> dataInverter = new DefaultDataInverter();
 
     /**
      * 空值填充字符

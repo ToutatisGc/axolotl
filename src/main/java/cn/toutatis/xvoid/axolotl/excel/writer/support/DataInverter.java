@@ -6,5 +6,8 @@ package cn.toutatis.xvoid.axolotl.excel.writer.support;
  * 目前支持写入字符串
  * @author Toutatis_Gc
  */
-public interface DataInverter {
+public interface DataInverter<T> {
+
+    T convert(Object value);
+
 }

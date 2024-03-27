@@ -1,8 +1,11 @@
 package cn.toutatis.xvoid.axolotl.excel.dev;
 
+import cn.hutool.core.lang.func.Func1;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
+import cn.toutatis.xvoid.axolotl.excel.entities.writer.StockEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
@@ -11,7 +14,10 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
+import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
+import cn.toutatis.xvoid.toolkit.clazz.XFunc;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
@@ -69,31 +75,36 @@ public class AutoWriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
         commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
-//        commonWriteConfig.setTitle("股票测试表");
-//        commonWriteConfig.setFontName("仿宋");
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,false);
+        commonWriteConfig.setTitle("股票测试表");
+        commonWriteConfig.setFontName("仿宋");
+        commonWriteConfig.setBlankValue("-");
         commonWriteConfig.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
-        headers.add(new Header("代码"));
-        headers.add(new Header("简称"));
-        headers.add(new Header("最新日期"));
-        headers.add(new Header("最新收盘价（元）"));
-        headers.add(new Header("涨跌幅（%）"));
-        headers.add(new Header("总市值（亿元）"));
-        headers.add(new Header("流通市值（亿元）"));
+        headers.add(new Header("代码","code"));
+        headers.add(new Header("简称","intro"));
+        headers.add(new Header("最新日期","localDateTimeStr"));
+        headers.add(new Header("最新收盘价（元）",StockEntity::getClosingPrice));
+        headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
+        headers.add(new Header("总市值（亿元）",StockEntity::getTotalValue));
+        headers.add(new Header("流通市值（亿元）",StockEntity::getCirculationMarketValue));
         List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
         headers.add(new Header("每股收益", subHeader1));
         headers.add(new Header("市盈率PE", subHeader1));
         headers.add(new Header("市净率PB（LF）"));
-        headers.add(new Header("市销率PS（TTM）"));
-        ArrayList<JSONObject> data = new ArrayList<>();
+        headers.add(new Header("市销率PS（TTM）","pts"));
+        ArrayList<StockEntity> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
-            JSONObject json = new JSONObject(true);
-            json.put("remark", "name" + i);
-            json.put("age", i);
-            json.put("sex", i % 2 == 0? "男" : "女");
-            json.put("card", 555444114);
-            json.put("address", null);
-            data.add(json);
+            StockEntity stockEntity = new StockEntity();
+            stockEntity.setCode(RandomStringUtils.randomNumeric(8));
+            StringBuilder sb = new StringBuilder();
+            for (int i1 = 0; i1 < 10; i1++) {
+                char c = RandomUtil.randomChinese();
+                sb.append(c);
+            }
+            stockEntity.setIntro(sb.toString());
+            stockEntity.setPts(Double.parseDouble(RandomStringUtils.randomNumeric(2)));
+            data.add(stockEntity);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
         SXSSFWorkbook workbook = autoExcelWriter.getWorkbook();

@@ -199,6 +199,7 @@ public class StyleHelper {
             Font font
     ){
         CellStyle cellStyle = createCellStyle(workbook, borderStyle, borderColor, foregroundColor, font);
+        cellStyle.setWrapText(true);
         StyleHelper.setCellStyleAlignmentCenter(cellStyle);
         return cellStyle;
     }

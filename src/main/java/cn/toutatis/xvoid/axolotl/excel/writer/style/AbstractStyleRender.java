@@ -6,10 +6,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoWriteContext;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlConstant;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -441,6 +438,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
         boolean columnMappingEmpty = columnMapping.isEmpty();
         boolean useOrderField = true;
+        DataInverter<?> dataInverter = writeConfig.getDataInverter();
         for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
             SXSSFCell cell;
             if (columnMappingEmpty){
@@ -461,6 +459,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             if (value == null){
                 cell.setCellValue(writeConfig.getBlankValue());
             }else{
+                value = dataInverter.convert(value);
                 String valueString = value.toString();
                 if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(valueString)){
                     Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(switchSheetIndex);
@@ -509,6 +508,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
             SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
             row.setHeight((short) 600);
+            DataInverter<?> dataInverter = writeConfig.getDataInverter();
             for (int i = 0; i < alreadyWrittenColumns; i++) {
                 SXSSFCell cell = row.createCell(i);
                 String cellValue = "-";
@@ -521,7 +521,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                                     .setScale(AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP);
                     cellValue = scale.toString();
                 }
-                cell.setCellValue(cellValue);
+                cell.setCellValue(dataInverter.convert(cellValue).toString());
                 CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
                 SXSSFWorkbook workbook = sheet.getWorkbook();
                 CellStyle totalCellStyle = workbook.createCellStyle();
@@ -548,7 +548,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         sheet.trackAllColumnsForAutoSizing();
         for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
             sheet.autoSizeColumn(columnIdx,true);
-            sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.5));
+            sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.25));
         }
         return new AxolotlWriteResult(true, "完成结束阶段");
     }

@@ -8,16 +8,19 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
@@ -28,6 +31,8 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
     private static final AxolotlColor THEME_COLOR_XSSF = new AxolotlColor(191,56,55);
 
     private static final String THEME_FONT_NAME = "黑体";
+
+    private final AxolotlColor backgroundColor = new AxolotlColor(255, 255, 255);
 
     private Font MAIN_TEXT_FONT;
 
@@ -63,9 +68,9 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
         AxolotlWriteResult writeTitle = createTitleRow(sheet);
 
         // 2.创建表头单元格样式
-        AxolotlColor whiteColor = new AxolotlColor(255, 255, 255);
+
         XSSFCellStyle headerDefaultCellStyle = (XSSFCellStyle) StyleHelper.
-                createStandardCellStyle(context.getWorkbook(), BorderStyle.NONE, IndexedColors.WHITE,whiteColor,MAIN_TEXT_FONT);
+                createStandardCellStyle(context.getWorkbook(), BorderStyle.NONE, IndexedColors.WHITE,backgroundColor,MAIN_TEXT_FONT);
         headerDefaultCellStyle.setBorderBottom(BorderStyle.MEDIUM);
         headerDefaultCellStyle.setBottomBorderColor(THEME_COLOR_XSSF.toXSSFColor());
         headerDefaultCellStyle.setWrapText(true);
@@ -83,13 +88,27 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
 
     @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
-        return null;
+        SXSSFWorkbook workbook = context.getWorkbook();
+        BorderStyle borderStyle = BorderStyle.NONE;
+        IndexedColors borderColor = IndexedColors.WHITE;
+        // 交叉样式
+        Font dataFont = StyleHelper.createWorkBookFont(workbook, getFontName(), false, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK);
+        CellStyle dataStyle = StyleHelper.createStandardCellStyle(workbook, borderStyle, borderColor, backgroundColor,dataFont);
+        StyleHelper.setCellAsPlainText(dataStyle);
+        Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
+        if (!columnMapping.isEmpty()){
+            debug(LOGGER,"已有字段映射表,将按照字段映射渲染数据[%s]",columnMapping);
+        }
+        for (Object datum : data) {
+            this.defaultRenderNextData(sheet, datum, dataStyle);
+        }
+        return new AxolotlWriteResult(true, "渲染数据完成");
     }
 
     @Override
     public AxolotlWriteResult finish(SXSSFSheet sheet) {
-//        return super.finish(sheet);
-        return null;
+        return super.finish(sheet);
+//        return null;
     }
 }
 
