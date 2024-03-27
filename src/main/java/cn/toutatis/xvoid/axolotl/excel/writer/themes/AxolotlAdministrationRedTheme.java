@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import java.util.List;
 import java.util.Map;
 
+import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 public class AxolotlAdministrationRedTheme extends AbstractStyleRender implements ExcelStyleRender {
@@ -68,7 +69,6 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
         AxolotlWriteResult writeTitle = createTitleRow(sheet);
 
         // 2.创建表头单元格样式
-
         XSSFCellStyle headerDefaultCellStyle = (XSSFCellStyle) StyleHelper.
                 createStandardCellStyle(context.getWorkbook(), BorderStyle.NONE, IndexedColors.WHITE,backgroundColor,MAIN_TEXT_FONT);
         headerDefaultCellStyle.setBorderBottom(BorderStyle.MEDIUM);
@@ -82,6 +82,9 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
         if (writeTitle.isWrite()){
             this.mergeTitleRegion(sheet,context.getAlreadyWrittenColumns().get(context.getSwitchSheetIndex()),headerDefaultCellStyle);
         }
+
+        // 5.创建冻结窗格
+        sheet.createFreezePane(START_POSITION, context.getAlreadyWriteRow().get(context.getSwitchSheetIndex())+1);
 
         return headerWriteResult;
     }

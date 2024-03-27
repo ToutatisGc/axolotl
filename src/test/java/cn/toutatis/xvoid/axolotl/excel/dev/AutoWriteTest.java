@@ -74,7 +74,7 @@ public class AutoWriteTest {
     public void testAuto2() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
-        commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
+        commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.HAZE_BLUE);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,false);
         commonWriteConfig.setTitle("股票测试表");
         commonWriteConfig.setFontName("仿宋");
