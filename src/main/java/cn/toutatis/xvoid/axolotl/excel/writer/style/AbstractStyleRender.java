@@ -44,17 +44,27 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 @Getter
 public abstract class AbstractStyleRender implements ExcelStyleRender{
 
+    /**
+     * 写入配置
+     */
     @Setter
     protected AutoWriteConfig writeConfig;
 
+    /**
+     * 写入上下文
+     */
     @Setter
     protected AutoWriteContext context;
 
-    private Logger LOGGER;
+    /**
+     * 日志
+     */
+    private final Logger LOGGER;
 
     /**
      * 字体名称
      */
+    @Setter @Getter
     private String fontName;
 
     /**
@@ -80,6 +90,21 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      */
     public boolean isFirstBatch(){
         return context.isFirstBatch(context.getSwitchSheetIndex());
+    }
+
+    /**
+     * 检查并使用自定义字体
+     * 如果自定义字体不为空，则使用自定义字体，否则使用默认主题字体
+     * @param themeFont 主题字体
+     */
+    public void checkedAndUseCustomFontName(String themeFont){
+        String fontName = writeConfig.getFontName();
+        if (fontName != null){
+            debug(LOGGER, "使用自定义字体：%s",fontName);
+            setFontName(fontName);
+        }else{
+            setFontName(themeFont);
+        }
     }
 
     @Override
@@ -174,7 +199,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public AxolotlWriteResult defaultRenderHeaders(SXSSFSheet sheet, CellStyle headerDefaultCellStyle){
         int switchSheetIndex = context.getSwitchSheetIndex();
         List<Header> headers = context.getHeaders().get(switchSheetIndex);
-        int headerMaxDepth = -1;
+        int headerMaxDepth;
         int headerColumnCount = 0;
         int alreadyWriteRow = context.getAlreadyWriteRow().getOrDefault(context.getSwitchSheetIndex(),-1);
         if (headers != null && !headers.isEmpty()){

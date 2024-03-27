@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -46,6 +47,12 @@ public class AutoWriteConfig extends CommonWriteConfig {
     private String sheetName;
 
     /**
+     * 自定义字体名称
+     * 设置此值将使用自定义字体，忽略主题使用字体
+     */
+    private String fontName;
+
+    /**
      * 样式渲染器
      */
     private ExcelStyleRender styleRender = ExcelWriteThemes.$DEFAULT.getRender();
@@ -56,19 +63,43 @@ public class AutoWriteConfig extends CommonWriteConfig {
      */
     private String blankValue = "";
 
-
-    public void setStyleRender(ExcelStyleRender styleRender) {
+    /**
+     * 设置样式渲染器
+     * @param styleRender 样式渲染器
+     */
+    public void setThemeStyleRender(ExcelStyleRender styleRender) {
         this.styleRender = styleRender;
     }
 
+    /**
+     * 设置样式渲染器
+     * @param theme 主题
+     */
     @SneakyThrows
-    public void setStyleRender(ExcelWriteThemes theme) {
+    public void setThemeStyleRender(ExcelWriteThemes theme) {
         this.styleRender = theme.getRender();
     }
 
-    public void setStyleRender(String themeName) {
-        this.setStyleRender(ExcelWriteThemes.valueOf(themeName.toUpperCase()));
+    /**
+     * 设置样式渲染器
+     * @param themeName 主题
+     */
+    public void setThemeStyleRender(String themeName) {
+        this.setThemeStyleRender(ExcelWriteThemes.valueOf(themeName.toUpperCase()));
     }
+
+    /**
+     * 设置样式渲染器
+     * @param styleRenderClass 主题渲染器
+     */
+    public void setThemeStyleRender(Class<? extends ExcelStyleRender> styleRenderClass){
+        try {
+            this.styleRender = styleRenderClass.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     /**
      * 获取工作表名称

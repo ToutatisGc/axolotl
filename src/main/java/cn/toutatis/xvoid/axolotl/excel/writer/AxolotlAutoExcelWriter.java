@@ -9,6 +9,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
@@ -98,6 +99,10 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
 //        }
         styleRender.renderData(sheet, dataList);
         return null;
+    }
+
+    public void exxx(Sheet sheet, Runnable runnable){
+        runnable.run();
     }
 
     @Override

@@ -75,7 +75,7 @@ public class StyleHelper {
      * @return 预置单元格长度
      */
     public static Integer getPresetCellLength(String cellName){
-        return PRESET_CELL_LENGTH_MAP.getOrDefault(cellName,cellName.length()*256*8);
+        return PRESET_CELL_LENGTH_MAP.getOrDefault(cellName, (int) (cellName.length()*512*1.5));
     }
 
     /**

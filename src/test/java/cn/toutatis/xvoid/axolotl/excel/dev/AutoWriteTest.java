@@ -12,7 +12,6 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
@@ -69,21 +68,23 @@ public class AutoWriteTest {
     public void testAuto2() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
-        commonWriteConfig.setStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
-        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
-        commonWriteConfig.setTitle("测试表");
+        commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
+//        commonWriteConfig.setTitle("股票测试表");
+//        commonWriteConfig.setFontName("仿宋");
         commonWriteConfig.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
-        headers.add(new Header("名\r\n称",List.of(new Header("姓名"),new Header("花名"))));
-        headers.add(new Header("期限", List.of(new Header("年"), new Header("月"))));
-        Header header1 = new Header("金额");
-        Header header = new Header("账面数",
-                List.of(new Header("经济",
-                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), header1));
-        headers.add(header);
-        Header remark = new Header("备注");
-        AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
-        headers.add(remark);
+        headers.add(new Header("代码"));
+        headers.add(new Header("简称"));
+        headers.add(new Header("最新日期"));
+        headers.add(new Header("最新收盘价（元）"));
+        headers.add(new Header("涨跌幅（%）"));
+        headers.add(new Header("总市值（亿元）"));
+        headers.add(new Header("流通市值（亿元）"));
+        List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
+        headers.add(new Header("每股收益", subHeader1));
+        headers.add(new Header("市盈率PE", subHeader1));
+        headers.add(new Header("市净率PB（LF）"));
+        headers.add(new Header("市销率PS（TTM）"));
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             JSONObject json = new JSONObject(true);
@@ -95,6 +96,7 @@ public class AutoWriteTest {
             data.add(json);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
+        SXSSFWorkbook workbook = autoExcelWriter.getWorkbook();
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();
 
