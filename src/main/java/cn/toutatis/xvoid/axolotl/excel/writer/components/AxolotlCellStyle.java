@@ -32,7 +32,7 @@ public class AxolotlCellStyle {
     /**
      * 字体
      */
-    private String fontName = "宋体";
+    private String fontName = StyleHelper.STANDARD_FONT_NAME;
 
     /**
      * 字体大小
