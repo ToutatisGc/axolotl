@@ -1,13 +1,10 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
 import lombok.Data;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.*;
 
 /**
- * 单元格相关配置
+ * 样式全局配置
  * @author 张智凯
  * @version 1.0
  * @data 2024/3/28 9:32
@@ -106,6 +103,11 @@ public class BaseCellStyle {
      */
     private AxolotlColor foregroundColor;
 
+    /**
+     * 填充模式
+     */
+    private FillPatternType fillPatternType;
+
 
 
 
@@ -130,4 +132,14 @@ public class BaseCellStyle {
      *字体颜色
      */
     private IndexedColors fontColor;
+
+    /**
+     *设置文字为斜体
+     */
+    private boolean italic;
+
+    /**
+     * 使用水平删除线
+     */
+    private boolean strikeout;
 }
