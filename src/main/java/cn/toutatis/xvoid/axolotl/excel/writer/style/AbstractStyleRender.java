@@ -18,10 +18,12 @@ import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
@@ -61,8 +63,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     /**
      * 字体名称
      */
-    @Setter @Getter
-    private String fontName;
+    private String globalFontName;
+
+    /**
+     * 主题颜色
+     */
+    @Getter @Setter
+    private AxolotlColor themeColor;
 
     /**
      * 数据写入已进行错误提示
@@ -71,12 +78,14 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
 
     public AbstractStyleRender(Logger LOGGER) {
         this.LOGGER = LOGGER;
-        this.fontName = StyleHelper.STANDARD_FONT_NAME;
     }
 
-    public AbstractStyleRender(Logger LOGGER,String fontName) {
-        this.LOGGER = LOGGER;
-        this.fontName = fontName;
+    public String globalFontName() {
+        return globalFontName;
+    }
+
+    public void setGlobalFontName(String globalFontName) {
+        this.globalFontName = globalFontName;
     }
 
     public static final String TOTAL_HEADER_COUNT_KEY = "";
@@ -94,20 +103,22 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * 如果自定义字体不为空，则使用自定义字体，否则使用默认主题字体
      * @param themeFont 主题字体
      */
-    public void checkedAndUseCustomFontName(String themeFont){
+    public void checkedAndUseCustomTheme(String themeFont,AxolotlColor themeColor){
         String fontName = writeConfig.getFontName();
         if (fontName != null){
             debug(LOGGER, "使用自定义字体：%s",fontName);
-            setFontName(fontName);
+            setGlobalFontName(fontName);
         }else{
-            setFontName(themeFont);
+            setGlobalFontName(Objects.requireNonNullElse(themeFont, StyleHelper.STANDARD_FONT_NAME));
         }
+        this.setThemeColor(Objects.requireNonNullElse(themeColor, StyleHelper.STANDARD_THEME_COLOR));
     }
 
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
+            this.checkedAndUseCustomTheme(null,null);
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
             String sheetName = writeConfig.getSheetName();
             if(Validator.strNotBlank(sheetName)){
@@ -119,7 +130,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
             boolean fillWhite = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_FILL_DEFAULT_CELL_WHITE);
             if (fillWhite){
-                fillWhiteCell(sheet,fontName);
+                fillWhiteCell(sheet, globalFontName);
             }
         }else {
             axolotlWriteResult = new AxolotlWriteResult(true,"已初始化");
@@ -241,17 +252,22 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     recursionRenderHeaders(sheet,childs, headerRecursiveInfo);
                 }else{
                     cellAddresses = new CellRangeAddress(alreadyWriteRow, (alreadyWriteRow +headerMaxDepth)-1, headerColumnCount, headerColumnCount);
-                    int columnWidth = header.getColumnWidth();
-                    if (columnWidth == -1){
-                        columnWidth = StyleHelper.getPresetCellLength(title);
-                    }
+
                     String fieldName = header.getFieldName();
                     if (fieldName != null){
                         debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,headerColumnCount);
                         headerCache.put(fieldName,headerColumnCount);
                     }
-                    debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),columnWidth);
-                    sheet.setColumnWidth(headerColumnCount, columnWidth);
+                    if (!writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
+                        int columnWidth = header.getColumnWidth();
+                        if (columnWidth < 0){
+                            columnWidth = StyleHelper.getPresetCellLength(title);
+                        }
+                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),columnWidth);
+                        sheet.setColumnWidth(headerColumnCount, columnWidth);
+                    }else{
+                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),"AUTO");
+                    }
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,usedCellStyle);
                 if (headerMaxDepth > 1){
@@ -362,12 +378,17 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     cellAddresses = new CellRangeAddress(startRow, startRow, alreadyWriteColumn, endColumnPosition-1);
                 }else{
                     cellAddresses = new CellRangeAddress(startRow, startRow + maxDepth-1, alreadyWriteColumn, endColumnPosition-1);
-                    int columnWidth = header.getColumnWidth();
-                    if (columnWidth == -1){
-                        columnWidth = StyleHelper.getPresetCellLength(header.getName());
+
+                    if (!writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
+                        int columnWidth = header.getColumnWidth();
+                        if (columnWidth == -1){
+                            columnWidth = StyleHelper.getPresetCellLength(header.getName());
+                        }
+                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),columnWidth);
+                        sheet.setColumnWidth(alreadyWriteColumn, columnWidth);
+                    }else{
+                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),"AUTO");
                     }
-                    debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),columnWidth);
-                    sheet.setColumnWidth(alreadyWriteColumn, columnWidth);
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, usedCellStyle);
                 if (mergeRowNumber !=  startRow){
@@ -391,11 +412,48 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
     }
 
+    /**
+     * 属性信息
+     * 用于渲染列的数据和合计
+     */
+    @Data
+    protected static class FieldInfo{
+
+        /**
+         * 属性所属的类
+         */
+        private Class<?> clazz;
+
+        /**
+         * 属性名称
+         */
+        private final String fieldName;
+
+        /**
+         * 属性值
+         */
+        private final Object value;
+
+        /**
+         * 列索引
+         */
+        private final int columnIndex;
+
+        public FieldInfo(String fieldName, Object value, int columnIndex) {
+            if (value != null){
+                this.clazz = value.getClass();
+            }
+            this.fieldName = fieldName;
+            this.value = value;
+            this.columnIndex = columnIndex;
+        }
+    }
+
+    private Map<Integer, Integer> unmappedColumnCount;
 
     /**
      * 默认行为渲染数据
      * @param sheet 工作表
-     * @return 写入结果
      */
     @SuppressWarnings({"rawtypes","unchecked"})
     public void defaultRenderNextData(SXSSFSheet sheet,Object data,CellStyle rowStyle){
@@ -434,49 +492,35 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
         // 写入数据
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
-        Map<Integer, Integer> unmappedColumnCount =  new HashMap<>();
+        unmappedColumnCount =  new HashMap<>();
         columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
         boolean columnMappingEmpty = columnMapping.isEmpty();
         boolean useOrderField = true;
-        DataInverter<?> dataInverter = writeConfig.getDataInverter();
         for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
+            String fieldName = dataEntry.getKey();
             SXSSFCell cell;
             if (columnMappingEmpty){
                 cell = dataRow.createCell(writtenColumn);
             }else{
                 useOrderField = false;
-                if (columnMapping.containsKey(dataEntry.getKey())){
-                    cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(dataEntry.getKey()),null);
+                if (columnMapping.containsKey(fieldName)){
+                    cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(fieldName),null);
                 }else {
                     if (!alreadyNotice){
-                        warn(LOGGER,"未映射字段[%s]请在表头Header中映射字段!",dataEntry.getKey());
+                        warn(LOGGER,"未映射字段[%s]请在表头Header中映射字段!",fieldName);
                         alreadyNotice = true;
                     }
                     continue;
                 }
             }
             Object value = dataEntry.getValue();
-            if (value == null){
-                cell.setCellValue(writeConfig.getBlankValue());
-            }else{
-                value = dataInverter.convert(value);
-                String valueString = value.toString();
-                if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(valueString)){
-                    Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(switchSheetIndex);
-                    int columnIndex = cell.getColumnIndex();
-                    if (endingTotalMapping.containsKey(columnIndex)){
-                        BigDecimal newValue = endingTotalMapping.get(columnIndex).add(BigDecimal.valueOf(Double.parseDouble(valueString)));
-                        endingTotalMapping.put(columnIndex,newValue);
-                    }else{
-                        endingTotalMapping.put(columnIndex,BigDecimal.valueOf(Double.parseDouble(valueString)));
-                    }
-                }
-                cell.setCellValue(valueString);
-            }
-            unmappedColumnCount.remove(cell.getColumnIndex());
+            FieldInfo fieldInfo = new FieldInfo(fieldName, value, writtenColumn);
             cell.setCellStyle(rowStyle);
+            // 渲染数据到单元格
+            this.renderColumn(fieldInfo,cell);
             writtenColumnMap.put(writtenColumn++,1);
         }
+        // 将未使用的的单元格赋予空值
         for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {
             SXSSFCell cell = null;
             if (useOrderField){
@@ -494,6 +538,42 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             if (cell != null){
                 cell.setCellValue(writeConfig.getBlankValue());
                 cell.setCellStyle(rowStyle);
+            }
+        }
+    }
+
+    /**
+     * 渲染列数据
+     * @param fieldInfo 字段信息
+     * @param cell 单元格
+     */
+    public void renderColumn(FieldInfo fieldInfo,Cell cell){
+        Object value = fieldInfo.getValue();
+        if (value == null){
+            cell.setCellValue(writeConfig.getBlankValue());
+        }else{
+            calculateColumns(fieldInfo);
+            value = writeConfig.getDataInverter().convert(value);
+            int columnIndex = fieldInfo.getColumnIndex();
+            cell.setCellValue(value.toString());
+            unmappedColumnCount.remove(columnIndex);
+        }
+    }
+
+    /**
+     * 计算列合计
+     * @param fieldInfo 字段信息
+     */
+    public void calculateColumns(FieldInfo fieldInfo){
+        int columnIndex = fieldInfo.getColumnIndex();
+        String value = fieldInfo.getValue().toString();
+        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
+            Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(context.getSwitchSheetIndex());
+            if (endingTotalMapping.containsKey(columnIndex)){
+                BigDecimal newValue = endingTotalMapping.get(columnIndex).add(BigDecimal.valueOf(Double.parseDouble(value)));
+                endingTotalMapping.put(columnIndex,newValue);
+            }else{
+                endingTotalMapping.put(columnIndex,BigDecimal.valueOf(Double.parseDouble(value)));
             }
         }
     }
@@ -526,13 +606,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 SXSSFWorkbook workbook = sheet.getWorkbook();
                 CellStyle totalCellStyle = workbook.createCellStyle();
                 Font font = StyleHelper.createWorkBookFont(
-                        workbook, fontName, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
+                        workbook, globalFontName, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
                 );
                 StyleHelper.setCellStyleAlignmentCenter(totalCellStyle);
                 totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
                 totalCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 totalCellStyle.setFont(font);
-                BorderStyle borderStyle = BorderStyle.MEDIUM;
+                BorderStyle borderStyle = BorderStyle.THIN;
                 totalCellStyle.setBorderBottom(borderStyle);
                 totalCellStyle.setBorderLeft(borderStyle);
                 totalCellStyle.setBorderRight(borderStyle);
@@ -545,12 +625,83 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 cell.setCellStyle(totalCellStyle);
             }
         }
-        sheet.trackAllColumnsForAutoSizing();
-        for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
-            sheet.autoSizeColumn(columnIdx,true);
-            sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.25));
+        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
+            debug(LOGGER,"开始自动计算列宽");
+            sheet.trackAllColumnsForAutoSizing();
+            for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
+                sheet.autoSizeColumn(columnIdx,true);
+                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.25));
+            }
         }
         return new AxolotlWriteResult(true, "完成结束阶段");
+    }
+
+    /* 拓展方法部分 */
+
+    /**
+     * 创建字体
+     * @param fontName 字体名称
+     * @param fontSize 字体大小
+     * @param isBold 是否加粗
+     * @param color 颜色
+     * @return 字体
+     */
+    public Font createFont(String fontName,short fontSize,boolean isBold,IndexedColors color){
+        return StyleHelper.createWorkBookFont(context.getWorkbook(),fontName,isBold, fontSize,color);
+    }
+
+    /**
+     * 创建字体
+     * @param fontName 字体名称
+     * @param fontSize 字体大小
+     * @param isBold 是否加粗
+     * @param color 颜色
+     * @return 字体
+     */
+    public Font createFont(String fontName,short fontSize,boolean isBold,AxolotlColor color){
+        XSSFFont font = new XSSFFont();
+        font.setColor(color.toXSSFColor());
+        font.setBold(isBold);
+        font.setFontName(fontName);
+        font.setFontHeightInPoints(fontSize);
+        StylesTable stylesSource = context.getWorkbook().getXSSFWorkbook().getStylesSource();
+        font.registerTo(stylesSource);
+        return font;
+    }
+
+    public Font createMainTextFont(short fontSize,AxolotlColor color){return this.createFont(globalFontName, fontSize, false, color);}
+    public Font createMainTextFont(AxolotlColor color){return this.createMainTextFont(StyleHelper.STANDARD_TEXT_FONT_SIZE, color);}
+    public Font createMainTextFont(short fontSize,IndexedColors color){return this.createFont(globalFontName, fontSize, false, color);}
+    public Font createMainTextFont(IndexedColors color){return this.createMainTextFont(StyleHelper.STANDARD_TEXT_FONT_SIZE, color);}
+    public Font createBlackMainTextFont(){return this.createMainTextFont(IndexedColors.BLACK);}
+    public Font createWhiteMainTextFont(){return this.createMainTextFont(IndexedColors.WHITE);}
+    public Font createRedMainTextFont(){return this.createMainTextFont(IndexedColors.RED);}
+
+    public CellStyle createBlackMainTextCellStyle(IndexedColors borderColor, AxolotlColor cellColor){
+        return createStyle(BorderStyle.THIN, borderColor, cellColor,
+                globalFontName, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.BLACK);
+    }
+
+    public CellStyle createBlackMainTextCellStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor){
+        return createStyle(borderStyle, borderColor, cellColor,
+                globalFontName, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.BLACK);
+    }
+
+    public CellStyle createStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor,Font font) {
+        return StyleHelper.createStandardCellStyle(context.getWorkbook(),borderStyle, borderColor,cellColor,font);
+    }
+
+    public CellStyle createStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor,
+                                 String fontName,short fontSize,boolean isBold,Object fontColor) {
+        Font font;
+        if (fontColor instanceof AxolotlColor){
+            font = this.createFont(fontName,fontSize,isBold, (AxolotlColor) fontColor);
+        }else if (fontColor instanceof IndexedColors){
+            font = this.createFont(fontName,fontSize,isBold, (IndexedColors) fontColor);
+        }else{
+            throw new IllegalArgumentException("字体颜色类型错误");
+        }
+        return StyleHelper.createStandardCellStyle(context.getWorkbook(),borderStyle, borderColor,cellColor,font);
     }
 
 }

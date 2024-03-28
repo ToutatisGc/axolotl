@@ -1,12 +1,13 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
+import org.apache.poi.ss.usermodel.Color;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 
 /**
  * 工作簿颜色
  * @author Toutatis_Gc
  */
-public class AxolotlColor {
+public class AxolotlColor implements Color {
 
     private final int red;
     private final int green;
@@ -32,6 +33,14 @@ public class AxolotlColor {
 
     public XSSFColor toXSSFColor(){
         return new XSSFColor(new byte[]{(byte)red,(byte)green,(byte)blue});
+    }
+
+    public static AxolotlColor create(int red, int green, int blue){
+        return new AxolotlColor(red,green,blue);
+    }
+
+    public static XSSFColor createXSSFColor(int red, int green, int blue){
+        return new AxolotlColor(red,green,blue).toXSSFColor();
     }
 
 }

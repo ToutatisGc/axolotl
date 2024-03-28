@@ -1,7 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
@@ -23,6 +22,11 @@ public class StyleHelper {
      * 默认使用字体
      */
     public static final String STANDARD_FONT_NAME = "Arial";
+
+    /**
+     * 默认主题颜色
+     */
+    public static final AxolotlColor STANDARD_THEME_COLOR = AxolotlColor.create(255,255,255);
 
     /**
      * 默认起始位置
@@ -67,6 +71,8 @@ public class StyleHelper {
         PRESET_CELL_LENGTH_MAP.put("身份证号码",SERIAL_NUMBER_LENGTH);
         PRESET_CELL_LENGTH_MAP.put("性别",2000);
         PRESET_CELL_LENGTH_MAP.put("地址",12800);
+        PRESET_CELL_LENGTH_MAP.put("简称",8000);
+        PRESET_CELL_LENGTH_MAP.put("代码",4000);
     }
 
     /**

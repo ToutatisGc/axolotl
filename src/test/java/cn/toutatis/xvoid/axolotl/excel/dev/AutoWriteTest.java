@@ -76,6 +76,7 @@ public class AutoWriteTest {
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
         commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
         commonWriteConfig.setTitle("股票测试表");
         commonWriteConfig.setFontName("仿宋");
         commonWriteConfig.setBlankValue("-");
