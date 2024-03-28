@@ -496,7 +496,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
         SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
         int writtenColumn = START_POSITION;
-        int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
+        int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex)+1;
         // 写入序号
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
             SXSSFCell cell = dataRow.createCell(writtenColumn);
