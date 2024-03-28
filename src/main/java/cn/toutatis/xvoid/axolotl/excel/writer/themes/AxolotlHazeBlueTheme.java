@@ -36,6 +36,7 @@ public class AxolotlHazeBlueTheme extends AbstractStyleRender implements ExcelSt
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         if (isFirstBatch()){
+            this.checkedAndUseCustomTheme(FONT_NAME,THEME_COLOR_XSSF);
             MAIN_TEXT_FONT = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, false, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK);
         }
         return super.init(sheet);
@@ -67,13 +68,12 @@ public class AxolotlHazeBlueTheme extends AbstractStyleRender implements ExcelSt
 
     @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
-        SXSSFWorkbook workbook = context.getWorkbook();
         BorderStyle borderStyle = BorderStyle.THIN;
         IndexedColors borderColor = IndexedColors.WHITE;
         // 交叉样式
-        CellStyle dataStyle = StyleHelper.createStandardCellStyle(workbook, borderStyle, borderColor, new AxolotlColor(255,255,253),MAIN_TEXT_FONT);
-        CellStyle dataStyleOdd = StyleHelper.createStandardCellStyle(workbook ,borderStyle , borderColor, new AxolotlColor(213,220,229),MAIN_TEXT_FONT);
+        CellStyle dataStyle = this.createStyle(borderStyle, borderColor, new AxolotlColor(255, 255, 253), MAIN_TEXT_FONT);
         StyleHelper.setCellAsPlainText(dataStyle);
+        CellStyle dataStyleOdd = this.createStyle(borderStyle, borderColor, new AxolotlColor(213,220,229), MAIN_TEXT_FONT);
         StyleHelper.setCellAsPlainText(dataStyleOdd);
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
         if (!columnMapping.isEmpty()){

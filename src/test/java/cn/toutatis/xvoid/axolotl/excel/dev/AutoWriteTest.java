@@ -12,6 +12,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlIndustrialOrangeTheme;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
@@ -108,7 +109,42 @@ public class AutoWriteTest {
             data.add(stockEntity);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
-        SXSSFWorkbook workbook = autoExcelWriter.getWorkbook();
+        autoExcelWriter.write(headers,data);
+        autoExcelWriter.close();
+
+    }
+
+    @Test
+    public void autoTest3() throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        AutoWriteConfig config = new AutoWriteConfig();
+        config.setThemeStyleRender(ExcelWriteThemes.INDUSTRIAL_ORANGE);
+        config.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
+        config.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
+        config.setBlankValue("-");
+        config.setOutputStream(fileOutputStream);
+        List<Header> headers = new ArrayList<>();
+        headers.add(new Header("Capacity\nTON"));
+        headers.add(new Header("Model",new Header("Single\nSpeed"),new Header("Dual\nSpeed")));
+        headers.add(new Header("I-Beam",new Header("(mm)"),new Header("(inch)")));
+        headers.add(new Header("Travel Speed",new Header("50HZ"),new Header("60HZ")));
+        headers.add(new Header("Motor(KW)",new Header("Single",true),new Header("Dual",true)));
+        config.addSpecialRowHeight(1,40);
+        ArrayList<JSONObject> data = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            JSONObject jsonObject = new JSONObject(true);
+            jsonObject.put("order",i);
+            jsonObject.put("model","CHM-00"+i);
+            jsonObject.put("dual speed","CD-00"+i);
+            jsonObject.put("mm",RandomUtil.randomInt(0,200)+"-"+RandomUtil.randomInt(200,500));
+            jsonObject.put("inch",RandomUtil.randomInt(0,10)+"°-"+RandomUtil.randomInt(10,20)+"°");
+            jsonObject.put("50HZ",RandomUtil.randomDouble(0,20));
+            jsonObject.put("60HZ",RandomUtil.randomDouble(0,20));
+            jsonObject.put("Single",RandomUtil.randomDouble(0,20));
+            jsonObject.put("Dual",RandomUtil.randomDouble(0,20));
+            data.add(jsonObject);
+        }
+        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(config);
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();
 

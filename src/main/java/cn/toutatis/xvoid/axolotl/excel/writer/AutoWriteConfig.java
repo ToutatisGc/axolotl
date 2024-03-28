@@ -13,7 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
+import java.util.*;
 
 /**
  * 自动写入的写入配置
@@ -25,6 +25,7 @@ public class AutoWriteConfig extends CommonWriteConfig {
 
     public AutoWriteConfig() {
         super(true);
+        this.calculateColumnIndexes.add(-1);
     }
 
     public AutoWriteConfig(Class<?> metaClass,boolean withDefaultConfig) {
@@ -69,6 +70,18 @@ public class AutoWriteConfig extends CommonWriteConfig {
      * null值将被填充为空字符串，常用的字符串有"-","未填写","无"
      */
     private String blankValue = "";
+
+    /**
+     * 特殊行高映射
+     */
+    private Map<Integer,Integer> specialRowHeightMapping = new HashMap<>();
+
+    /**
+     * 需要计算的列索引
+     * -1:为计算所有数字列
+     * 0:空为不计算,填充为默认值
+     */
+    private HashSet<Integer> calculateColumnIndexes = new HashSet<>();
 
     /**
      * 设置样式渲染器
@@ -148,4 +161,20 @@ public class AutoWriteConfig extends CommonWriteConfig {
         }
     }
 
+    /**
+     * 添加需要计算的列索引
+     * @param index 列索引
+     */
+    public void addCalculateColumnIndex(int... index){
+        Arrays.stream(index).filter(i -> i >= 0).forEach(i -> this.calculateColumnIndexes.add(i));
+    }
+
+    /**
+     * 添加特殊行高
+     * @param row 行
+     * @param height 高度
+     */
+    public void addSpecialRowHeight(int row,int height){
+        this.specialRowHeightMapping.put(row,height);
+    }
 }

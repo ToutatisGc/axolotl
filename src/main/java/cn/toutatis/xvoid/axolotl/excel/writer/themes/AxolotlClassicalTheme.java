@@ -32,7 +32,8 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         if (isFirstBatch()){
-            MAIN_TEXT_FONT = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, false, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK);
+            this.checkedAndUseCustomTheme(FONT_NAME,THEME_COLOR_XSSF);
+            MAIN_TEXT_FONT = this.createFont(FONT_NAME,  StyleHelper.STANDARD_TEXT_FONT_SIZE,false, IndexedColors.BLACK);
         }
         return super.init(sheet);
     }

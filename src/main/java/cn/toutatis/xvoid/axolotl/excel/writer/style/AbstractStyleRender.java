@@ -118,7 +118,6 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
-            this.checkedAndUseCustomTheme(null,null);
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
             String sheetName = writeConfig.getSheetName();
             if(Validator.strNotBlank(sheetName)){
@@ -131,6 +130,10 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             boolean fillWhite = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_FILL_DEFAULT_CELL_WHITE);
             if (fillWhite){
                 fillWhiteCell(sheet, globalFontName);
+            }
+            if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
+                debug(LOGGER,"开启自动获取列宽");
+                sheet.trackAllColumnsForAutoSizing();
             }
         }else {
             axolotlWriteResult = new AxolotlWriteResult(true,"已初始化");
@@ -267,6 +270,10 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                         sheet.setColumnWidth(headerColumnCount, columnWidth);
                     }else{
                         debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),"AUTO");
+                    }
+                    if (header.isParticipateInCalculate()){
+                        debug(LOGGER,"列[%s]表头[%s]参与计算",headerColumnCount,header.getName());
+                        writeConfig.addCalculateColumnIndex(headerColumnCount);
                     }
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,usedCellStyle);
@@ -407,6 +414,10 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                         debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,alreadyWriteColumn);
                         headerCache.put(fieldName,alreadyWriteColumn);
                     }
+                    if (header.isParticipateInCalculate()){
+                        debug(LOGGER,"列[%s]表头[%s]参与计算",alreadyWriteColumn,header.getName());
+                        writeConfig.addCalculateColumnIndex(alreadyWriteColumn);
+                    }
                 }
             }
         }
@@ -439,13 +450,16 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          */
         private final int columnIndex;
 
-        public FieldInfo(String fieldName, Object value, int columnIndex) {
+        private final int rowIndex;
+
+        public FieldInfo(String fieldName, Object value, int columnIndex,int rowIndex) {
             if (value != null){
                 this.clazz = value.getClass();
             }
             this.fieldName = fieldName;
             this.value = value;
             this.columnIndex = columnIndex;
+            this.rowIndex = rowIndex;
         }
     }
 
@@ -514,7 +528,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }
             }
             Object value = dataEntry.getValue();
-            FieldInfo fieldInfo = new FieldInfo(fieldName, value, writtenColumn);
+            FieldInfo fieldInfo = new FieldInfo(fieldName, value, writtenColumn,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
             this.renderColumn(fieldInfo,cell);
@@ -589,19 +603,22 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
             row.setHeight((short) 600);
             DataInverter<?> dataInverter = writeConfig.getDataInverter();
+            HashSet<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes();
             for (int i = 0; i < alreadyWrittenColumns; i++) {
                 SXSSFCell cell = row.createCell(i);
                 String cellValue = "-";
                 if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                     cellValue = "合计";
+                    sheet.setColumnWidth(i, StyleHelper.SERIAL_NUMBER_LENGTH);
                 }
                 if (endingTotalMapping.containsKey(i)){
-                    BigDecimal scale =
-                            endingTotalMapping.get(i)
-                                    .setScale(AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP);
-                    cellValue = scale.toString();
+                    if (calculateColumnIndexes.contains(i) || (calculateColumnIndexes.size() == 1 && calculateColumnIndexes.contains(-1))){
+                        BigDecimal bigDecimal = endingTotalMapping.get(i);
+                        Object convert = dataInverter.convert(bigDecimal);
+                        cellValue = convert.toString();
+                    }
                 }
-                cell.setCellValue(dataInverter.convert(cellValue).toString());
+                cell.setCellValue(cellValue);
                 CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
                 SXSSFWorkbook workbook = sheet.getWorkbook();
                 CellStyle totalCellStyle = workbook.createCellStyle();
@@ -627,11 +644,15 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
             debug(LOGGER,"开始自动计算列宽");
-            sheet.trackAllColumnsForAutoSizing();
             for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
                 sheet.autoSizeColumn(columnIdx,true);
-                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.25));
+                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.35));
             }
+        }
+        Map<Integer, Integer> specialRowHeightMapping = writeConfig.getSpecialRowHeightMapping();
+        for (Map.Entry<Integer, Integer> heightEntry : specialRowHeightMapping.entrySet()) {
+            debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
+            sheet.getRow(heightEntry.getKey()).setHeightInPoints(heightEntry.getValue());
         }
         return new AxolotlWriteResult(true, "完成结束阶段");
     }

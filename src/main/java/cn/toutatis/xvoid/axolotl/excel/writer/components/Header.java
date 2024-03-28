@@ -15,9 +15,20 @@ public class Header {
         this.name = name;
     }
 
+    public Header(String name, boolean participateInCalculate) {
+        this.name = name;
+        this.participateInCalculate = participateInCalculate;
+    }
+
     public Header(String name, String fieldName) {
         this(name);
         this.fieldName = fieldName;
+    }
+
+    public Header(String name, String fieldName, boolean participateInCalculate) {
+        this.name = name;
+        this.fieldName = fieldName;
+        this.participateInCalculate = participateInCalculate;
     }
 
     public <T,D> Header(String name, XFunc<T,D> fieldName) {
@@ -25,9 +36,22 @@ public class Header {
         this.fieldName = LambdaToolkit.getFieldName(fieldName);
     }
 
+    public <T,D> Header(String name, boolean participateInCalculate, XFunc<T,D> fieldName) {
+        this(name);
+        this.fieldName = LambdaToolkit.getFieldName(fieldName);
+        this.participateInCalculate = participateInCalculate;
+    }
+
+
     public Header(String name, List<Header> childs) {
         this.name = name;
         this.childs = childs;
+    }
+
+    public Header(String name, boolean participateInCalculate, List<Header> childs) {
+        this.name = name;
+        this.childs = childs;
+        this.participateInCalculate = participateInCalculate;
     }
 
     public Header(String name, String fieldName, List<Header> childs) {
@@ -36,15 +60,36 @@ public class Header {
         this.childs = childs;
     }
 
+    public Header(String name, String fieldName, boolean participateInCalculate, List<Header> childs) {
+        this.name = name;
+        this.fieldName = fieldName;
+        this.childs = childs;
+        this.participateInCalculate = participateInCalculate;
+    }
+
     public Header(String name, Header... childs) {
         this.name = name;
         this.childs = List.of(childs);
     }
 
+    public Header(String name, boolean participateInCalculate, Header... childs) {
+        this.name = name;
+        this.childs = List.of(childs);
+        this.participateInCalculate = participateInCalculate;
+    }
+
+
     public Header(String name, String fieldName, Header... childs) {
         this.name = name;
         this.fieldName = fieldName;
         this.childs = List.of(childs);
+    }
+
+    public Header(String name, String fieldName,boolean participateInCalculate, Header... childs ) {
+        this.name = name;
+        this.fieldName = fieldName;
+        this.childs = List.of(childs);
+        this.participateInCalculate = participateInCalculate;
     }
 
     /**
@@ -86,6 +131,12 @@ public class Header {
      * 仅最下层表头的列宽有效
      */
     private int columnWidth = -1;
+
+    /**
+     * 是否参与计算列
+     * 修改此值将加入到config中的计算列字段
+     */
+    private boolean participateInCalculate = false;
 
     /**
      * 计算当前表头的列数

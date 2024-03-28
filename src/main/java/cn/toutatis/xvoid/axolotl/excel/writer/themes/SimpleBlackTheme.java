@@ -36,6 +36,7 @@ public class SimpleBlackTheme extends AbstractStyleRender implements ExcelStyleR
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         if (isFirstBatch()){
+            this.checkedAndUseCustomTheme(FONT_NAME,THEME_COLOR_XSSF);
             MAIN_TEXT_FONT = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, false, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK);
         }
         return super.init(sheet);
@@ -77,8 +78,8 @@ public class SimpleBlackTheme extends AbstractStyleRender implements ExcelStyleR
         if (!columnMapping.isEmpty()){
             debug(LOGGER,"已有字段映射表,将按照字段映射渲染数据[%s]",columnMapping);
         }
-        for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
-            this.defaultRenderNextData(sheet, data.get(i), dataStyle);
+        for (Object datum : data) {
+            this.defaultRenderNextData(sheet, datum, dataStyle);
         }
         return new AxolotlWriteResult(true, "渲染数据完成");
     }

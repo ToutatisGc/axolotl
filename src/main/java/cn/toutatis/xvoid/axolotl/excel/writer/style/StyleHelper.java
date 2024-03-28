@@ -24,9 +24,21 @@ public class StyleHelper {
     public static final String STANDARD_FONT_NAME = "Arial";
 
     /**
+     * 白色颜色
+     */
+    public static final AxolotlColor WHITE_COLOR = AxolotlColor.create(255,255,255);
+
+    /**
+     * 黑色颜色
+     */
+    public static final AxolotlColor BLACK_COLOR = AxolotlColor.create(0,0,0);
+
+    /**
      * 默认主题颜色
      */
-    public static final AxolotlColor STANDARD_THEME_COLOR = AxolotlColor.create(255,255,255);
+    public static final AxolotlColor STANDARD_THEME_COLOR = WHITE_COLOR;
+
+
 
     /**
      * 默认起始位置

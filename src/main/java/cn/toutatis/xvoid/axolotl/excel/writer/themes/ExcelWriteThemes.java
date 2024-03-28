@@ -14,7 +14,8 @@ public enum ExcelWriteThemes {
     $DEFAULT("默认主题样式", AxolotlClassicalTheme.class),
     SIMPLE_BLACK("经典黑", SimpleBlackTheme.class),
     ADMINISTRATION_RED("行政红", AxolotlAdministrationRedTheme.class),
-    HAZE_BLUE("雾霾蓝", AxolotlHazeBlueTheme.class);
+    HAZE_BLUE("雾霾蓝", AxolotlHazeBlueTheme.class),
+    INDUSTRIAL_ORANGE("工业橙", AxolotlIndustrialOrangeTheme.class);
 
     /**
      * 样式名称
