@@ -450,6 +450,9 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          */
         private final int columnIndex;
 
+        /**
+         * 行索引
+         */
         private final int rowIndex;
 
         public FieldInfo(String fieldName, Object value, int columnIndex,int rowIndex) {

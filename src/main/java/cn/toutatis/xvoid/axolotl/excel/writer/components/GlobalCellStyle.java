@@ -4,6 +4,8 @@ import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.*;
 
+import java.util.Objects;
+
 /**
  * 样式全局配置
  * @author 张智凯
@@ -123,4 +125,16 @@ public class GlobalCellStyle {
      */
     private Boolean strikeout;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GlobalCellStyle style = (GlobalCellStyle) o;
+        return Objects.equals(rowHeight, style.rowHeight) && Objects.equals(columnWidth, style.columnWidth) && horizontalAlignment == style.horizontalAlignment && verticalAlignment == style.verticalAlignment && Objects.equals(foregroundColor, style.foregroundColor) && fillPatternType == style.fillPatternType && baseBorderStyle == style.baseBorderStyle && baseBorderColor == style.baseBorderColor && borderTopStyle == style.borderTopStyle && topBorderColor == style.topBorderColor && borderBottomStyle == style.borderBottomStyle && bottomBorderColor == style.bottomBorderColor && borderLeftStyle == style.borderLeftStyle && leftBorderColor == style.leftBorderColor && borderRightStyle == style.borderRightStyle && rightBorderColor == style.rightBorderColor && Objects.equals(fontName, style.fontName) && Objects.equals(bold, style.bold) && Objects.equals(fontSize, style.fontSize) && fontColor == style.fontColor && Objects.equals(italic, style.italic) && Objects.equals(strikeout, style.strikeout);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rowHeight, columnWidth, horizontalAlignment, verticalAlignment, foregroundColor, fillPatternType, baseBorderStyle, baseBorderColor, borderTopStyle, topBorderColor, borderBottomStyle, bottomBorderColor, borderLeftStyle, leftBorderColor, borderRightStyle, rightBorderColor, fontName, bold, fontSize, fontColor, italic, strikeout);
+    }
 }

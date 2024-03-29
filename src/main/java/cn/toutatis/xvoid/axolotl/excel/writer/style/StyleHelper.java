@@ -158,6 +158,8 @@ public class StyleHelper {
      * @param bold 是否加粗
      * @param fontSize 字体大小
      * @param fontColor 字体颜色
+     * @param italic 是否为斜体
+     * @param strikeout 是否有删除线
      */
     public static Font createWorkBookFont(Workbook workbook,String fontName,boolean bold,short fontSize,IndexedColors fontColor,boolean italic,boolean strikeout){
         Font font = workbook.createFont();
