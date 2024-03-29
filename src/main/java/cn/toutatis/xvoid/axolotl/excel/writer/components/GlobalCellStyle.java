@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.*;
 
@@ -10,32 +11,37 @@ import org.apache.poi.ss.usermodel.*;
  * @data 2024/3/28 9:32
  */
 @Data
-public class BaseCellStyle {
+public class GlobalCellStyle {
 
     /**
-     * 标题行高
+     * 行高
      */
-    private short titleRowHeight;
-
-    /**
-     * 表头行高
-     */
-    private short headerRowHeight;
-
-    /**
-     * 内容行高
-     */
-    private short dataRowHeight;
-
+    private Short rowHeight;
 
     /**
      * 列宽
      */
-  //  private short columnWidth;
+    private Short columnWidth;
 
+    /**
+     * 单元格水平对齐方式
+     */
+    private HorizontalAlignment horizontalAlignment;
 
+    /**
+     * 单元格对齐方式
+     */
+    private VerticalAlignment verticalAlignment;
 
-    /** 边框相关 */
+    /**
+     * 背景颜色
+     */
+    private AxolotlColor foregroundColor;
+
+    /**
+     * 填充模式
+     */
+    private FillPatternType fillPatternType;
 
     /**
      * 边框默认样式
@@ -87,32 +93,6 @@ public class BaseCellStyle {
      */
     private IndexedColors rightBorderColor;
 
-
-    /**
-     * 水平对齐方式
-     */
-    private HorizontalAlignment horizontalAlignment;
-
-    /**
-     * 垂直对齐方式
-     */
-    private VerticalAlignment verticalAlignment;
-
-    /**
-     * 背景颜色
-     */
-    private AxolotlColor foregroundColor;
-
-    /**
-     * 填充模式
-     */
-    private FillPatternType fillPatternType;
-
-
-
-
-    /** 字体相关 */
-
     /**
      * 字体名称
      */
@@ -121,12 +101,12 @@ public class BaseCellStyle {
     /**
      * 是否加粗
      */
-    private boolean bold;
+    private Boolean bold;
 
     /**
      * 字体大小
      */
-    private short fontSize;
+    private Short fontSize;
 
     /**
      *字体颜色
@@ -136,10 +116,11 @@ public class BaseCellStyle {
     /**
      *设置文字为斜体
      */
-    private boolean italic;
+    private Boolean italic;
 
     /**
      * 使用水平删除线
      */
-    private boolean strikeout;
+    private Boolean strikeout;
+
 }

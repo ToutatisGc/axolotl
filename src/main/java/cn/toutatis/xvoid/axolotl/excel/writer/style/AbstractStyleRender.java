@@ -690,6 +690,43 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         return font;
     }
 
+    /**
+     * 创建字体
+     * @param fontName 字体名称
+     * @param fontSize 字体大小
+     * @param isBold 是否加粗
+     * @param color 颜色
+     * @param italic 是否斜体
+     * @param strikeout 是否删除线
+     * @return
+     */
+    public Font createFont(String fontName,short fontSize,boolean isBold,IndexedColors color,boolean italic,boolean strikeout){
+        return StyleHelper.createWorkBookFont(context.getWorkbook(),fontName,isBold, fontSize,color,italic,strikeout);
+    }
+
+    /**
+     * 创建字体
+     * @param fontName 字体名称
+     * @param fontSize 字体大小
+     * @param isBold 是否加粗
+     * @param color 颜色
+     * @param italic 是否斜体
+     * @param strikeout 是否删除线
+     * @return
+     */
+    public Font createFont(String fontName,short fontSize,boolean isBold,AxolotlColor color,boolean italic,boolean strikeout){
+        XSSFFont font = new XSSFFont();
+        font.setColor(color.toXSSFColor());
+        font.setBold(isBold);
+        font.setFontName(fontName);
+        font.setFontHeightInPoints(fontSize);
+        font.setItalic(italic);
+        font.setStrikeout(strikeout);
+        StylesTable stylesSource = context.getWorkbook().getXSSFWorkbook().getStylesSource();
+        font.registerTo(stylesSource);
+        return font;
+    }
+
     public Font createMainTextFont(short fontSize,AxolotlColor color){return this.createFont(globalFontName, fontSize, false, color);}
     public Font createMainTextFont(AxolotlColor color){return this.createMainTextFont(StyleHelper.STANDARD_TEXT_FONT_SIZE, color);}
     public Font createMainTextFont(short fontSize,IndexedColors color){return this.createFont(globalFontName, fontSize, false, color);}
@@ -719,6 +756,19 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             font = this.createFont(fontName,fontSize,isBold, (AxolotlColor) fontColor);
         }else if (fontColor instanceof IndexedColors){
             font = this.createFont(fontName,fontSize,isBold, (IndexedColors) fontColor);
+        }else{
+            throw new IllegalArgumentException("字体颜色类型错误");
+        }
+        return StyleHelper.createStandardCellStyle(context.getWorkbook(),borderStyle, borderColor,cellColor,font);
+    }
+
+    public CellStyle createStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor,
+                                 String fontName,short fontSize,boolean isBold,Object fontColor,boolean italic,boolean strikeout) {
+        Font font;
+        if (fontColor instanceof AxolotlColor){
+            font = this.createFont(fontName,fontSize,isBold,(AxolotlColor) fontColor,italic,strikeout);
+        }else if (fontColor instanceof IndexedColors){
+            font = this.createFont(fontName,fontSize,isBold,(IndexedColors) fontColor, italic,strikeout);
         }else{
             throw new IllegalArgumentException("字体颜色类型错误");
         }

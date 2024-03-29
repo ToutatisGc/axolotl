@@ -152,6 +152,25 @@ public class StyleHelper {
     }
 
     /**
+     * 创建工作簿字体
+     * @param workbook 工作簿
+     * @param fontName 字体名称
+     * @param bold 是否加粗
+     * @param fontSize 字体大小
+     * @param fontColor 字体颜色
+     */
+    public static Font createWorkBookFont(Workbook workbook,String fontName,boolean bold,short fontSize,IndexedColors fontColor,boolean italic,boolean strikeout){
+        Font font = workbook.createFont();
+        font.setFontName(fontName);
+        font.setBold(bold);
+        font.setFontHeightInPoints(fontSize);
+        font.setItalic(italic);
+        font.setStrikeout(strikeout);
+        font.setColor(fontColor.getIndex());
+        return font;
+    }
+
+    /**
      * 创建通用的单元格样式
      * @param workbook 工作表
      * @param borderStyle 边框样式
