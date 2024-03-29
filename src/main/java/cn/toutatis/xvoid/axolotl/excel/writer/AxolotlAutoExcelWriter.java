@@ -85,24 +85,8 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         return null;
     }
 
-    public AxolotlWriteResult write(List<?> dataList) throws AxolotlWriteException {
-        info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(writeConfig.getSheetIndex()));
-        SXSSFSheet sheet = workbook.createSheet();
-
-        workbook.setSheetName(writeConfig.getSheetIndex(), writeConfig.getSheetName());
-        ExcelStyleRender styleRender = writeConfig.getStyleRender();
-//        if (styleRender instanceof AbstractInnerStyleRender innerStyleRender){
-//            innerStyleRender.setWriteConfig(writeConfig);
-//            innerStyleRender.renderHeader(sheet);
-//        }else {
-//            styleRender.renderHeader(sheet);
-//        }
-        styleRender.renderData(sheet, dataList);
-        return null;
-    }
-
-    public void exxx(Sheet sheet, Runnable runnable){
-        runnable.run();
+    public AxolotlWriteResult write(List<?> data) throws AxolotlWriteException {
+        return this.write(null,data);
     }
 
     @Override
@@ -122,10 +106,4 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         workbook.close();
     }
 
-    /**
-     * 获取配置绑定索引
-     */
-    protected XSSFSheet getConfigBoundSheet() {
-        return this.getWorkbookSheet(this.writeConfig.getSheetIndex());
-    }
 }

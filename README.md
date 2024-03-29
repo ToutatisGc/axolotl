@@ -37,14 +37,21 @@
 
 ### 1.1 版本更新说明
 
-#### 🔝 0.0.10-ALPHA-8 更新说明
+#### 🔝Java17 版本 <font color='red'>1.0.13</font> 更新说明
 
-- 修复部分API错误。
-- 增加指定列范围[sheetColumnEffectiveRange]的ReaderConfig支持。
-- 增加默认转换器[support方法]约束。
-- 完善使用说明。
-- 增加散播策略的读取策略[SPREAD_MERGING_REGION]。
-- Excel模板写入进入支持阶段。
+发布时间：[2024-03-29]
+
+- 正式发布Java17版本。
+
+- 自动写入功能进入支持阶段。
+
+- 升级VOID-TOOLKIT依赖。
+
+- 统一API命名规则。
+
+- 迁移写入器部分代码结构。
+
+- Java8版本进入补丁修复阶段。
 
 #### 🧩历史版本更新说明
 
@@ -609,27 +616,149 @@ try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, co
 
 ##### 4.1.2.2 自动写入
 
-![内置色卡](./README.assets/IndexedColors内置颜色.png)
+###### 📖说明：
 
-![填充样式](./README.assets/FillPatternType填充样式.png)
+​	自动写入为按照预定的主题/样式写入数据。
 
+###### 📖使用方法：
+
+```java
+// 初始化写入文件
+FileOutputStream fos = new FileOutputStream("D:\\test.xlsx");
+AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
+// 设置写入相关信息
+commonWriteConfig.setTitle("股票测试表");
+commonWriteConfig.setBlankValue("-");
+commonWriteConfig.setOutputStream(fos);
+// 设置表头
+List<Header> headers = new ArrayList<>();
+headers.add(new Header("代码","code"));
+headers.add(new Header("简称","intro"));
+headers.add(new Header("最新日期","localDateTimeStr"));
+headers.add(new Header("最新收盘（元）",StockEntity::getClosingPrice));
+headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
+headers.add(new Header("总市值（亿元）",StockEntity::getTotalValue));
+headers.add(new Header("流通市值（元）",StockEntity::getCirculationMarketValue));
+List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
+headers.add(new Header("每股收益", subHeader1));
+headers.add(new Header("市盈率PE", subHeader1));
+headers.add(new Header("市净率PB（LF）"));
+headers.add(new Header("市销率PS（TTM）","pts"));
+// 创建写入数据
+ArrayList<StockEntity> data = new ArrayList<>();
+for (int i = 0; i < 50; i++) {
+	StockEntity stockEntity = new StockEntity();
+    stockEntity.setCode(RandomStringUtils.randomNumeric(8));
+    // ...忽略字段写入
+    data.add(stockEntity);
+}
+//创建写入器
+AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
+autoExcelWriter.write(headers,data);
+autoExcelWriter.close();
 ```
-// 等待完善
+
+######  📖核心类说明：
+
+1. 表头Header:
+
+    ​	Header类为工作表的表头，使用autoExcelWriter.write(**headers**,data)方法写入数据时将为工作表创建表头，支持嵌套表头， 表现为多行合并表头。在**主题说明**章节处可以查看样式。 
+
+    **📖表头属性说明：**
+
+    | 属性                   | 说明           | 备注                                                         |
+    | ---------------------- | -------------- | ------------------------------------------------------------ |
+    | name                   | 表头标题       | 表头显示名称。                                               |
+    | fieldName              | 数据字段映射   | 实体类的对应字段，指定该字段后写入将只按照映射写入，不按照数据的字段定义顺序写入列，必须指定所有字段映射，否则将置入空值，最底层节点生效。 |
+    | childs                 | 子表头         | 当前表头的下级表头。                                         |
+    | customCellStyle        | 表头自定义样式 | POI样式，适合高级使用。<br />优先级:高                       |
+    | axolotlCellStyle       | 表头自定义样式 | 对于不熟悉POI的使用者使用此属性创建单元格样式，指定了customCellStyle后此属性将不生效。<br />优先级:低 |
+    | columnWidth            | 当前表头的列宽 | 仅最底层节点生效。                                           |
+    | participateInCalculate | 是否参与计算列 | 表头所对应列是否参与合计。（合计特性）<br />仅最底层节点生效。 |
+
+
+###### 📖配置说明： 
+
+​	写入配置使用AutoWriteConfig类进行写入。
+
+**📖AutoWriteConfig配置属性说明：**
+
+| 属性                    | 说明             | 备注                                                         |
+| ----------------------- | ---------------- | ------------------------------------------------------------ |
+| title                   | 工作表标题       | 配置此属性将创建工作表标题行样式。                           |
+| sheetName               | 工作簿表名称     | 未配置此属性时将使用title属性值。                            |
+| metaClass               | 数据类           | 配置此类将获取该类的表头标题等注解。                         |
+| fontName                | 自定义字体名称   | 配置字体名称将覆盖主题默认字体。                             |
+| **styleRender**         | **样式渲染器**   | **使用样式渲染器渲染内容。**                                 |
+| dataInverter            | 数据转换器       | 将字段数据转为工作表数据。（默认渲染为字符串）<br />如有需要将在未来版本支持其他数据格式。 |
+| blankValue              | 空值填充字符     | 写入数据时，实体类中Null值将被填充为空字符串。<br />常用的字符串有"","-","未填写","无"等。 |
+| specialRowHeightMapping | 特殊行高映射     | 添加到此map的行次将配置行高。                                |
+| calculateColumnIndexes  | 需要计算的列索引 | 在使用**自动在结尾插入合计行**特性时生效，默认计算所有列。<br />可能会将编号等字段也作为合计列，此时可以使用此字段自定义合计列。 |
+
+###### 📖主题说明：
+
+**🧭如何配置主题？**
+
+​	使用**AutoWriteConfig**配置类调用**setThemeStyleRender**方法配置主题样式。
+
+```java
+AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
+autoWriteConfig.setThemeStyleRender(theme);
 ```
+
+![主题方法形参](docs.assets/writer/theme-method-param.png)
+
+**🧭内置主题样式：**
+
+<div align='center'>
+    <font><b>Axolotl默认主题</b></font>
+</div>
+
+![Axolotl默认主题](./docs.assets/writer/Axolotl默认主题.png)
+
+<div align='center'>
+    <font><b>经典黑主题</b></font>
+</div>
+
+![经典黑主题](./docs.assets/writer/经典黑主题.png)
+
+<div align='center'>
+    <font><b>行政红主题</b></font>
+</div>
+
+![行政红主题](./docs.assets/writer/行政红主题.png)
+
+<div align='center'>
+    <font><b>雾霾蓝主题</b></font>
+</div>
+
+![雾霾蓝主题](./docs.assets/writer/雾霾蓝主题.png)
+
+<div align='center'>
+    <font><b>工业橙主题</b></font>
+</div>
+
+![工业橙主题](./docs.assets/writer/工业橙主题.png)
+
+**🧭如何自定义主题或定制样式：**
+
+​	[📂自定义主题说明书](docs.assets\writer\AutoWriterDetail.md) 
 
 ##### 4.1.2.3 写入策略
 
 在写入数据时，支持写入策略来对数据进行处理。
 
-| 策略名称                      | 使用范围 | 说明                           |
-| ----------------------------- | -------- | ------------------------------ |
-| AUTO_CATCH_COLUMN_LENGTH      | 自动写入 | 自动计算列长度                 |
-| AUTO_INSERT_SERIAL_NUMBER     | 自动写入 | 自动在第一列插入编号           |
-| SHIFT_WRITE_ROW               | 模板写入 | 数据写入自动将数据写入到下一行 |
-| PLACEHOLDER_FILL_DEFAULT      | 模板写入 | 为没有指定的占位符填充默认值   |
-| EXCEPTION_RETURN_RESULT       | 所有写入 | 异常将返回结果，不抛出异常     |
-| NULL_VALUE_WITH_TEMPLATE_FILL | 模板写入 | 空值是否使用模板填充           |
-| NON_TEMPLATE_CELL_FILL        | 模板写入 | 非模板单元格是否模板填充       |
+| 策略名称                               | 使用范围 | 说明                               |
+| -------------------------------------- | -------- | ---------------------------------- |
+| AUTO_CATCH_COLUMN_LENGTH               | 自动写入 | 自动计算列长度                     |
+| AUTO_INSERT_SERIAL_NUMBER              | 自动写入 | 自动在第一列插入编号               |
+| AUTO_FILL_DEFAULT_CELL_WHITE           | 自动写入 | 默认填充单元格为白色               |
+| AUTO_INSERT_TOTAL_IN_ENDING            | 自动写入 | 自动在结尾插入合计行               |
+| TEMPLATE_SHIFT_WRITE_ROW               | 模板写入 | 数据写入自动将数据写入下移到下一行 |
+| TEMPLATE_PLACEHOLDER_FILL_DEFAULT      | 模板写入 | 为没有指定的占位符填充默认值       |
+| TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL | 模板写入 | 空值是否使用模板填充               |
+| TEMPLATE_NON_TEMPLATE_CELL_FILL        | 模板写入 | 非模板单元格是否模板填充           |
+| EXCEPTION_RETURN_RESULT                | 通用     | 异常将返回结果，不抛出异常         |
 
 ### 4.2 PDF操作
 
@@ -658,8 +787,6 @@ log4j.appender.console.Target = System.out
 log4j.appender.console.Threshold = DEBUG
 log4j.appender.console.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 ```
-
-
 
 ## Part.5 疑难解答
 

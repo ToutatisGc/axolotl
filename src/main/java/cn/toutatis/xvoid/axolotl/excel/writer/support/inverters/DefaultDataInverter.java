@@ -2,9 +2,12 @@ package cn.toutatis.xvoid.axolotl.excel.writer.support.inverters;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.DataInverter;
+import cn.toutatis.xvoid.toolkit.constant.Time;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 public class DefaultDataInverter implements DataInverter<Object> {
 
@@ -24,6 +27,12 @@ public class DefaultDataInverter implements DataInverter<Object> {
                     decimal = decimal.setScale(AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP);
                     return decimal.toString();
                 }
+            }
+            if (valueClass == LocalDateTime.class){
+                return Time.regexTime(Time.YMD_HORIZONTAL_FORMAT_REGEX,((LocalDateTime) value));
+            }
+            if (valueClass == Date.class){
+                return Time.regexTime(Time.YMD_HORIZONTAL_FORMAT_REGEX,((Date) value));
             }
             return value;
         }

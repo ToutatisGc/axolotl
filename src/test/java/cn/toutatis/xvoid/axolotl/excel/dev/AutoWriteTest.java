@@ -187,5 +187,47 @@ public class AutoWriteTest {
         }
     }
 
+    @Test
+    public void testAuto4() throws IOException {
+        for (ExcelWriteThemes theme : ExcelWriteThemes.values()) {
+            FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+            AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
+            autoWriteConfig.setThemeStyleRender(theme);
+            autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
+            autoWriteConfig.setTitle("股票测试表");
+            autoWriteConfig.setBlankValue("-");
+            autoWriteConfig.setOutputStream(fileOutputStream);
+            List<Header> headers = new ArrayList<>();
+            headers.add(new Header("代码","code"));
+            headers.add(new Header("简称","intro"));
+            headers.add(new Header("最新日期","localDateTimeStr"));
+            headers.add(new Header("最新收盘价（元）",StockEntity::getClosingPrice));
+            headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
+            headers.add(new Header("总市值（亿元）",StockEntity::getTotalValue));
+            headers.add(new Header("流通市值（亿元）",StockEntity::getCirculationMarketValue));
+            List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
+            headers.add(new Header("每股收益", subHeader1));
+            headers.add(new Header("市盈率PE", subHeader1));
+            headers.add(new Header("市净率PB（LF）"));
+            headers.add(new Header("市销率PS（TTM）","pts"));
+            ArrayList<StockEntity> data = new ArrayList<>();
+            for (int i = 0; i < 50; i++) {
+                StockEntity stockEntity = new StockEntity();
+                stockEntity.setCode(RandomStringUtils.randomNumeric(8));
+                StringBuilder sb = new StringBuilder();
+                for (int i1 = 0; i1 < 10; i1++) {
+                    char c = RandomUtil.randomChinese();
+                    sb.append(c);
+                }
+                stockEntity.setIntro(sb.toString());
+                stockEntity.setPts(Double.parseDouble(RandomStringUtils.randomNumeric(2)));
+                data.add(stockEntity);
+            }
+            AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
+            autoExcelWriter.write(headers,data);
+            autoExcelWriter.close();
+        }
+    }
+
 
 }
