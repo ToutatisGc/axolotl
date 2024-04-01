@@ -4,6 +4,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfi
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.GlobalCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
@@ -306,51 +307,31 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
-                if(axolotlCellStyle.getBorderLeftStyle() != null){
-                    usedCellStyle.setBorderLeft(axolotlCellStyle.getBorderLeftStyle());
-                }
-                if(axolotlCellStyle.getBorderRightStyle() != null){
-                    usedCellStyle.setBorderRight(axolotlCellStyle.getBorderRightStyle());
-                }
-                if(axolotlCellStyle.getBorderTopStyle() != null){
-                    usedCellStyle.setBorderTop(axolotlCellStyle.getBorderTopStyle());
-                }
-                if(axolotlCellStyle.getBorderBottomStyle() != null){
-                    usedCellStyle.setBorderBottom(axolotlCellStyle.getBorderBottomStyle());
-                }
-                if(axolotlCellStyle.getLeftBorderColor() != null){
-                    usedCellStyle.setLeftBorderColor(axolotlCellStyle.getLeftBorderColor().getIndex());
-                }
-                if(axolotlCellStyle.getRightBorderColor() != null){
-                    usedCellStyle.setRightBorderColor(axolotlCellStyle.getRightBorderColor().getIndex());
-                }
-                if(axolotlCellStyle.getTopBorderColor() != null){
-                    usedCellStyle.setTopBorderColor(axolotlCellStyle.getTopBorderColor().getIndex());
-                }
-                if(axolotlCellStyle.getBottomBorderColor() != null){
-                    usedCellStyle.setBottomBorderColor(axolotlCellStyle.getBottomBorderColor().getIndex());
-                }
-                if(axolotlCellStyle.getForegroundColor() != null){
-                    usedCellStyle.setFillBackgroundColor(axolotlCellStyle.getForegroundColor());
-                }
-                if(axolotlCellStyle.getFillPatternType() != null){
-                    usedCellStyle.setFillPattern(axolotlCellStyle.getFillPatternType());
-                }
-                Font font = createFont(StyleHelper.STANDARD_FONT_NAME, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.BLACK, false, false);
-                if(axolotlCellStyle.getFontName() != null){
-                    font.setFontName(axolotlCellStyle.getFontName());
-                }
-                if(axolotlCellStyle.getFontSize() != -1){
-                    font.setFontHeightInPoints(axolotlCellStyle.getFontSize());
-                }
-                if(axolotlCellStyle.getFontColor() != null){
-                    font.setColor(axolotlCellStyle.getFontColor().getIndex());
-                }
-                font.setBold(axolotlCellStyle.isFontBold());
-                font.setItalic(axolotlCellStyle.isItalic());
-                font.setStrikeout(axolotlCellStyle.isStrikeout());
-
-                usedCellStyle.setFont(font);
+                Font axolotlCustomFont = StyleHelper.createWorkBookFont(
+                        context.getWorkbook(),
+                        axolotlCellStyle.getFontName(),
+                        axolotlCellStyle.isFontBold(),
+                        axolotlCellStyle.getFontSize(),
+                        axolotlCellStyle.getFontColor(),
+                        axolotlCellStyle.isItalic(),
+                        axolotlCellStyle.isStrikeout()
+                );
+                usedCellStyle = StyleHelper.createStandardCellStyle(
+                        context.getWorkbook(),
+                        BorderStyle.NONE,
+                        IndexedColors.BLACK,
+                        axolotlCellStyle.getForegroundColor(),
+                        axolotlCustomFont
+                );
+                usedCellStyle.setBorderTop(axolotlCellStyle.getBorderTopStyle());
+                usedCellStyle.setBorderRight(axolotlCellStyle.getBorderRightStyle());
+                usedCellStyle.setBorderBottom(axolotlCellStyle.getBorderBottomStyle());
+                usedCellStyle.setBorderLeft(axolotlCellStyle.getBorderLeftStyle());
+                usedCellStyle.setTopBorderColor(axolotlCellStyle.getTopBorderColor().getIndex());
+                usedCellStyle.setRightBorderColor(axolotlCellStyle.getRightBorderColor().getIndex());
+                usedCellStyle.setBottomBorderColor(axolotlCellStyle.getBottomBorderColor().getIndex());
+                usedCellStyle.setLeftBorderColor(axolotlCellStyle.getLeftBorderColor().getIndex());
+                usedCellStyle.setFillPattern(axolotlCellStyle.getFillPatternType());
             }
         }
         return usedCellStyle;

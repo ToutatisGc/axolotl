@@ -65,11 +65,11 @@ public class DefaultStyleConfig implements CellStyleConfigur{
         cellBorder.setBottomBorderColor(IndexedColors.BLACK);
         cellBorder.setBorderBottomStyle(BorderStyle.THIN);
 
-        if(fieldInfo.getColumnIndex() == 0){
+        if(fieldInfo.getColumnIndex() == 1){
             cellBorder.setLeftBorderColor(IndexedColors.BLACK);
             cellBorder.setBorderLeftStyle(BorderStyle.MEDIUM);
         }
-        if(fieldInfo.getColumnIndex() == 5){
+        if(fieldInfo.getColumnIndex() == 6){
             cellBorder.setRightBorderColor(IndexedColors.BLACK);
             cellBorder.setBorderRightStyle(BorderStyle.MEDIUM);
         }

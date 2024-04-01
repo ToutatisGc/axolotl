@@ -238,9 +238,11 @@ public class AutoWriteTest {
     public void testAuto3() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
-        commonWriteConfig.setThemeStyleRender(new AxolotlSimpleConfigTheme(new DefaultStyleConfig()));
-       // commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
+       // commonWriteConfig.setThemeStyleRender(new AxolotlSimpleConfigTheme(new DefaultStyleConfig()));
+        commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.$DEFAULT);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,false);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
         commonWriteConfig.setTitle("——巡视总报告——");
       //  commonWriteConfig.setFontName("仿宋");
         commonWriteConfig.setBlankValue("-");
