@@ -1,6 +1,5 @@
 package cn.toutatis.xvoid.axolotl.excel.dev;
 
-import cn.hutool.core.lang.func.Func1;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.Axolotls;
@@ -11,6 +10,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.CellStyleConfigur;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.DefaultStyleConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlIndustrialOrangeTheme;
@@ -18,8 +18,6 @@ import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlSimpleConfigTheme;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.SimpleBlackTheme;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
-import cn.toutatis.xvoid.toolkit.clazz.XFunc;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -28,7 +26,9 @@ import org.junit.Test;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AutoWriteTest {
 
@@ -228,6 +228,45 @@ public class AutoWriteTest {
             data.add(stockEntity);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
+        autoExcelWriter.write(headers,data);
+        autoExcelWriter.close();
+
+    }
+
+
+    @Test
+    public void testAuto3() throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
+        commonWriteConfig.setThemeStyleRender(new AxolotlSimpleConfigTheme(new DefaultStyleConfig()));
+       // commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
+        commonWriteConfig.setTitle("——巡视总报告——");
+      //  commonWriteConfig.setFontName("仿宋");
+        commonWriteConfig.setBlankValue("-");
+        commonWriteConfig.setOutputStream(fileOutputStream);
+        List<Header> headers = new ArrayList<>();
+        headers.add(new Header("杆塔及拉线","one"));
+        headers.add(new Header("导、地线","two"));
+        headers.add(new Header("绝缘子","three"));
+        headers.add(new Header("金属附件及附属设备","four"));
+        headers.add(new Header("基础及接地","five"));
+        headers.add(new Header("通道","six"));
+
+        ArrayList<JSONObject> data = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            JSONObject map = new JSONObject(true);
+//            HashMap<String, String> map = new HashMap<>();
+            map.put("two","导线XXX");
+            map.put("three","绝缘子XXX");
+            map.put("four","金具XXX");
+            map.put("five","基础XXX");
+            map.put("six","通道XXX");
+            map.put("one","杆塔XXX");
+            data.add(map);
+        }
+        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
+        SXSSFWorkbook workbook = autoExcelWriter.getWorkbook();
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();
 

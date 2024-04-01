@@ -20,14 +20,44 @@ public class AxolotlCellStyle {
     private FillPatternType fillPatternType = FillPatternType.SOLID_FOREGROUND;
 
     /**
-     * 边框颜色
+     * 上边框样式
      */
-    private IndexedColors borderColor = IndexedColors.BLACK;
+    private BorderStyle borderTopStyle = BorderStyle.THIN;
 
     /**
-     * 边框样式
+     * 上边框颜色
      */
-    private BorderStyle borderStyle = BorderStyle.THIN;
+    private IndexedColors topBorderColor = IndexedColors.BLACK;
+
+    /**
+     * 下边框样式
+     */
+    private BorderStyle borderBottomStyle = BorderStyle.THIN;
+
+    /**
+     * 下边框颜色
+     */
+    private IndexedColors bottomBorderColor = IndexedColors.BLACK;
+
+    /**
+     * 左边框样式
+     */
+    private BorderStyle borderLeftStyle = BorderStyle.THIN;
+
+    /**
+     * 左边框颜色
+     */
+    private IndexedColors leftBorderColor = IndexedColors.BLACK;
+
+    /**
+     * 右边框样式
+     */
+    private BorderStyle borderRightStyle = BorderStyle.THIN;
+
+    /**
+     * 右边框颜色
+     */
+    private IndexedColors rightBorderColor = IndexedColors.BLACK;
 
     /**
      * 字体
@@ -48,5 +78,15 @@ public class AxolotlCellStyle {
      * 字体是否加粗
      */
     private boolean fontBold = false;
+
+    /**
+     *设置文字为斜体
+     */
+    private boolean italic = false;
+
+    /**
+     * 使用水平删除线
+     */
+    private boolean strikeout = false;
 
 }

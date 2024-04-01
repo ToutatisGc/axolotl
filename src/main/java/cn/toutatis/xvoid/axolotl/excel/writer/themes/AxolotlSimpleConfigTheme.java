@@ -3,10 +3,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.themes;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.*;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.CellStyleConfigur;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.*;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.DataInverter;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
@@ -69,6 +66,11 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
      */
     private Map<GlobalCellStyle,CellStyle> cellStyleCache = new HashMap<>();
 
+    /**
+     * 字体创建缓存
+     */
+    private Map<GlobalCellStyle,Font> fontStyleCache = new HashMap<>();
+
     private Short titleRowHeight = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
 
     private Short headerRowHeight = StyleHelper.STANDARD_HEADER_ROW_HEIGHT;
@@ -86,7 +88,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
 
     public AxolotlSimpleConfigTheme() {
         super(LOGGER);
-        throw new AxolotlWriteException("样式配置类初始化失败，请使用有参构造进行创建");
+        this.cellStyleConfigur = new DefaultStyleConfig();
     }
 
     public AxolotlSimpleConfigTheme(CellStyleConfigur cellStyleConfigur) {
@@ -285,11 +287,12 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                     }
                 }
                 Object value = dataEntry.getValue();
-                FieldInfo fieldInfo = new FieldInfo(fieldName, value, writtenColumn,alreadyWriteRow);
+                int columnNumber = useOrderField ? writtenColumn : columnMapping.get(fieldName);
+                FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
 
                 //获取数据样式
                 CellMain dsc = new CellMain();
-                cellStyleConfigur.dataStyleConfig(dsc,new FieldInfo(fieldName, value, writtenColumn,alreadyWriteRow));
+                cellStyleConfigur.dataStyleConfig(dsc,new FieldInfo(fieldName, value, columnNumber,alreadyWriteRow));
                 GlobalCellStyle dataStyle = new GlobalCellStyle();
                 try {
                     BeanUtils.copyProperties(dataStyle,globalCellStyle);
@@ -314,14 +317,18 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                 dataRow.setHeight(dataStyle.getRowHeight());
                 //设置列宽 内容列宽若没设置默认值，继承表头
                 if(dataStyle.getColumnWidth() != null){
-                    sheet.setColumnWidth(writtenColumn,dataStyle.getColumnWidth());
+                    sheet.setColumnWidth(columnNumber,dataStyle.getColumnWidth());
                 }
 
                 // 对单元格设置样式
                 cell.setCellStyle(dataDefaultCellStyle);
                 // 渲染数据到单元格
                 this.renderColumn(fieldInfo,cell);
-                writtenColumnMap.put(writtenColumn++,1);
+                if (useOrderField){
+                    writtenColumnMap.put(writtenColumn++,1);
+                }else{
+                    writtenColumnMap.put(columnNumber,1);
+                }
             }
             // 将未使用的的单元格赋予空值
             for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {
@@ -822,17 +829,29 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
-                if(axolotlCellStyle.getBorderStyle() != null){
-                    usedCellStyle.setBorderTop(axolotlCellStyle.getBorderStyle());
-                    usedCellStyle.setBorderRight(axolotlCellStyle.getBorderStyle());
-                    usedCellStyle.setBorderBottom(axolotlCellStyle.getBorderStyle());
-                    usedCellStyle.setBorderLeft(axolotlCellStyle.getBorderStyle());
+                if(axolotlCellStyle.getBorderLeftStyle() != null){
+                    usedCellStyle.setBorderLeft(axolotlCellStyle.getBorderLeftStyle());
                 }
-                if(axolotlCellStyle.getBorderColor() != null){
-                    usedCellStyle.setTopBorderColor(axolotlCellStyle.getBorderColor().getIndex());
-                    usedCellStyle.setRightBorderColor(axolotlCellStyle.getBorderColor().getIndex());
-                    usedCellStyle.setBottomBorderColor(axolotlCellStyle.getBorderColor().getIndex());
-                    usedCellStyle.setLeftBorderColor(axolotlCellStyle.getBorderColor().getIndex());
+                if(axolotlCellStyle.getBorderRightStyle() != null){
+                    usedCellStyle.setBorderRight(axolotlCellStyle.getBorderRightStyle());
+                }
+                if(axolotlCellStyle.getBorderTopStyle() != null){
+                    usedCellStyle.setBorderTop(axolotlCellStyle.getBorderTopStyle());
+                }
+                if(axolotlCellStyle.getBorderBottomStyle() != null){
+                    usedCellStyle.setBorderBottom(axolotlCellStyle.getBorderBottomStyle());
+                }
+                if(axolotlCellStyle.getLeftBorderColor() != null){
+                    usedCellStyle.setLeftBorderColor(axolotlCellStyle.getLeftBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getRightBorderColor() != null){
+                    usedCellStyle.setRightBorderColor(axolotlCellStyle.getRightBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getTopBorderColor() != null){
+                    usedCellStyle.setTopBorderColor(axolotlCellStyle.getTopBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getBottomBorderColor() != null){
+                    usedCellStyle.setBottomBorderColor(axolotlCellStyle.getBottomBorderColor().getIndex());
                 }
                 if(axolotlCellStyle.getForegroundColor() != null){
                     usedCellStyle.setFillBackgroundColor(axolotlCellStyle.getForegroundColor());
@@ -840,7 +859,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                 if(axolotlCellStyle.getFillPatternType() != null){
                     usedCellStyle.setFillPattern(axolotlCellStyle.getFillPatternType());
                 }
-                Font font = createFont(handlerCellStyle.getFontName(), handlerCellStyle.getFontSize(), handlerCellStyle.getBold(), handlerCellStyle.getFontColor());
+                Font font = createFontStyle(handlerCellStyle.getFontName(), handlerCellStyle.getFontSize(), handlerCellStyle.getBold(), handlerCellStyle.getFontColor(), handlerCellStyle.getItalic(), handlerCellStyle.getStrikeout());
                 if(axolotlCellStyle.getFontName() != null){
                     font.setFontName(axolotlCellStyle.getFontName());
                 }
@@ -851,6 +870,8 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                     font.setColor(axolotlCellStyle.getFontColor().getIndex());
                 }
                 font.setBold(axolotlCellStyle.isFontBold());
+                font.setItalic(axolotlCellStyle.isItalic());
+                font.setStrikeout(axolotlCellStyle.isStrikeout());
 
                 usedCellStyle.setFont(font);
             }
@@ -884,13 +905,54 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
         key.setItalic(italic);
         key.setStrikeout(strikeout);
 
-        if(cellStyleCache.containsKey(key)){
-            return cellStyleCache.get(key);
+       /* if(cellStyleCache.containsKey(key)){
+            CellStyle cellStyle = cellStyleCache.get(key);
+            cellStyle.setBorderTop(BorderStyle.NONE);
+            cellStyle.setBorderRight(BorderStyle.NONE);
+            cellStyle.setBorderBottom(BorderStyle.NONE);
+            cellStyle.setBorderLeft(BorderStyle.NONE);
+            cellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+            cellStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+            cellStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+            cellStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+            return cellStyle;
         }else{
             CellStyle style = createStyle(borderStyle, borderColor, cellColor,
                     fontName, fontSize, isBold, fontColor, italic, strikeout);
             cellStyleCache.put(key,style);
             return style;
+        }*/
+        CellStyle style = createStyle(borderStyle, borderColor, cellColor,
+                fontName, fontSize, isBold, fontColor, italic, strikeout);
+        cellStyleCache.put(key,style);
+        return style;
+    }
+
+
+    /**
+     * 创建字体 字体缓存
+     * @param fontName 字体名称
+     * @param fontSize 字体大小
+     * @param isBold 是否加粗
+     * @param color 字体颜色
+     * @param italic 是否斜体
+     * @param strikeout 是否删除线
+     * @return
+     */
+    public Font createFontStyle(String fontName,Short fontSize,Boolean isBold,IndexedColors color,Boolean italic,Boolean strikeout){
+        GlobalCellStyle key = new GlobalCellStyle();
+        key.setFontName(fontName);
+        key.setFontSize(fontSize);
+        key.setBold(isBold);
+        key.setFontColor(color);
+        key.setItalic(italic);
+        key.setStrikeout(strikeout);
+        if(fontStyleCache.containsKey(key)){
+            return fontStyleCache.get(key);
+        }else{
+            Font font = createFont(fontName, fontSize, isBold, color, italic, strikeout);
+            fontStyleCache.put(key,font);
+            return font;
         }
     }
 }

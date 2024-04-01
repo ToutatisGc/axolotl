@@ -306,19 +306,51 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
-                Font axolotlCustomFont = StyleHelper.createWorkBookFont(
-                        context.getWorkbook(),
-                        axolotlCellStyle.getFontName(),
-                        axolotlCellStyle.isFontBold(),
-                        axolotlCellStyle.getFontSize(),
-                        axolotlCellStyle.getFontColor());
-                usedCellStyle = StyleHelper.createStandardCellStyle(
-                        context.getWorkbook(),
-                        axolotlCellStyle.getBorderStyle(),
-                        axolotlCellStyle.getBorderColor(),
-                        axolotlCellStyle.getForegroundColor(),
-                        axolotlCustomFont
-                );
+                if(axolotlCellStyle.getBorderLeftStyle() != null){
+                    usedCellStyle.setBorderLeft(axolotlCellStyle.getBorderLeftStyle());
+                }
+                if(axolotlCellStyle.getBorderRightStyle() != null){
+                    usedCellStyle.setBorderRight(axolotlCellStyle.getBorderRightStyle());
+                }
+                if(axolotlCellStyle.getBorderTopStyle() != null){
+                    usedCellStyle.setBorderTop(axolotlCellStyle.getBorderTopStyle());
+                }
+                if(axolotlCellStyle.getBorderBottomStyle() != null){
+                    usedCellStyle.setBorderBottom(axolotlCellStyle.getBorderBottomStyle());
+                }
+                if(axolotlCellStyle.getLeftBorderColor() != null){
+                    usedCellStyle.setLeftBorderColor(axolotlCellStyle.getLeftBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getRightBorderColor() != null){
+                    usedCellStyle.setRightBorderColor(axolotlCellStyle.getRightBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getTopBorderColor() != null){
+                    usedCellStyle.setTopBorderColor(axolotlCellStyle.getTopBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getBottomBorderColor() != null){
+                    usedCellStyle.setBottomBorderColor(axolotlCellStyle.getBottomBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getForegroundColor() != null){
+                    usedCellStyle.setFillBackgroundColor(axolotlCellStyle.getForegroundColor());
+                }
+                if(axolotlCellStyle.getFillPatternType() != null){
+                    usedCellStyle.setFillPattern(axolotlCellStyle.getFillPatternType());
+                }
+                Font font = createFont(StyleHelper.STANDARD_FONT_NAME, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.BLACK, false, false);
+                if(axolotlCellStyle.getFontName() != null){
+                    font.setFontName(axolotlCellStyle.getFontName());
+                }
+                if(axolotlCellStyle.getFontSize() != -1){
+                    font.setFontHeightInPoints(axolotlCellStyle.getFontSize());
+                }
+                if(axolotlCellStyle.getFontColor() != null){
+                    font.setColor(axolotlCellStyle.getFontColor().getIndex());
+                }
+                font.setBold(axolotlCellStyle.isFontBold());
+                font.setItalic(axolotlCellStyle.isItalic());
+                font.setStrikeout(axolotlCellStyle.isStrikeout());
+
+                usedCellStyle.setFont(font);
             }
         }
         return usedCellStyle;
@@ -531,11 +563,16 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }
             }
             Object value = dataEntry.getValue();
-            FieldInfo fieldInfo = new FieldInfo(fieldName, value, writtenColumn,alreadyWriteRow);
+            int columnNumber = useOrderField ? writtenColumn : columnMapping.get(fieldName);
+            FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
             this.renderColumn(fieldInfo,cell);
-            writtenColumnMap.put(writtenColumn++,1);
+            if (useOrderField){
+                writtenColumnMap.put(writtenColumn++,1);
+            }else{
+                writtenColumnMap.put(columnNumber,1);
+            }
         }
         // 将未使用的的单元格赋予空值
         for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {

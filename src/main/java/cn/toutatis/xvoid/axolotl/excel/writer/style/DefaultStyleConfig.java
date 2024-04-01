@@ -1,8 +1,10 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.CellBorder;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.CellFont;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.CellMain;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.IndexedColors;
 
 /**
@@ -13,8 +15,12 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 public class DefaultStyleConfig implements CellStyleConfigur{
     @Override
     public void globalStyleConfig(CellMain cell) {
+        cell.setForegroundColor(new AxolotlColor(39,56,86));
+        cell.setRowHeight((short) 550);
         CellFont cellFont = new CellFont();
-        cellFont.setFontColor(IndexedColors.BLUE);
+        cellFont.setFontSize((short) 10);
+        cellFont.setFontColor(IndexedColors.WHITE);
+        cellFont.setFontName("微软雅黑");
         cell.setFont(cellFont);
     }
 
@@ -25,59 +31,50 @@ public class DefaultStyleConfig implements CellStyleConfigur{
 
     @Override
     public void headerStyleConfig(CellMain cell) {
-        cell.setForegroundColor(new AxolotlColor(247,202,142));
-        CellFont cellFont = new CellFont();
-        cellFont.setFontColor(IndexedColors.BLACK);
-        cellFont.setBold(true);
-        cellFont.setFontName("宋体");
-        cellFont.setFontSize(StyleHelper.STANDARD_TITLE_FONT_SIZE);
-        cell.setFont(cellFont);
+        cell.setForegroundColor(new AxolotlColor(34,44,69));
+        CellBorder cellBorder = new CellBorder();
+        cellBorder.setBaseBorderStyle(BorderStyle.NONE);
+
+        cellBorder.setLeftBorderColor(IndexedColors.BLACK);
+        cellBorder.setBorderLeftStyle(BorderStyle.THIN);
+        cellBorder.setRightBorderColor(IndexedColors.BLACK);
+        cellBorder.setBorderRightStyle(BorderStyle.THIN);
+        cell.setBorder(cellBorder);
 
     }
 
     @Override
     public void titleStyleConfig(CellMain cell) {
-        cell.setRowHeight((short) 800);
-        cell.setForegroundColor(new AxolotlColor(125,116,122));
+        cell.setRowHeight((short) 900);
+        cell.setForegroundColor(new AxolotlColor( 53,80,125));
         CellFont cellFont = new CellFont();
-        cellFont.setFontColor(IndexedColors.RED);
-        cellFont.setBold(true);
-        cellFont.setFontName("宋体");
         cellFont.setFontSize(StyleHelper.STANDARD_TITLE_FONT_SIZE);
+        cellFont.setBold(true);
         cell.setFont(cellFont);
+
     }
 
     @Override
     public void dataStyleConfig(CellMain cell, AbstractStyleRender.FieldInfo fieldInfo) {
+       // cell.setForegroundColor(new AxolotlColor(39,56,86));
+        CellBorder cellBorder = new CellBorder();
+        cellBorder.setBaseBorderStyle(BorderStyle.NONE);
 
+        cellBorder.setTopBorderColor(IndexedColors.BLACK);
+        cellBorder.setBorderTopStyle(BorderStyle.THIN);
+        cellBorder.setBottomBorderColor(IndexedColors.BLACK);
+        cellBorder.setBorderBottomStyle(BorderStyle.THIN);
 
-        CellFont cellFont = new CellFont();
-
-        cellFont.setBold(true);
-        cellFont.setFontName("宋体");
-        cellFont.setFontSize(StyleHelper.STANDARD_TEXT_FONT_SIZE);
-        cellFont.setItalic(true);
-        if(x(fieldInfo.getColumnIndex(),true)){
-            cellFont.setFontColor(IndexedColors.RED);
+        if(fieldInfo.getColumnIndex() == 0){
+            cellBorder.setLeftBorderColor(IndexedColors.BLACK);
+            cellBorder.setBorderLeftStyle(BorderStyle.MEDIUM);
         }
-
-        if(x(fieldInfo.getRowIndex(),false)){
-
-        }else{
-            cellFont.setFontColor(IndexedColors.GREEN);
+        if(fieldInfo.getColumnIndex() == 5){
+            cellBorder.setRightBorderColor(IndexedColors.BLACK);
+            cellBorder.setBorderRightStyle(BorderStyle.MEDIUM);
         }
-        cell.setFont(cellFont);
+        cell.setBorder(cellBorder);
+
     }
 
-    private boolean x(Integer start,boolean begin){
-        boolean r = begin;
-        for (Integer i = 0; i < start; i++) {
-            if(r){
-                r = false;
-            }else{
-                r = true;
-            }
-        }
-        return r;
-    }
 }
