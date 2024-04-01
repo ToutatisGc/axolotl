@@ -68,17 +68,17 @@
 
 ### 3.1 添加Maven依赖
 
-**⛔<font color='red'>Java17版本（暂未实装，请使用Java8版本）</font>**
+**⛔<font color='red'>Java17版本（LTS版本，推荐使用）</font>**
 
 ```xml
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>1.0.0-ALPHA</version>
+    <version>1.0.13</version>
 </dependency>
 ```
 
-**✅<font color='green'>Java8版本</font>**
+**✅<font color='red'>Java8版本()</font>**
 
 ```xml
 <dependency>

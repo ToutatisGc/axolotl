@@ -1,6 +1,5 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
@@ -29,7 +28,6 @@ import org.slf4j.Logger;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
@@ -156,7 +154,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             sheet.setDefaultColumnStyle(i, defaultStyle);
             sheet.setDefaultColumnWidth(12);
         }
-        sheet.setDefaultRowHeight((short) 400);
+        sheet.setDefaultRowHeight(StyleHelper.STANDARD_ROW_HEIGHT);
     }
 
     /**
@@ -232,7 +230,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 CellStyle usedCellStyle = headerDefaultCellStyle;
                 usedCellStyle = getCellStyle(header, usedCellStyle);
                 Row row = ExcelToolkit.createOrCatchRow(sheet, alreadyWriteRow);
-                row.setHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
+                row.setHeight(StyleHelper.STANDARD_ROW_HEIGHT);
 
                 Cell cell = row.createCell(headerColumnCount, CellType.STRING);
                 String title = header.getName();
@@ -251,7 +249,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     headerRecursiveInfo.setStartColumn(headerColumnCount);
                     headerRecursiveInfo.setAlreadyWriteColumn(headerColumnCount);
                     headerRecursiveInfo.setCellStyle(headerDefaultCellStyle);
-                    headerRecursiveInfo.setRowHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
+                    headerRecursiveInfo.setRowHeight(StyleHelper.STANDARD_ROW_HEIGHT);
                     recursionRenderHeaders(sheet,childs, headerRecursiveInfo);
                 }else{
                     cellAddresses = new CellRangeAddress(alreadyWriteRow, (alreadyWriteRow +headerMaxDepth)-1, headerColumnCount, headerColumnCount);
@@ -495,6 +493,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
         alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
         SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
+        dataRow.setHeight(StyleHelper.STANDARD_ROW_HEIGHT);
         int writtenColumn = START_POSITION;
         int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex)+1;
         // 写入序号
@@ -625,6 +624,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 Font font = StyleHelper.createWorkBookFont(
                         workbook, globalFontName, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
                 );
+                font.setColor(workbook.getFontAt(cellStyle.getFontIndex()).getColor());
                 StyleHelper.setCellStyleAlignmentCenter(totalCellStyle);
                 totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
                 totalCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -706,6 +706,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public CellStyle createBlackMainTextCellStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor){
         return createStyle(borderStyle, borderColor, cellColor,
                 globalFontName, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.BLACK);
+    }
+
+    public CellStyle createWhiteMainTextCellStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor){
+        return createStyle(borderStyle, borderColor, cellColor,
+                globalFontName, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.WHITE);
     }
 
     public CellStyle createStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor,Font font) {

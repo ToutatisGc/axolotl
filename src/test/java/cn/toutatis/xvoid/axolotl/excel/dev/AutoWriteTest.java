@@ -13,6 +13,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlIndustrialOrangeTheme;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlMidnightTheme;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
@@ -118,7 +119,9 @@ public class AutoWriteTest {
     public void autoTest3() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig config = new AutoWriteConfig();
-        config.setThemeStyleRender(ExcelWriteThemes.INDUSTRIAL_ORANGE);
+        config.setTitle("测试1");
+        config.setThemeStyleRender(AxolotlMidnightTheme.class);
+        config.setFontName("微软雅黑");
         config.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
         config.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
         config.setBlankValue("-");
