@@ -527,11 +527,16 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }
             }
             Object value = dataEntry.getValue();
-            FieldInfo fieldInfo = new FieldInfo(fieldName, value, writtenColumn,alreadyWriteRow);
+            int columnNumber = useOrderField ? writtenColumn : columnMapping.get(fieldName);
+            FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
             this.renderColumn(fieldInfo,cell);
-            writtenColumnMap.put(writtenColumn++,1);
+            if (useOrderField){
+                writtenColumnMap.put(writtenColumn++,1);
+            }else{
+                writtenColumnMap.put(columnNumber,1);
+            }
         }
         // 将未使用的的单元格赋予空值
         for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {
