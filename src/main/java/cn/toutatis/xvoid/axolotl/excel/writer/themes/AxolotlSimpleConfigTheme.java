@@ -42,7 +42,7 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
  */
 public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements ExcelStyleRender {
 
-    private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlAdministrationRedTheme.class);
+    private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlSimpleConfigTheme.class);
 
     /**
      * 全局样式
