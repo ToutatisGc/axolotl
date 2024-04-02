@@ -26,7 +26,17 @@ public class DefaultStyleConfig implements CellStyleConfigur{
 
     @Override
     public void commonStyleConfig(CellMain cell) {
+        CellBorder cellBorder = new CellBorder();
+        cellBorder.setBaseBorderStyle(BorderStyle.NONE);
 
+        cellBorder.setTopBorderColor(IndexedColors.BLACK);
+        cellBorder.setBorderTopStyle(BorderStyle.THIN);
+        cellBorder.setBottomBorderColor(IndexedColors.BLACK);
+        cellBorder.setBorderBottomStyle(BorderStyle.THIN);
+
+        cellBorder.setLeftBorderColor(IndexedColors.BLACK);
+        cellBorder.setBorderLeftStyle(BorderStyle.MEDIUM);
+        cell.setBorder(cellBorder);
     }
 
     @Override
@@ -65,10 +75,10 @@ public class DefaultStyleConfig implements CellStyleConfigur{
         cellBorder.setBottomBorderColor(IndexedColors.BLACK);
         cellBorder.setBorderBottomStyle(BorderStyle.THIN);
 
-        if(fieldInfo.getColumnIndex() == 1){
+        /*if(fieldInfo.getColumnIndex() == 1){
             cellBorder.setLeftBorderColor(IndexedColors.BLACK);
             cellBorder.setBorderLeftStyle(BorderStyle.MEDIUM);
-        }
+        }*/
         if(fieldInfo.getColumnIndex() == 6){
             cellBorder.setRightBorderColor(IndexedColors.BLACK);
             cellBorder.setBorderRightStyle(BorderStyle.MEDIUM);

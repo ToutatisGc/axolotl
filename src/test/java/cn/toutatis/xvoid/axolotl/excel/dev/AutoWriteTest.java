@@ -285,7 +285,7 @@ public class AutoWriteTest {
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
         commonWriteConfig.setThemeStyleRender(new AxolotlSimpleConfigTheme(new DefaultStyleConfig()));
         //commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.$DEFAULT);
-        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,false);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
         commonWriteConfig.setTitle("——巡视总报告——");

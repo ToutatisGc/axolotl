@@ -627,7 +627,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             HashSet<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes();
             for (int i = 0; i < alreadyWrittenColumns; i++) {
                 SXSSFCell cell = row.createCell(i);
-                String cellValue = "-";
+                String cellValue = writeConfig.getBlankValue();
                 if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                     cellValue = "合计";
                     sheet.setColumnWidth(i, StyleHelper.SERIAL_NUMBER_LENGTH);

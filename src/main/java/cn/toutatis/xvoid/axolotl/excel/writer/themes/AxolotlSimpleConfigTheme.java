@@ -352,7 +352,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
             HashSet<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes();
             for (int i = 0; i < alreadyWrittenColumns; i++) {
                 SXSSFCell cell = row.createCell(i);
-                String cellValue = "-";
+                String cellValue = writeConfig.getBlankValue();
                 if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                     cellValue = "合计";
                     sheet.setColumnWidth(i, commonCellStyle.getColumnWidth());
@@ -369,13 +369,10 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                 CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
                 SXSSFWorkbook workbook = sheet.getWorkbook();
                 CellStyle totalCellStyle = workbook.createCellStyle();
-                Font font = StyleHelper.createWorkBookFont(
-                        workbook, commonCellStyle.getFontName(), commonCellStyle.getBold(), commonCellStyle.getFontSize(), commonCellStyle.getFontColor(), commonCellStyle.getItalic(), commonCellStyle.getStrikeout()
-                );
                 StyleHelper.setCellStyleAlignment(totalCellStyle,cellStyle.getAlignment(),cellStyle.getVerticalAlignment());
                 totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
                 totalCellStyle.setFillPattern(cellStyle.getFillPattern());
-                totalCellStyle.setFont(font);
+                totalCellStyle.setFont(workbook.getFontAt(cellStyle.getFontIndex()));
 
                 totalCellStyle.setBorderBottom(cellStyle.getBorderBottom());
                 totalCellStyle.setBorderLeft(cellStyle.getBorderLeft());
