@@ -1,11 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.CellMain;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.CommonWriteConfig;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-
-import java.util.List;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.BaseCellProperty;
 
 /**
  *
@@ -13,7 +8,7 @@ import java.util.List;
  * @version 1.0
  * @data 2024/3/28 11:22
  */
-public interface CellStyleConfigur {
+public interface AxolotlCellStyleConfig {
 
     /**
      * 配置全局样式
@@ -21,7 +16,7 @@ public interface CellStyleConfigur {
      * 全局样式配置优先级 AutoWriteConfig内样式有关配置 > 此处配置 > 预制样式
      * @param cell  样式配置
      */
-    void globalStyleConfig(CellMain cell);
+    void globalStyleConfig(BaseCellProperty cell);
 
     /**
      * 配置程序常用样式
@@ -31,7 +26,7 @@ public interface CellStyleConfigur {
      * 程序常用样式配置优先级 此处配置 > 全局样式
      * @param cell  样式配置
      */
-    void commonStyleConfig(CellMain cell);
+    void commonStyleConfig(BaseCellProperty cell);
 
     /**
      * 配置表头样式（此处为所有表头配置样式，配置单表头样式请在Header对象内配置）
@@ -39,7 +34,7 @@ public interface CellStyleConfigur {
      * 表头样式配置优先级   Header对象内配置 > 此处配置 > 全局样式
      * @param cell  样式配置
      */
-    void headerStyleConfig(CellMain cell);
+    void headerStyleConfig(BaseCellProperty cell);
 
     /**
      * 配置标题样式（标题是一个整体，此处为整个标题配置样式）
@@ -47,7 +42,7 @@ public interface CellStyleConfigur {
      * 标题样式配置优先级  此处配置 > 全局样式
      * @param cell  样式配置
      */
-    void titleStyleConfig(CellMain cell);
+    void titleStyleConfig(BaseCellProperty cell);
 
     /**
      * 配置内容样式
@@ -56,6 +51,6 @@ public interface CellStyleConfigur {
      * @param cell  样式配置
      * @param fieldInfo 单元格与内容信息
      */
-    void dataStyleConfig(CellMain cell, AbstractStyleRender.FieldInfo fieldInfo);
+    void dataStyleConfig(BaseCellProperty cell, AbstractStyleRender.FieldInfo fieldInfo);
 
 }

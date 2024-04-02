@@ -4,9 +4,10 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.*;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.*;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.DataInverter;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.style.CellStyleProperty;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -38,74 +39,83 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
 /**
- * 简单配置 主题
+ * 可配置主题
  * @author 张智凯
  * @version 1.0
  * @data 2024/3/28 9:21
  */
-public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements ExcelStyleRender {
+public class AxolotlConfigurableTheme extends AbstractStyleRender implements ExcelStyleRender {
 
-    private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlSimpleConfigTheme.class);
+    private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlConfigurableTheme.class);
 
     /**
      * 全局样式
      */
-    private GlobalCellStyle globalCellStyle;
+    private final CellStyleProperty INIT_STYLE = CellStyleProperty.buildDefault();
 
     /**
      * 表头样式
      */
-    private GlobalCellStyle headerCellStyle;
+    private CellStyleProperty headerCellStyle;
 
     /**
      * 标题样式
      */
-    private GlobalCellStyle titleCellStyle;
+    private CellStyleProperty titleCellStyle;
 
     /**
      * 程序常用样式
      */
-    private GlobalCellStyle commonCellStyle;
+    private CellStyleProperty commonCellStyle;
 
     /**
      * 样式创建缓存
      */
-    private Map<GlobalCellStyle,CellStyle> cellStyleCache = new HashMap<>();
+    private final Map<CellStyleProperty,CellStyle> cellStyleCache = new HashMap<>();
 
-    /**
-     * 字体创建缓存
-     */
-    private Map<GlobalCellStyle,Font> fontStyleCache = new HashMap<>();
+    public final Short DEFAULT_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
 
-    private Short titleRowHeight = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
+    public final Short TITLE_ROW_HEIGHT = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
 
-    private Short headerRowHeight = StyleHelper.STANDARD_ROW_HEIGHT;
+    public final Short HEADER_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
 
-    private Short dataRowHeight = StyleHelper.STANDARD_ROW_HEIGHT;
+    public final Short DATA_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
 
-    private Short commonRowHeight = StyleHelper.STANDARD_ROW_HEIGHT;
-
-    private Short columnWidth = (short) 12;
+    public final Short DEFAULT_COLUMN_WIDTH = (short) 12;
 
     /**
      * 样式配置类
      */
-    private CellStyleConfigur cellStyleConfigur;
+    private final AxolotlCellStyleConfig axolotlCellStyleConfig;
 
-    public AxolotlSimpleConfigTheme() {
+    public AxolotlConfigurableTheme() {
         super(LOGGER);
-        this.cellStyleConfigur = new DefaultStyleConfig();
+        this.axolotlCellStyleConfig = new AxolotlCellStyleConfig() {
+            @Override
+            public void globalStyleConfig(BaseCellProperty cell) {}
+            @Override
+            public void commonStyleConfig(BaseCellProperty cell) {}
+
+            @Override
+            public void headerStyleConfig(BaseCellProperty cell) {}
+
+            @Override
+            public void titleStyleConfig(BaseCellProperty cell) {}
+
+            @Override
+            public void dataStyleConfig(BaseCellProperty cell, FieldInfo fieldInfo) {}
+        };
     }
 
-    public AxolotlSimpleConfigTheme(CellStyleConfigur cellStyleConfigur) {
+    public AxolotlConfigurableTheme(AxolotlCellStyleConfig axolotlCellStyleConfig) {
         super(LOGGER);
-        this.cellStyleConfigur = cellStyleConfigur;
+        this.axolotlCellStyleConfig = axolotlCellStyleConfig;
     }
 
-    public AxolotlSimpleConfigTheme(Class<? extends CellStyleConfigur> configurClass) {
+    public AxolotlConfigurableTheme(Class<? extends AxolotlCellStyleConfig> configurClass) {
         super(LOGGER);
         try {
-            this.cellStyleConfigur = configurClass.getDeclaredConstructor().newInstance();
+            this.axolotlCellStyleConfig = configurClass.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
@@ -115,31 +125,29 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
-            //读取默认配置
-            globalCellStyle = getDefaultCellStyle();
-            CellMain gsc = new CellMain();
-            cellStyleConfigur.globalStyleConfig(gsc);
-            setCellStyle(gsc,globalCellStyle);
+            BaseCellProperty gsc = new BaseCellProperty();
+            axolotlCellStyleConfig.globalStyleConfig(gsc);
+            setCellStyle(gsc, INIT_STYLE);
             String fontName = writeConfig.getFontName();
             if (fontName != null){
                 debug(LOGGER, "使用自定义字体：%s",fontName);
-                globalCellStyle.setFontName(fontName);
+                INIT_STYLE.setFontName(fontName);
             }
             debug(LOGGER,"全局样式读取完毕");
 
             //读取系统列样式配置
-            CellMain csc = new CellMain();
-            cellStyleConfigur.commonStyleConfig(csc);
-            GlobalCellStyle commonStyle = new GlobalCellStyle();
+            BaseCellProperty csc = new BaseCellProperty();
+            axolotlCellStyleConfig.commonStyleConfig(csc);
+            CellStyleProperty commonStyle = new CellStyleProperty();
             try {
-                BeanUtils.copyProperties(commonStyle,globalCellStyle);
+                BeanUtils.copyProperties(commonStyle, INIT_STYLE);
             } catch (Exception e) {throw new AxolotlWriteException("读取系统列样式配置失败");}
             setCellStyle(csc,commonStyle);
             if(commonStyle.getRowHeight() == null){
-                commonStyle.setRowHeight(this.commonRowHeight);
+                commonStyle.setRowHeight(DEFAULT_ROW_HEIGHT);
             }
             if(commonStyle.getColumnWidth() == null){
-                commonStyle.setColumnWidth(columnWidth);
+                commonStyle.setColumnWidth(DEFAULT_COLUMN_WIDTH);
             }
             this.commonCellStyle = commonStyle;
             debug(LOGGER,"程序常用列样式读取完毕");
@@ -167,29 +175,29 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
     public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
 
         //读取表头配置
-        CellMain hsc = new CellMain();
-        cellStyleConfigur.headerStyleConfig(hsc);
-        GlobalCellStyle handlerStyle = new GlobalCellStyle();
+        BaseCellProperty hsc = new BaseCellProperty();
+        axolotlCellStyleConfig.headerStyleConfig(hsc);
+        CellStyleProperty handlerStyle = new CellStyleProperty();
         try {
-            BeanUtils.copyProperties(handlerStyle,globalCellStyle);
+            BeanUtils.copyProperties(handlerStyle, INIT_STYLE);
         } catch (Exception e) {throw new AxolotlWriteException("读取表头配置失败");}
         setCellStyle(hsc,handlerStyle);
         if(handlerStyle.getRowHeight() == null){
-            handlerStyle.setRowHeight(this.headerRowHeight);
+            handlerStyle.setRowHeight(HEADER_ROW_HEIGHT);
         }
         this.headerCellStyle = handlerStyle;
         debug(LOGGER,"表头样式读取完毕");
 
         //读取标题配置
-        CellMain tsc = new CellMain();
-        cellStyleConfigur.titleStyleConfig(tsc);
-        GlobalCellStyle titleStyle = new GlobalCellStyle();
+        BaseCellProperty tsc = new BaseCellProperty();
+        axolotlCellStyleConfig.titleStyleConfig(tsc);
+        CellStyleProperty titleStyle = new CellStyleProperty();
         try {
-            BeanUtils.copyProperties(titleStyle,globalCellStyle);
+            BeanUtils.copyProperties(titleStyle, INIT_STYLE);
         } catch (Exception e) {throw new AxolotlWriteException("读取标题配置失败");}
         setCellStyle(tsc,titleStyle);
         if(titleStyle.getRowHeight() == null){
-            titleStyle.setRowHeight(this.titleRowHeight);
+            titleStyle.setRowHeight(this.TITLE_ROW_HEIGHT);
         }
         this.titleCellStyle = titleStyle;
         debug(LOGGER,"标题样式读取完毕");
@@ -278,19 +286,19 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                 FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
 
                 //获取内容样式
-                CellMain dsc = new CellMain();
-                cellStyleConfigur.dataStyleConfig(dsc,new FieldInfo(fieldName, value, columnNumber,alreadyWriteRow));
-                GlobalCellStyle dataStyle = new GlobalCellStyle();
+                BaseCellProperty dsc = new BaseCellProperty();
+                axolotlCellStyleConfig.dataStyleConfig(dsc,new FieldInfo(fieldName, value, columnNumber,alreadyWriteRow));
+                CellStyleProperty dataStyle = new CellStyleProperty();
                 try {
-                    BeanUtils.copyProperties(dataStyle,globalCellStyle);
+                    BeanUtils.copyProperties(dataStyle, INIT_STYLE);
                 } catch (Exception e) {throw new AxolotlWriteException("读取数据配置失败");}
                 setCellStyle(dsc,dataStyle);
                 if(dataStyle.getRowHeight() == null){
-                    dataStyle.setRowHeight(this.dataRowHeight);
+                    dataStyle.setRowHeight(this.DATA_ROW_HEIGHT);
                 }
                 List<Header> headers = context.getHeaders().get(switchSheetIndex);
                 if(dataStyle.getColumnWidth() == null && (headers == null || headers.isEmpty())){
-                    dataStyle.setColumnWidth(columnWidth);
+                    dataStyle.setColumnWidth(DEFAULT_COLUMN_WIDTH);
                 }
 
                 //设置行高
@@ -495,57 +503,31 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
         }
     }
 
-
-    /**
-     * 创建预制样式
-     * @return
-     */
-    private GlobalCellStyle getDefaultCellStyle(){
-        GlobalCellStyle defaultStyle = new GlobalCellStyle();
-
-        defaultStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
-        defaultStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-        defaultStyle.setForegroundColor(new AxolotlColor(255,255,255));
-        defaultStyle.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
-        //边框
-        defaultStyle.setBaseBorderStyle(BorderStyle.NONE);
-        defaultStyle.setBaseBorderColor(IndexedColors.BLACK);
-        //字体
-        defaultStyle.setFontName(StyleHelper.STANDARD_FONT_NAME);
-        defaultStyle.setFontColor(IndexedColors.BLACK);
-        defaultStyle.setBold(false);
-        defaultStyle.setFontSize(StyleHelper.STANDARD_TEXT_FONT_SIZE);
-        defaultStyle.setItalic(false);
-        defaultStyle.setStrikeout(false);
-
-        return defaultStyle;
-    }
-
     /**
      * 导入配置
-     * @param cellMain 用户配置
+     * @param baseCellProperty 用户配置
      * @param defaultCellStyle 主题配置
      */
-    private void setCellStyle(CellMain cellMain, GlobalCellStyle defaultCellStyle){
-        if(cellMain.getRowHeight() != null){
-            defaultCellStyle.setRowHeight(cellMain.getRowHeight());
+    private void setCellStyle(BaseCellProperty baseCellProperty, CellStyleProperty defaultCellStyle){
+        if(baseCellProperty.getRowHeight() != null){
+            defaultCellStyle.setRowHeight(baseCellProperty.getRowHeight());
         }
-        if(cellMain.getColumnWidth() != null){
-            defaultCellStyle.setColumnWidth(cellMain.getColumnWidth());
+        if(baseCellProperty.getColumnWidth() != null){
+            defaultCellStyle.setColumnWidth(baseCellProperty.getColumnWidth());
         }
-        if(cellMain.getHorizontalAlignment() != null){
-            defaultCellStyle.setHorizontalAlignment(cellMain.getHorizontalAlignment());
+        if(baseCellProperty.getHorizontalAlignment() != null){
+            defaultCellStyle.setHorizontalAlignment(baseCellProperty.getHorizontalAlignment());
         }
-        if(cellMain.getVerticalAlignment() != null){
-            defaultCellStyle.setVerticalAlignment(cellMain.getVerticalAlignment());
+        if(baseCellProperty.getVerticalAlignment() != null){
+            defaultCellStyle.setVerticalAlignment(baseCellProperty.getVerticalAlignment());
         }
-        if(cellMain.getForegroundColor() != null){
-            defaultCellStyle.setForegroundColor(cellMain.getForegroundColor());
+        if(baseCellProperty.getForegroundColor() != null){
+            defaultCellStyle.setForegroundColor(baseCellProperty.getForegroundColor());
         }
-        if(cellMain.getFillPatternType() != null){
-            defaultCellStyle.setFillPatternType(cellMain.getFillPatternType());
+        if(baseCellProperty.getFillPatternType() != null){
+            defaultCellStyle.setFillPatternType(baseCellProperty.getFillPatternType());
         }
-        CellBorder border = cellMain.getBorder();
+        CellBorder border = baseCellProperty.getBorder();
         if(border != null){
             if(border.getBaseBorderStyle() != null){
                 defaultCellStyle.setBaseBorderStyle(border.getBaseBorderStyle());
@@ -578,7 +560,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                 defaultCellStyle.setRightBorderColor(border.getRightBorderColor());
             }
         }
-        CellFont font = cellMain.getFont();
+        CellFont font = baseCellProperty.getFont();
         if(font != null){
             if(font.getBold() != null){
                 defaultCellStyle.setBold(font.getBold());
@@ -606,13 +588,13 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
      * @param sheet 工作表
      */
     public void fillWhiteCell(Sheet sheet){
-        CellStyle defaultStyle = createCellStyle(globalCellStyle);
+        CellStyle defaultStyle = createCellStyle(INIT_STYLE);
         // 将默认样式应用到所有单元格
         for (int i = 0; i < 26; i++) {
             sheet.setDefaultColumnStyle(i, defaultStyle);
-            sheet.setDefaultColumnWidth(globalCellStyle.getColumnWidth() == null ? columnWidth : globalCellStyle.getColumnWidth());
+            sheet.setDefaultColumnWidth(INIT_STYLE.getColumnWidth() == null ? DEFAULT_COLUMN_WIDTH : INIT_STYLE.getColumnWidth());
         }
-        sheet.setDefaultRowHeight(globalCellStyle.getRowHeight() == null ? dataRowHeight : globalCellStyle.getRowHeight());
+        sheet.setDefaultRowHeight(INIT_STYLE.getRowHeight() == null ? DATA_ROW_HEIGHT : INIT_STYLE.getRowHeight());
         info(LOGGER,"执行结束，渲染空白单元格以撑开整个屏幕");
     }
 
@@ -621,7 +603,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
      * @param cellStyle 单元格样式
      * @param baseCellStyle 全局配置
      */
-    private void setBorderStyle(CellStyle cellStyle, GlobalCellStyle baseCellStyle){
+    private void setBorderStyle(CellStyle cellStyle, CellStyleProperty baseCellStyle){
         BorderStyle borderTopStyle = baseCellStyle.getBorderTopStyle();
         if(borderTopStyle != null){
             cellStyle.setBorderTop(borderTopStyle);
@@ -799,7 +781,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
         /**
          * 渲染的单元格样式
          */
-        private GlobalCellStyle cellStyle;
+        private CellStyleProperty cellStyle;
 
         /**
          * 渲染的行高度
@@ -880,14 +862,14 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
      * @param usedCellStyle 表头样式默认配置
      * @return 表头样式
      */
-    public CellStyle getCellStyle(Header header, GlobalCellStyle usedCellStyle) {
+    public CellStyle getCellStyle(Header header, CellStyleProperty usedCellStyle) {
         if (header.getCustomCellStyle() != null){
             debug(LOGGER,"["+header.getName()+"] Header内部样式配置读取完毕,优先级:高");
             return header.getCustomCellStyle();
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
-                GlobalCellStyle headerStyle = new GlobalCellStyle();
+                CellStyleProperty headerStyle = new CellStyleProperty();
                 try {
                     BeanUtils.copyProperties(headerStyle,usedCellStyle);
                 } catch (Exception e) {throw new RuntimeException(e);}
@@ -946,63 +928,37 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
      * 创建样式、从缓存中获取样式
      * @return 样式
      */
-    public CellStyle createCellStyle(GlobalCellStyle cellStyle){
-        GlobalCellStyle key = new GlobalCellStyle();
+    public CellStyle createCellStyle(CellStyleProperty cellStyle){
+        CellStyleProperty styleProperty = new CellStyleProperty();
         try {
-            BeanUtils.copyProperties(key,cellStyle);
+            BeanUtils.copyProperties(styleProperty,cellStyle);
         } catch (Exception e) {throw new RuntimeException(e);}
-        key.setColumnWidth(null);
-        key.setRowHeight(null);
-        if(cellStyleCache.containsKey(key)){
-            return cellStyleCache.get(key);
+        styleProperty.setColumnWidth(null);
+        styleProperty.setRowHeight(null);
+        if(cellStyleCache.containsKey(styleProperty)){
+            return cellStyleCache.get(styleProperty);
         }else{
             CellStyle style = createStyle(
-                    key.getBaseBorderStyle(),
-                    key.getBaseBorderColor(),
-                    key.getForegroundColor(),
-                    key.getFontName(),
-                    key.getFontSize(),
-                    key.getBold(),
-                    key.getFontColor(),
-                    key.getItalic(),
-                    key.getStrikeout());
-            setBorderStyle(style,key);
+                    styleProperty.getBaseBorderStyle(),
+                    styleProperty.getBaseBorderColor(),
+                    styleProperty.getForegroundColor(),
+                    styleProperty.getFontName(),
+                    styleProperty.getFontSize(),
+                    styleProperty.getBold(),
+                    styleProperty.getFontColor(),
+                    styleProperty.getItalic(),
+                    styleProperty.getStrikeout()
+            );
+            setBorderStyle(style,styleProperty);
             //设置单元格对齐方式
-            StyleHelper.setCellStyleAlignment(style, key.getHorizontalAlignment(), key.getVerticalAlignment());
+            StyleHelper.setCellStyleAlignment(style, styleProperty.getHorizontalAlignment(), styleProperty.getVerticalAlignment());
             //设置单元格边框样式
-            setBorderStyle(style,key);
+            setBorderStyle(style,styleProperty);
             //填充样式
-            style.setFillPattern(key.getFillPatternType());
-            cellStyleCache.put(key,style);
+            style.setFillPattern(styleProperty.getFillPatternType());
+            cellStyleCache.put(styleProperty,style);
             return style;
         }
     }
 
-
-    /**
-     * 创建字体 字体缓存
-     * @param fontName 字体名称
-     * @param fontSize 字体大小
-     * @param isBold 是否加粗
-     * @param color 字体颜色
-     * @param italic 是否斜体
-     * @param strikeout 是否删除线
-     * @return
-     */
-    public Font createFontStyle(String fontName,Short fontSize,Boolean isBold,IndexedColors color,Boolean italic,Boolean strikeout){
-        GlobalCellStyle key = new GlobalCellStyle();
-        key.setFontName(fontName);
-        key.setFontSize(fontSize);
-        key.setBold(isBold);
-        key.setFontColor(color);
-        key.setItalic(italic);
-        key.setStrikeout(strikeout);
-        if(fontStyleCache.containsKey(key)){
-            return fontStyleCache.get(key);
-        }else{
-            Font font = createFont(fontName, fontSize, isBold, color, italic, strikeout);
-            fontStyleCache.put(key,font);
-            return font;
-        }
-    }
 }

@@ -2,17 +2,34 @@
 
 ## 最新更新：
 
-​	最后更新时间：<font color='red'>2024-03-29</font>
+​	最后更新时间：<font color='red'>2024-04-03</font>
 
-​	Java17依赖版本**（LTS）**：<font color='red'>1.0.13</font>
+​	Java17依赖版本**（LTS）**：<font color='red'>1.0.14</font>
 
 ​	Java8依赖版本：<font color='red'>0.0.13-ALPHA</font>
 
-### 🔝Java17 版本 <font color='red'>1.0.13</font> 更新说明
+### 🔝Java17 版本 <font color='red'>1.0.14</font> 更新说明
+
+发布时间：[2024-04-03]
+
+- 增加读取特性ALLOW_READ_HIDDEN_SHEET，允许读取隐藏表，否则抛出异常。
+
+- 增加可配置主题。
+
+- 修复写入BUG。
+
+- 增加自动写入器API。
+
+- 完善文档。
+
+
+## 历史更新：
+
+### 🧩 Java17 版本 <font color='red'>1.0.13</font> 更新说明
 
 发布时间：[2024-03-29]
 
-- **正式支持Java17版本**。
+- 正式发布Java17版本。
 
 - 自动写入功能进入支持阶段。
 
@@ -23,9 +40,6 @@
 - 迁移写入器部分代码结构。
 
 - Java8版本进入补丁修复阶段。
-  
-
-## 历史更新：
 
 ### 🧩 Java8 0.0.10-ALPHA-8 更新说明
 

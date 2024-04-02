@@ -3,7 +3,7 @@ package cn.toutatis.xvoid.axolotl;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlStreamExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.writer.*;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 
 import java.io.File;
 import java.io.InputStream;

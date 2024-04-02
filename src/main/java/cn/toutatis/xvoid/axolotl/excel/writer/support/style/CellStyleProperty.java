@@ -1,5 +1,6 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.components;
+package cn.toutatis.xvoid.axolotl.excel.writer.support.style;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.*;
@@ -13,7 +14,7 @@ import java.util.Objects;
  * @data 2024/3/28 9:32
  */
 @Data
-public class GlobalCellStyle {
+public class CellStyleProperty {
 
     /**
      * 行高
@@ -125,11 +126,36 @@ public class GlobalCellStyle {
      */
     private Boolean strikeout;
 
+    /**
+     * 构建默认样式
+     * @return 默认样式
+     */
+    public static CellStyleProperty buildDefault(){
+        CellStyleProperty defaultStyle = new CellStyleProperty();
+
+        defaultStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        defaultStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        defaultStyle.setForegroundColor(StyleHelper.WHITE_COLOR);
+        defaultStyle.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
+        //边框
+        defaultStyle.setBaseBorderStyle(BorderStyle.NONE);
+        defaultStyle.setBaseBorderColor(IndexedColors.BLACK);
+        //字体
+        defaultStyle.setFontName(StyleHelper.STANDARD_FONT_NAME);
+        defaultStyle.setFontColor(IndexedColors.BLACK);
+        defaultStyle.setBold(false);
+        defaultStyle.setFontSize(StyleHelper.STANDARD_TEXT_FONT_SIZE);
+        defaultStyle.setItalic(false);
+        defaultStyle.setStrikeout(false);
+
+        return defaultStyle;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        GlobalCellStyle style = (GlobalCellStyle) o;
+        CellStyleProperty style = (CellStyleProperty) o;
         return Objects.equals(rowHeight, style.rowHeight) && Objects.equals(columnWidth, style.columnWidth) && horizontalAlignment == style.horizontalAlignment && verticalAlignment == style.verticalAlignment && Objects.equals(foregroundColor, style.foregroundColor) && fillPatternType == style.fillPatternType && baseBorderStyle == style.baseBorderStyle && baseBorderColor == style.baseBorderColor && borderTopStyle == style.borderTopStyle && topBorderColor == style.topBorderColor && borderBottomStyle == style.borderBottomStyle && bottomBorderColor == style.bottomBorderColor && borderLeftStyle == style.borderLeftStyle && leftBorderColor == style.leftBorderColor && borderRightStyle == style.borderRightStyle && rightBorderColor == style.rightBorderColor && Objects.equals(fontName, style.fontName) && Objects.equals(bold, style.bold) && Objects.equals(fontSize, style.fontSize) && fontColor == style.fontColor && Objects.equals(italic, style.italic) && Objects.equals(strikeout, style.strikeout);
     }
 
@@ -137,4 +163,5 @@ public class GlobalCellStyle {
     public int hashCode() {
         return Objects.hash(rowHeight, columnWidth, horizontalAlignment, verticalAlignment, foregroundColor, fillPatternType, baseBorderStyle, baseBorderColor, borderTopStyle, topBorderColor, borderBottomStyle, bottomBorderColor, borderLeftStyle, leftBorderColor, borderRightStyle, rightBorderColor, fontName, bold, fontSize, fontColor, italic, strikeout);
     }
+
 }

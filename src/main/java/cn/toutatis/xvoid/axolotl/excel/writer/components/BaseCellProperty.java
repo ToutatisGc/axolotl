@@ -12,7 +12,7 @@ import org.apache.poi.ss.usermodel.VerticalAlignment;
  * @data 2024/3/29 0:49
  */
 @Data
-public class CellMain {
+public class BaseCellProperty {
 
     /**
      * 行高

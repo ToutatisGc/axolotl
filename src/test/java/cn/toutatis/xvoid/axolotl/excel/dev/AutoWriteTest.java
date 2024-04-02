@@ -9,15 +9,13 @@ import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlSelectBox;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.CellStyleConfigur;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.DefaultStyleConfig;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.ExcelWritePolicy;
-import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlIndustrialOrangeTheme;
+import cn.toutatis.xvoid.axolotl.excel.entities.writer.AxolotlDefaultStyleConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlMidnightTheme;
-import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlSimpleConfigTheme;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.AxolotlConfigurableTheme;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
-import cn.toutatis.xvoid.axolotl.excel.writer.themes.SimpleBlackTheme;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -239,7 +237,7 @@ public class AutoWriteTest {
     public void testAuto5() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
-        commonWriteConfig.setThemeStyleRender(new AxolotlSimpleConfigTheme(DefaultStyleConfig.class));
+        commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class));
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
         commonWriteConfig.setTitle("股票测试表");
@@ -283,7 +281,7 @@ public class AutoWriteTest {
     public void testAuto3() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
-        commonWriteConfig.setThemeStyleRender(new AxolotlSimpleConfigTheme(new DefaultStyleConfig()));
+        commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme());
         //commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.$DEFAULT);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
@@ -306,10 +304,11 @@ public class AutoWriteTest {
         objects.add(2);
         objects.add(3);
         String[] objects1 = {"1","2","4","5"};
+        AxolotlSelectBox<String> stringAxolotlSelectBox = new AxolotlSelectBox<>("阶段1", List.of("阶段1", "阶段2", "阶段3"));
         for (int i = 0; i < 50; i++) {
             JSONObject map = new JSONObject(true);
 //            HashMap<String, String> map = new HashMap<>();
-            map.put("two",objects1);
+            map.put("two",stringAxolotlSelectBox);
             map.put("three","绝缘子XXX");
             map.put("four","金具XXX");
             map.put("five","基础XXX");

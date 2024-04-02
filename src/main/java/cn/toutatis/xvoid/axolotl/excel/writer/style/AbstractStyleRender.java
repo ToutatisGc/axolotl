@@ -5,7 +5,10 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -438,7 +441,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * 用于渲染列的数据和合计
      */
     @Data
-    protected static class FieldInfo{
+    public static class FieldInfo{
 
         /**
          * 属性所属的类

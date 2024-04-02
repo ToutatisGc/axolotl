@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.support.CommonWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 
 /**
  * 模板写入配置

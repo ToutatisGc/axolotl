@@ -37,21 +37,19 @@
 
 ### 1.1 版本更新说明
 
-#### 🔝Java17 版本 <font color='red'>1.0.13</font> 更新说明
+#### 🔝Java17 版本 <font color='red'>1.0.14</font> 更新说明
 
-发布时间：[2024-03-29]
+发布时间：[2024-04-03]
 
-- 正式发布Java17版本。
+- 增加读取特性ALLOW_READ_HIDDEN_SHEET，允许读取隐藏表，否则抛出异常。
 
-- 自动写入功能进入支持阶段。
+- 增加可配置主题。
 
-- 升级VOID-TOOLKIT依赖。
+- 修复写入BUG。
 
-- 统一API命名规则。
+- 增加自动写入器API。
 
-- 迁移写入器部分代码结构。
-
-- Java8版本进入补丁修复阶段。
+- 完善文档。
 
 #### 🧩历史版本更新说明
 
@@ -68,23 +66,23 @@
 
 ### 3.1 添加Maven依赖
 
-**⛔<font color='red'>Java17版本（LTS版本，推荐使用）</font>**
+**<font color='green'>✅Java17版本（LTS版本，推荐使用）</font>**
 
 ```xml
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>1.0.13</version>
+    <version>1.0.14</version>
 </dependency>
 ```
 
-**✅<font color='red'>Java8版本()</font>**
+**⛔<font color='red'>Java8版本（维护状态）</font>**
 
 ```xml
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>0.0.10-ALPHA-8</version>
+    <version>0.0.14-BETA</version>
 </dependency>
 ```
 
@@ -294,6 +292,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | IGNORE_EMPTY_SHEET_ERROR        | 忽略空表异常                                                 | Boolean  | true           | true   |
 | IGNORE_EMPTY_SHEET_HEADER_ERROR | 忽略空表头的错误                                             | Boolean  | true           | true   |
 | SPREAD_MERGING_REGION           | 将合并的单元格展开到合并单元格的各个单元格                   | Boolean  | true           | true   |
+| ALLOW_READ_HIDDEN_SHEET         | 允许读取隐藏表                                               | Boolean  | true           | false  |
 | INCLUDE_EMPTY_ROW               | 空行也视为有效数据                                           | Boolean  | true           | false  |
 | SORTED_READ_SHEET_DATA          | 在使用Map接收时，使用LinkedHashMap                           | Boolean  | true           | true   |
 | CAST_NUMBER_TO_DATE             | 判断数字为日期类型将转换为日期格式                           | Boolean  | true           | true   |

@@ -4,7 +4,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfi
 import cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.*;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -128,7 +128,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * @param referenceData 数据源
      * @param gatherUnusedStage 是否收集未使用的数据
      */
-    private void writeSingleData(Sheet sheet,Map<String,?> singleMap,HashBasedTable<Integer, String, CellAddress> referenceData,boolean gatherUnusedStage){
+    private void writeSingleData(Sheet sheet, Map<String,?> singleMap, HashBasedTable<Integer, String, CellAddress> referenceData, boolean gatherUnusedStage){
         // 注入通用信息
         HashMap<String, Object> dataMapping = (singleMap != null ? new HashMap<>(singleMap) : new HashMap<>());
         this.injectCommonConstInfo(dataMapping,gatherUnusedStage);

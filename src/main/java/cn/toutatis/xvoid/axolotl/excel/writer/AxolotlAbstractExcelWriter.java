@@ -2,8 +2,8 @@ package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.toutatis.xvoid.axolotl.common.CommonMimeType;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.CommonWriteConfig;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.WriteContext;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.WriteContext;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
