@@ -495,27 +495,26 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
         dataRow.setHeight(StyleHelper.STANDARD_ROW_HEIGHT);
         int writtenColumn = START_POSITION;
-        int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex)+1;
-        // 写入序号
-        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
-            SXSSFCell cell = dataRow.createCell(writtenColumn);
-            cell.setCellValue(serialNumber);
-            cell.setCellStyle(rowStyle);
-            writtenColumnMap.put(writtenColumn++,1);
-        }
+        int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
         // 写入数据
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
         unmappedColumnCount =  new HashMap<>();
         columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
         boolean columnMappingEmpty = columnMapping.isEmpty();
-        boolean useOrderField = true;
+        // 写入序号
+        boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
+        if (autoInsertSerialNumber){
+            SXSSFCell cell = dataRow.createCell(writtenColumn);
+            cell.setCellValue(serialNumber);
+            cell.setCellStyle(rowStyle);
+            writtenColumnMap.put(columnMappingEmpty?writtenColumn++:0,1);
+        }
         for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
             String fieldName = dataEntry.getKey();
             SXSSFCell cell;
             if (columnMappingEmpty){
                 cell = dataRow.createCell(writtenColumn);
             }else{
-                useOrderField = false;
                 if (columnMapping.containsKey(fieldName)){
                     cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(fieldName),null);
                 }else {
@@ -527,12 +526,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }
             }
             Object value = dataEntry.getValue();
-            int columnNumber = useOrderField ? writtenColumn : columnMapping.get(fieldName);
+            int columnNumber = columnMappingEmpty ? writtenColumn : columnMapping.get(fieldName);
             FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
             this.renderColumn(fieldInfo,cell);
-            if (useOrderField){
+            if (columnMappingEmpty){
                 writtenColumnMap.put(writtenColumn++,1);
             }else{
                 writtenColumnMap.put(columnNumber,1);
@@ -540,8 +539,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
         // 将未使用的的单元格赋予空值
         for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {
+            if (autoInsertSerialNumber && alreadyColumnIdx == 0){
+                continue;
+            }
             SXSSFCell cell = null;
-            if (useOrderField){
+            if (columnMappingEmpty){
                 if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
                     cell = dataRow.createCell(alreadyColumnIdx);
                 }

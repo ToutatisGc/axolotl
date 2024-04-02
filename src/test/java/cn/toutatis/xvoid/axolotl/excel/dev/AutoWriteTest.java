@@ -79,6 +79,7 @@ public class AutoWriteTest {
         commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
         commonWriteConfig.setTitle("股票测试表");
         commonWriteConfig.setFontName("仿宋");
         commonWriteConfig.setBlankValue("-");
@@ -197,6 +198,7 @@ public class AutoWriteTest {
             AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
             autoWriteConfig.setThemeStyleRender(theme);
             autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
+            autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
             autoWriteConfig.setTitle("股票测试表");
             autoWriteConfig.setBlankValue("-");
             autoWriteConfig.setOutputStream(fileOutputStream);
