@@ -46,12 +46,28 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
  */
 public class AxolotlConfigurableTheme extends AbstractStyleRender implements ExcelStyleRender {
 
+
+    public final Short DEFAULT_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
+
+    public final Short TITLE_ROW_HEIGHT = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
+
+    public final Short HEADER_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
+
+    public final Short DATA_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
+
+    public final Short DEFAULT_COLUMN_WIDTH = (short) 12;
+
     private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlConfigurableTheme.class);
 
     /**
      * 全局样式
      */
     private final CellStyleProperty INIT_STYLE = CellStyleProperty.buildDefault();
+
+    /**
+     * 样式创建缓存
+     */
+    private final Map<CellStyleProperty,CellStyle> cellStyleCache = new HashMap<>();
 
     /**
      * 表头样式
@@ -67,21 +83,6 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      * 程序常用样式
      */
     private CellStyleProperty commonCellStyle;
-
-    /**
-     * 样式创建缓存
-     */
-    private final Map<CellStyleProperty,CellStyle> cellStyleCache = new HashMap<>();
-
-    public final Short DEFAULT_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
-
-    public final Short TITLE_ROW_HEIGHT = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
-
-    public final Short HEADER_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
-
-    public final Short DATA_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
-
-    public final Short DEFAULT_COLUMN_WIDTH = (short) 12;
 
     /**
      * 样式配置类
@@ -126,8 +127,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
             BaseCellProperty gsc = new BaseCellProperty();
-            axolotlCellStyleConfig.globalStyleConfig(gsc);
-            setCellStyle(gsc, INIT_STYLE);
+            axolotlCellStyleConfig.globalStyleConfig(gsc, INIT_STYLE);
             String fontName = writeConfig.getFontName();
             if (fontName != null){
                 debug(LOGGER, "使用自定义字体：%s",fontName);
@@ -142,7 +142,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             try {
                 BeanUtils.copyProperties(commonStyle, INIT_STYLE);
             } catch (Exception e) {throw new AxolotlWriteException("读取系统列样式配置失败");}
-            setCellStyle(csc,commonStyle);
+            axolotlCellStyleConfig.cloneStyleProperties(csc,commonStyle);
             if(commonStyle.getRowHeight() == null){
                 commonStyle.setRowHeight(DEFAULT_ROW_HEIGHT);
             }
@@ -181,7 +181,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         try {
             BeanUtils.copyProperties(handlerStyle, INIT_STYLE);
         } catch (Exception e) {throw new AxolotlWriteException("读取表头配置失败");}
-        setCellStyle(hsc,handlerStyle);
+        axolotlCellStyleConfig.cloneStyleProperties(hsc,handlerStyle);
         if(handlerStyle.getRowHeight() == null){
             handlerStyle.setRowHeight(HEADER_ROW_HEIGHT);
         }
@@ -195,7 +195,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         try {
             BeanUtils.copyProperties(titleStyle, INIT_STYLE);
         } catch (Exception e) {throw new AxolotlWriteException("读取标题配置失败");}
-        setCellStyle(tsc,titleStyle);
+        axolotlCellStyleConfig.cloneStyleProperties(tsc,titleStyle);
         if(titleStyle.getRowHeight() == null){
             titleStyle.setRowHeight(this.TITLE_ROW_HEIGHT);
         }
@@ -292,7 +292,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 try {
                     BeanUtils.copyProperties(dataStyle, INIT_STYLE);
                 } catch (Exception e) {throw new AxolotlWriteException("读取数据配置失败");}
-                setCellStyle(dsc,dataStyle);
+                axolotlCellStyleConfig.cloneStyleProperties(dsc,dataStyle);
                 if(dataStyle.getRowHeight() == null){
                     dataStyle.setRowHeight(this.DATA_ROW_HEIGHT);
                 }
@@ -475,12 +475,8 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         CellRangeAddressList addressList = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
         DataValidationConstraint constraint = helper.createExplicitListConstraint(values);
         DataValidation dataValidation = helper.createValidation(constraint, addressList);
-        if (dataValidation instanceof HSSFDataValidation) {
-            dataValidation.setSuppressDropDownArrow(false);
-        } else {
-            dataValidation.setSuppressDropDownArrow(true);
-            dataValidation.setShowErrorBox(true);
-        }
+        dataValidation.setSuppressDropDownArrow(true);
+        dataValidation.setShowErrorBox(true);
         sheet.addValidationData(dataValidation);
     }
 
@@ -503,85 +499,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }
     }
 
-    /**
-     * 导入配置
-     * @param baseCellProperty 用户配置
-     * @param defaultCellStyle 主题配置
-     */
-    private void setCellStyle(BaseCellProperty baseCellProperty, CellStyleProperty defaultCellStyle){
-        if(baseCellProperty.getRowHeight() != null){
-            defaultCellStyle.setRowHeight(baseCellProperty.getRowHeight());
-        }
-        if(baseCellProperty.getColumnWidth() != null){
-            defaultCellStyle.setColumnWidth(baseCellProperty.getColumnWidth());
-        }
-        if(baseCellProperty.getHorizontalAlignment() != null){
-            defaultCellStyle.setHorizontalAlignment(baseCellProperty.getHorizontalAlignment());
-        }
-        if(baseCellProperty.getVerticalAlignment() != null){
-            defaultCellStyle.setVerticalAlignment(baseCellProperty.getVerticalAlignment());
-        }
-        if(baseCellProperty.getForegroundColor() != null){
-            defaultCellStyle.setForegroundColor(baseCellProperty.getForegroundColor());
-        }
-        if(baseCellProperty.getFillPatternType() != null){
-            defaultCellStyle.setFillPatternType(baseCellProperty.getFillPatternType());
-        }
-        CellBorder border = baseCellProperty.getBorder();
-        if(border != null){
-            if(border.getBaseBorderStyle() != null){
-                defaultCellStyle.setBaseBorderStyle(border.getBaseBorderStyle());
-            }
-            if(border.getBaseBorderColor() != null){
-                defaultCellStyle.setBaseBorderColor(border.getBaseBorderColor());
-            }
-            if(border.getBorderTopStyle() != null){
-                defaultCellStyle.setBorderTopStyle(border.getBorderTopStyle());
-            }
-            if(border.getTopBorderColor() != null){
-                defaultCellStyle.setTopBorderColor(border.getTopBorderColor());
-            }
-            if(border.getBorderBottomStyle() != null){
-                defaultCellStyle.setBorderBottomStyle(border.getBorderBottomStyle());
-            }
-            if(border.getBottomBorderColor() != null){
-                defaultCellStyle.setBottomBorderColor(border.getBottomBorderColor());
-            }
-            if(border.getBorderLeftStyle() != null){
-                defaultCellStyle.setBorderLeftStyle(border.getBorderLeftStyle());
-            }
-            if(border.getLeftBorderColor() != null){
-                defaultCellStyle.setLeftBorderColor(border.getLeftBorderColor());
-            }
-            if(border.getBorderRightStyle() != null){
-                defaultCellStyle.setBorderRightStyle(border.getBorderRightStyle());
-            }
-            if(border.getRightBorderColor() != null){
-                defaultCellStyle.setRightBorderColor(border.getRightBorderColor());
-            }
-        }
-        CellFont font = baseCellProperty.getFont();
-        if(font != null){
-            if(font.getBold() != null){
-                defaultCellStyle.setBold(font.getBold());
-            }
-            if(font.getFontName() != null){
-                defaultCellStyle.setFontName(font.getFontName());
-            }
-            if(font.getFontSize() != null){
-                defaultCellStyle.setFontSize(font.getFontSize());
-            }
-            if(font.getFontColor() != null){
-                defaultCellStyle.setFontColor(font.getFontColor());
-            }
-            if(font.getItalic() != null){
-                defaultCellStyle.setItalic(font.getItalic());
-            }
-            if(font.getStrikeout() != null){
-                defaultCellStyle.setStrikeout(font.getStrikeout());
-            }
-        }
-    }
+
 
     /**
      * 填充空白单元格
@@ -595,7 +513,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             sheet.setDefaultColumnWidth(INIT_STYLE.getColumnWidth() == null ? DEFAULT_COLUMN_WIDTH : INIT_STYLE.getColumnWidth());
         }
         sheet.setDefaultRowHeight(INIT_STYLE.getRowHeight() == null ? DATA_ROW_HEIGHT : INIT_STYLE.getRowHeight());
-        info(LOGGER,"执行结束，渲染空白单元格以撑开整个屏幕");
+        debug(LOGGER,"渲染空白单元格");
     }
 
     /**
