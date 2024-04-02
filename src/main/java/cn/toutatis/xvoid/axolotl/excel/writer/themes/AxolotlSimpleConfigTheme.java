@@ -15,8 +15,10 @@ import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.poi.hssf.usermodel.HSSFDataValidation;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
@@ -29,6 +31,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
@@ -300,7 +303,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                 // 对单元格设置样式
                 cell.setCellStyle(createCellStyle(dataStyle));
                 // 渲染数据到单元格
-                this.renderColumn(fieldInfo,cell);
+                this.renderColumn(fieldInfo,cell,sheet);
                 if (columnMappingEmpty){
                     writtenColumnMap.put(writtenColumn++,1);
                 }else{
@@ -407,18 +410,72 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
      * @param fieldInfo 字段信息
      * @param cell 单元格
      */
-    public void renderColumn(FieldInfo fieldInfo,Cell cell){
+    public void renderColumn(FieldInfo fieldInfo,Cell cell,SXSSFSheet sheet){
         Object value = fieldInfo.getValue();
         if (value == null){
             cell.setCellValue(writeConfig.getBlankValue());
         }else{
-            calculateColumns(fieldInfo);
-            value = writeConfig.getDataInverter().convert(value);
-            int columnIndex = fieldInfo.getColumnIndex();
-            cell.setCellValue(value.toString());
-            unmappedColumnCount.remove(columnIndex);
+            if(returnsMany(fieldInfo.getClazz())){
+                List<String> list = null;
+                if(fieldInfo.getClazz().isArray()){
+                    list = new ArrayList<Object>(Arrays.asList((Object[]) value)).stream().filter(Objects::nonNull)
+                            .map(Object::toString) // 将每个对象转换为字符串
+                            .collect(Collectors.toList());
+                }else{
+                    list = ((List<Object>) value).stream().filter(Objects::nonNull)
+                            .map(Object::toString) // 将每个对象转换为字符串
+                            .collect(Collectors.toList());
+                }
+                createDropDownList(sheet,list.toArray(new String[list.size()]),fieldInfo.getRowIndex(),fieldInfo.getRowIndex(),fieldInfo.getColumnIndex(),fieldInfo.getColumnIndex());
+                int columnIndex = fieldInfo.getColumnIndex();
+                unmappedColumnCount.remove(columnIndex);
+            }else{
+                calculateColumns(fieldInfo);
+                value = writeConfig.getDataInverter().convert(value);
+                int columnIndex = fieldInfo.getColumnIndex();
+                cell.setCellValue(value.toString());
+                unmappedColumnCount.remove(columnIndex);
+            }
         }
     }
+
+    /**
+     * 判断返回值类型是否是集合或者数组类型
+     * @param returnType 类型
+     * @return 是否是集合或者数组类型
+     */
+    public boolean returnsMany(Class<?> returnType) {
+        //判断返回类型是否是集合类型
+        boolean isCollection = Collection.class.isAssignableFrom(returnType);
+        //判断返回类型是否是数组类型
+        boolean isArray = returnType.isArray();
+        return isCollection || isArray;
+    }
+
+    /**
+     * 创建下拉列表选项(单元格下拉框数据小于255字节时使用)
+     *
+     * @param sheet    所在Sheet页面
+     * @param values   下拉框的选项值
+     * @param firstRow 起始行（从0开始）
+     * @param lastRow  终止行（从0开始）
+     * @param firstCol 起始列（从0开始）
+     * @param lastCol  终止列（从0开始）
+     */
+    public void createDropDownList(Sheet sheet, String[] values, int firstRow, int lastRow, int firstCol, int lastCol) {
+        DataValidationHelper helper = sheet.getDataValidationHelper();
+        CellRangeAddressList addressList = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
+        DataValidationConstraint constraint = helper.createExplicitListConstraint(values);
+        DataValidation dataValidation = helper.createValidation(constraint, addressList);
+        if (dataValidation instanceof HSSFDataValidation) {
+            dataValidation.setSuppressDropDownArrow(false);
+        } else {
+            dataValidation.setSuppressDropDownArrow(true);
+            dataValidation.setShowErrorBox(true);
+        }
+        sheet.addValidationData(dataValidation);
+    }
+
 
     /**
      * 计算列合计

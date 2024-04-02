@@ -301,10 +301,15 @@ public class AutoWriteTest {
         headers.add(new Header("通道","six"));
 
         ArrayList<JSONObject> data = new ArrayList<>();
+        ArrayList<Object> objects = new ArrayList<>();
+        objects.add(1);
+        objects.add(2);
+        objects.add(3);
+        String[] objects1 = {"1","2","4","5"};
         for (int i = 0; i < 50; i++) {
             JSONObject map = new JSONObject(true);
 //            HashMap<String, String> map = new HashMap<>();
-            map.put("two","导线XXX");
+            map.put("two",objects1);
             map.put("three","绝缘子XXX");
             map.put("four","金具XXX");
             map.put("five","基础XXX");
