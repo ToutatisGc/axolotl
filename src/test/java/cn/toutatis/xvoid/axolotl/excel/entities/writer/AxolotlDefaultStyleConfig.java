@@ -3,7 +3,7 @@ package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.CellBorder;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.CellFont;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.BaseCellProperty;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.CellConfigProperty;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AxolotlCellStyleConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
@@ -17,7 +17,7 @@ import org.apache.poi.ss.usermodel.IndexedColors;
  */
 public class AxolotlDefaultStyleConfig implements AxolotlCellStyleConfig {
     @Override
-    public void globalStyleConfig(BaseCellProperty cell) {
+    public void globalStyleConfig(CellConfigProperty cell) {
         cell.setForegroundColor(new AxolotlColor(39,56,86));
         cell.setRowHeight((short) 550);
         CellFont cellFont = new CellFont();
@@ -28,7 +28,7 @@ public class AxolotlDefaultStyleConfig implements AxolotlCellStyleConfig {
     }
 
     @Override
-    public void commonStyleConfig(BaseCellProperty cell) {
+    public void commonStyleConfig(CellConfigProperty cell) {
         CellBorder cellBorder = new CellBorder();
         cellBorder.setBaseBorderStyle(BorderStyle.NONE);
 
@@ -43,7 +43,7 @@ public class AxolotlDefaultStyleConfig implements AxolotlCellStyleConfig {
     }
 
     @Override
-    public void headerStyleConfig(BaseCellProperty cell) {
+    public void headerStyleConfig(CellConfigProperty cell) {
         cell.setForegroundColor(new AxolotlColor(34,44,69));
         CellBorder cellBorder = new CellBorder();
         cellBorder.setBaseBorderStyle(BorderStyle.NONE);
@@ -57,7 +57,7 @@ public class AxolotlDefaultStyleConfig implements AxolotlCellStyleConfig {
     }
 
     @Override
-    public void titleStyleConfig(BaseCellProperty cell) {
+    public void titleStyleConfig(CellConfigProperty cell) {
         cell.setRowHeight((short) 900);
         cell.setForegroundColor(new AxolotlColor( 53,80,125));
         CellFont cellFont = new CellFont();
@@ -68,7 +68,7 @@ public class AxolotlDefaultStyleConfig implements AxolotlCellStyleConfig {
     }
 
     @Override
-    public void dataStyleConfig(BaseCellProperty cell, AbstractStyleRender.FieldInfo fieldInfo) {
+    public void dataStyleConfig(CellConfigProperty cell, AbstractStyleRender.FieldInfo fieldInfo) {
        // cell.setForegroundColor(new AxolotlColor(39,56,86));
         CellBorder cellBorder = new CellBorder();
         cellBorder.setBaseBorderStyle(BorderStyle.NONE);

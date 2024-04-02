@@ -1,12 +1,14 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.BaseCellProperty;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.CellConfigProperty;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.CellBorder;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.CellFont;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.style.CellStyleProperty;
+import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.style.CellPropertyHolder;
+import org.apache.commons.beanutils.BeanUtils;
 
 /**
- *
+ * 单元格样式配置
  * @author 张智凯
  * @version 1.0
  * @data 2024/3/28 11:22
@@ -20,10 +22,7 @@ public interface AxolotlCellStyleConfig {
      * @param cell  样式配置
      * TODO 变量名
      */
-    default void globalStyleConfig(BaseCellProperty cell){}
-    default void globalStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
-        this.cloneStyleProperties(cell,cellStyle);
-    }
+    default void globalStyleConfig(CellConfigProperty cell){}
 
     /**
      * 配置程序常用样式
@@ -33,11 +32,7 @@ public interface AxolotlCellStyleConfig {
      * 程序常用样式配置优先级 此处配置 > 全局样式
      * @param cell  样式配置
      */
-    default void commonStyleConfig(BaseCellProperty cell){}
-
-    default void commonStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
-        this.cloneStyleProperties(cell,cellStyle);
-    }
+    default void commonStyleConfig(CellConfigProperty cell){}
 
     /**
      * 配置表头样式（此处为所有表头配置样式，配置单表头样式请在Header对象内配置）
@@ -45,11 +40,7 @@ public interface AxolotlCellStyleConfig {
      * 表头样式配置优先级   Header对象内配置 > 此处配置 > 全局样式
      * @param cell  样式配置
      */
-    default void headerStyleConfig(BaseCellProperty cell){}
-
-    default void headerStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
-        this.cloneStyleProperties(cell,cellStyle);
-    }
+    default void headerStyleConfig(CellConfigProperty cell){}
 
     /**
      * 配置标题样式（标题是一个整体，此处为整个标题配置样式）
@@ -57,12 +48,7 @@ public interface AxolotlCellStyleConfig {
      * 标题样式配置优先级  此处配置 > 全局样式
      * @param cell  样式配置
      */
-    default void titleStyleConfig(BaseCellProperty cell){}
-
-    default void titleStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
-        this.cloneStyleProperties(cell,cellStyle);
-    }
-
+    default void titleStyleConfig(CellConfigProperty cell){}
 
     /**
      * 配置内容样式
@@ -71,86 +57,104 @@ public interface AxolotlCellStyleConfig {
      * @param cell  样式配置
      * @param fieldInfo 单元格与内容信息
      */
-    default void dataStyleConfig(BaseCellProperty cell, AbstractStyleRender.FieldInfo fieldInfo){}
+    default void dataStyleConfig(CellConfigProperty cell, AbstractStyleRender.FieldInfo fieldInfo){}
 
     /**
      * 导入配置
-     * @param baseCellProperty 用户配置
-     * @param defaultCellStyle 主题配置
+     * @param cellConfigProperty 用户配置
+     * @param defaultCellProperty 默认主题配置
+     * @return 导入后的主题配置
      */
-    default void cloneStyleProperties(BaseCellProperty baseCellProperty, CellStyleProperty defaultCellStyle){
-        if(baseCellProperty.getRowHeight() != null){
-            defaultCellStyle.setRowHeight(baseCellProperty.getRowHeight());
+    default CellPropertyHolder cloneStyleProperties(CellConfigProperty cellConfigProperty, CellPropertyHolder defaultCellProperty){
+        CellPropertyHolder cellStyleProperty = copyConfigFromDefault(defaultCellProperty);
+        if(cellConfigProperty.getRowHeight() != null){
+            cellStyleProperty.setRowHeight(cellConfigProperty.getRowHeight());
         }
-        if(baseCellProperty.getColumnWidth() != null){
-            defaultCellStyle.setColumnWidth(baseCellProperty.getColumnWidth());
+        if(cellConfigProperty.getColumnWidth() != null){
+            cellStyleProperty.setColumnWidth(cellConfigProperty.getColumnWidth());
         }
-        if(baseCellProperty.getHorizontalAlignment() != null){
-            defaultCellStyle.setHorizontalAlignment(baseCellProperty.getHorizontalAlignment());
+        if(cellConfigProperty.getHorizontalAlignment() != null){
+            cellStyleProperty.setHorizontalAlignment(cellConfigProperty.getHorizontalAlignment());
         }
-        if(baseCellProperty.getVerticalAlignment() != null){
-            defaultCellStyle.setVerticalAlignment(baseCellProperty.getVerticalAlignment());
+        if(cellConfigProperty.getVerticalAlignment() != null){
+            cellStyleProperty.setVerticalAlignment(cellConfigProperty.getVerticalAlignment());
         }
-        if(baseCellProperty.getForegroundColor() != null){
-            defaultCellStyle.setForegroundColor(baseCellProperty.getForegroundColor());
+        if(cellConfigProperty.getForegroundColor() != null){
+            cellStyleProperty.setForegroundColor(cellConfigProperty.getForegroundColor());
         }
-        if(baseCellProperty.getFillPatternType() != null){
-            defaultCellStyle.setFillPatternType(baseCellProperty.getFillPatternType());
+        if(cellConfigProperty.getFillPatternType() != null){
+            cellStyleProperty.setFillPatternType(cellConfigProperty.getFillPatternType());
         }
-        CellBorder border = baseCellProperty.getBorder();
+        CellBorder border = cellConfigProperty.getBorder();
         if(border != null){
             if(border.getBaseBorderStyle() != null){
-                defaultCellStyle.setBaseBorderStyle(border.getBaseBorderStyle());
+                cellStyleProperty.setBaseBorderStyle(border.getBaseBorderStyle());
             }
             if(border.getBaseBorderColor() != null){
-                defaultCellStyle.setBaseBorderColor(border.getBaseBorderColor());
+                cellStyleProperty.setBaseBorderColor(border.getBaseBorderColor());
             }
             if(border.getBorderTopStyle() != null){
-                defaultCellStyle.setBorderTopStyle(border.getBorderTopStyle());
+                cellStyleProperty.setBorderTopStyle(border.getBorderTopStyle());
             }
             if(border.getTopBorderColor() != null){
-                defaultCellStyle.setTopBorderColor(border.getTopBorderColor());
+                cellStyleProperty.setTopBorderColor(border.getTopBorderColor());
             }
             if(border.getBorderBottomStyle() != null){
-                defaultCellStyle.setBorderBottomStyle(border.getBorderBottomStyle());
+                cellStyleProperty.setBorderBottomStyle(border.getBorderBottomStyle());
             }
             if(border.getBottomBorderColor() != null){
-                defaultCellStyle.setBottomBorderColor(border.getBottomBorderColor());
+                cellStyleProperty.setBottomBorderColor(border.getBottomBorderColor());
             }
             if(border.getBorderLeftStyle() != null){
-                defaultCellStyle.setBorderLeftStyle(border.getBorderLeftStyle());
+                cellStyleProperty.setBorderLeftStyle(border.getBorderLeftStyle());
             }
             if(border.getLeftBorderColor() != null){
-                defaultCellStyle.setLeftBorderColor(border.getLeftBorderColor());
+                cellStyleProperty.setLeftBorderColor(border.getLeftBorderColor());
             }
             if(border.getBorderRightStyle() != null){
-                defaultCellStyle.setBorderRightStyle(border.getBorderRightStyle());
+                cellStyleProperty.setBorderRightStyle(border.getBorderRightStyle());
             }
             if(border.getRightBorderColor() != null){
-                defaultCellStyle.setRightBorderColor(border.getRightBorderColor());
+                cellStyleProperty.setRightBorderColor(border.getRightBorderColor());
             }
         }
-        CellFont font = baseCellProperty.getFont();
+        CellFont font = cellConfigProperty.getFont();
         if(font != null){
             if(font.getBold() != null){
-                defaultCellStyle.setBold(font.getBold());
+                cellStyleProperty.setBold(font.getBold());
             }
             if(font.getFontName() != null){
-                defaultCellStyle.setFontName(font.getFontName());
+                cellStyleProperty.setFontName(font.getFontName());
             }
             if(font.getFontSize() != null){
-                defaultCellStyle.setFontSize(font.getFontSize());
+                cellStyleProperty.setFontSize(font.getFontSize());
             }
             if(font.getFontColor() != null){
-                defaultCellStyle.setFontColor(font.getFontColor());
+                cellStyleProperty.setFontColor(font.getFontColor());
             }
             if(font.getItalic() != null){
-                defaultCellStyle.setItalic(font.getItalic());
+                cellStyleProperty.setItalic(font.getItalic());
             }
             if(font.getStrikeout() != null){
-                defaultCellStyle.setStrikeout(font.getStrikeout());
+                cellStyleProperty.setStrikeout(font.getStrikeout());
             }
         }
+        return cellStyleProperty;
+    }
+
+    /**
+     * 根据默认配置复制生成一份新配置
+     * @param defaultCellProperty 默认配置
+     * @return 新配置
+     */
+    default CellPropertyHolder copyConfigFromDefault(CellPropertyHolder defaultCellProperty){
+        CellPropertyHolder cellProperty = new CellPropertyHolder();
+        try {
+            BeanUtils.copyProperties(cellProperty,defaultCellProperty);
+        } catch (Exception e) {
+            throw new AxolotlWriteException("主题配置加载失败:" + e.getMessage());
+        }
+        return cellProperty;
     }
 
 }

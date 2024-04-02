@@ -8,13 +8,13 @@ import org.apache.poi.ss.usermodel.*;
 import java.util.Objects;
 
 /**
- * 样式全局配置
+ * 单元格属性容器
  * @author 张智凯
  * @version 1.0
  * @data 2024/3/28 9:32
  */
 @Data
-public class CellStyleProperty {
+public class CellPropertyHolder {
 
     /**
      * 行高
@@ -130,8 +130,8 @@ public class CellStyleProperty {
      * 构建默认样式
      * @return 默认样式
      */
-    public static CellStyleProperty buildDefault(){
-        CellStyleProperty defaultStyle = new CellStyleProperty();
+    public static CellPropertyHolder buildDefault(){
+        CellPropertyHolder defaultStyle = new CellPropertyHolder();
 
         defaultStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
         defaultStyle.setVerticalAlignment(VerticalAlignment.CENTER);
@@ -155,7 +155,7 @@ public class CellStyleProperty {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CellStyleProperty style = (CellStyleProperty) o;
+        CellPropertyHolder style = (CellPropertyHolder) o;
         return Objects.equals(rowHeight, style.rowHeight) && Objects.equals(columnWidth, style.columnWidth) && horizontalAlignment == style.horizontalAlignment && verticalAlignment == style.verticalAlignment && Objects.equals(foregroundColor, style.foregroundColor) && fillPatternType == style.fillPatternType && baseBorderStyle == style.baseBorderStyle && baseBorderColor == style.baseBorderColor && borderTopStyle == style.borderTopStyle && topBorderColor == style.topBorderColor && borderBottomStyle == style.borderBottomStyle && bottomBorderColor == style.bottomBorderColor && borderLeftStyle == style.borderLeftStyle && leftBorderColor == style.leftBorderColor && borderRightStyle == style.borderRightStyle && rightBorderColor == style.rightBorderColor && Objects.equals(fontName, style.fontName) && Objects.equals(bold, style.bold) && Objects.equals(fontSize, style.fontSize) && fontColor == style.fontColor && Objects.equals(italic, style.italic) && Objects.equals(strikeout, style.strikeout);
     }
 

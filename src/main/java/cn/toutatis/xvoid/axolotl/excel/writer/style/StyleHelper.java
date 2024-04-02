@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.style.CellPropertyHolder;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
@@ -248,6 +249,46 @@ public class StyleHelper {
      */
     public static void setCellAsPlainText(CellStyle cellStyle){
         cellStyle.setDataFormat(DATA_FORMAT_PLAIN_TEXT_INDEX);
+    }
+
+    /**
+     * 根据样式属性设置单元格边框样式
+     * @param cellStyle 单元格样式
+     * @param cellProperty 单元格样式属性
+     */
+    public static void setBorderStyle(CellStyle cellStyle, CellPropertyHolder cellProperty){
+        BorderStyle borderTopStyle = cellProperty.getBorderTopStyle();
+        if(borderTopStyle != null){
+            cellStyle.setBorderTop(borderTopStyle);
+        }
+        IndexedColors topBorderColor = cellProperty.getTopBorderColor();
+        if(topBorderColor != null){
+            cellStyle.setTopBorderColor(topBorderColor.getIndex());
+        }
+        BorderStyle borderBottomStyle = cellProperty.getBorderBottomStyle();
+        if(borderBottomStyle != null){
+            cellStyle.setBorderBottom(borderBottomStyle);
+        }
+        IndexedColors bottomBorderColor = cellProperty.getBottomBorderColor();
+        if(bottomBorderColor != null){
+            cellStyle.setBottomBorderColor(bottomBorderColor.getIndex());
+        }
+        BorderStyle borderLeftStyle = cellProperty.getBorderLeftStyle();
+        if(borderLeftStyle != null){
+            cellStyle.setBorderLeft(borderLeftStyle);
+        }
+        IndexedColors leftBorderColor = cellProperty.getLeftBorderColor();
+        if(leftBorderColor != null){
+            cellStyle.setLeftBorderColor(leftBorderColor.getIndex());
+        }
+        BorderStyle borderRightStyle = cellProperty.getBorderRightStyle();
+        if(borderRightStyle != null){
+            cellStyle.setBorderRight(borderRightStyle);
+        }
+        IndexedColors rightBorderColor = cellProperty.getRightBorderColor();
+        if(rightBorderColor != null){
+            cellStyle.setRightBorderColor(rightBorderColor.getIndex());
+        }
     }
 
 }

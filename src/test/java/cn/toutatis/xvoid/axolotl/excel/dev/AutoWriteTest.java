@@ -281,7 +281,7 @@ public class AutoWriteTest {
     public void testAuto3() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
-        commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme());
+        commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme(new AxolotlDefaultStyleConfig()));
         //commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.$DEFAULT);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
