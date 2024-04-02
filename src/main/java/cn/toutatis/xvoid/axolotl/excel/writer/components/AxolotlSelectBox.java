@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * 下拉框支持
+ * TODO 校验等方法
  * @author Toutatis_Gc
  * @param <T> 选项泛型
  */

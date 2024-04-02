@@ -47,6 +47,9 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 public class AxolotlConfigurableTheme extends AbstractStyleRender implements ExcelStyleRender {
 
 
+    /**
+     * TODO 注释
+     */
     public final Short DEFAULT_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
 
     public final Short TITLE_ROW_HEIGHT = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
@@ -81,6 +84,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
     /**
      * 程序常用样式
+     * TODO 删掉
      */
     private CellStyleProperty commonCellStyle;
 
@@ -91,21 +95,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
     public AxolotlConfigurableTheme() {
         super(LOGGER);
-        this.axolotlCellStyleConfig = new AxolotlCellStyleConfig() {
-            @Override
-            public void globalStyleConfig(BaseCellProperty cell) {}
-            @Override
-            public void commonStyleConfig(BaseCellProperty cell) {}
-
-            @Override
-            public void headerStyleConfig(BaseCellProperty cell) {}
-
-            @Override
-            public void titleStyleConfig(BaseCellProperty cell) {}
-
-            @Override
-            public void dataStyleConfig(BaseCellProperty cell, FieldInfo fieldInfo) {}
-        };
+        this.axolotlCellStyleConfig = new AxolotlCellStyleConfig() {};
     }
 
     public AxolotlConfigurableTheme(AxolotlCellStyleConfig axolotlCellStyleConfig) {
@@ -114,6 +104,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     }
 
     public AxolotlConfigurableTheme(Class<? extends AxolotlCellStyleConfig> configurClass) {
+        // TODO null判断
         super(LOGGER);
         try {
             this.axolotlCellStyleConfig = configurClass.getDeclaredConstructor().newInstance();
@@ -136,10 +127,12 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             debug(LOGGER,"全局样式读取完毕");
 
             //读取系统列样式配置
+
             BaseCellProperty csc = new BaseCellProperty();
             axolotlCellStyleConfig.commonStyleConfig(csc);
             CellStyleProperty commonStyle = new CellStyleProperty();
             try {
+                // TODO 统一方法
                 BeanUtils.copyProperties(commonStyle, INIT_STYLE);
             } catch (Exception e) {throw new AxolotlWriteException("读取系统列样式配置失败");}
             axolotlCellStyleConfig.cloneStyleProperties(csc,commonStyle);
@@ -189,6 +182,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         debug(LOGGER,"表头样式读取完毕");
 
         //读取标题配置
+        // TODO 变量命名
         BaseCellProperty tsc = new BaseCellProperty();
         axolotlCellStyleConfig.titleStyleConfig(tsc);
         CellStyleProperty titleStyle = new CellStyleProperty();
@@ -285,6 +279,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 int columnNumber = columnMappingEmpty ? writtenColumn : columnMapping.get(fieldName);
                 FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
 
+                // TODO 统一
                 //获取内容样式
                 BaseCellProperty dsc = new BaseCellProperty();
                 axolotlCellStyleConfig.dataStyleConfig(dsc,new FieldInfo(fieldName, value, columnNumber,alreadyWriteRow));
@@ -424,6 +419,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             cell.setCellValue(writeConfig.getBlankValue());
         }else{
             if(returnsMany(fieldInfo.getClazz())){
+                // TODO 下拉框支持
                 List<String> list = null;
                 if(fieldInfo.getClazz().isArray()){
                     list = new ArrayList<Object>(Arrays.asList((Object[]) value)).stream().filter(Objects::nonNull)
@@ -448,6 +444,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     }
 
     /**
+     * TODO 删掉
      * 判断返回值类型是否是集合或者数组类型
      * @param returnType 类型
      * @return 是否是集合或者数组类型
@@ -461,6 +458,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     }
 
     /**
+     * TODO 用SelectBox
      * 创建下拉列表选项(单元格下拉框数据小于255字节时使用)
      *
      * @param sheet    所在Sheet页面
@@ -480,27 +478,6 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         sheet.addValidationData(dataValidation);
     }
 
-
-    /**
-     * 计算列合计
-     * @param fieldInfo 字段信息
-     */
-    public void calculateColumns(FieldInfo fieldInfo){
-        int columnIndex = fieldInfo.getColumnIndex();
-        String value = fieldInfo.getValue().toString();
-        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
-            Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(context.getSwitchSheetIndex());
-            if (endingTotalMapping.containsKey(columnIndex)){
-                BigDecimal newValue = endingTotalMapping.get(columnIndex).add(BigDecimal.valueOf(Double.parseDouble(value)));
-                endingTotalMapping.put(columnIndex,newValue);
-            }else{
-                endingTotalMapping.put(columnIndex,BigDecimal.valueOf(Double.parseDouble(value)));
-            }
-        }
-    }
-
-
-
     /**
      * 填充空白单元格
      * @param sheet 工作表
@@ -517,6 +494,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     }
 
     /**
+     * TODO 放到StyleHelper
      * 根据全局配置设置单元格边框样式
      * @param cellStyle 单元格样式
      * @param baseCellStyle 全局配置
@@ -787,6 +765,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
+                // TODO 放在CellStyleProperty里
                 CellStyleProperty headerStyle = new CellStyleProperty();
                 try {
                     BeanUtils.copyProperties(headerStyle,usedCellStyle);
@@ -845,6 +824,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     /**
      * 创建样式、从缓存中获取样式
      * @return 样式
+     * TODO 改为private
      */
     public CellStyle createCellStyle(CellStyleProperty cellStyle){
         CellStyleProperty styleProperty = new CellStyleProperty();

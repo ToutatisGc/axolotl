@@ -19,7 +19,7 @@ public interface AxolotlCellStyleConfig {
      * 全局样式配置优先级 AutoWriteConfig内样式有关配置 > 此处配置 > 预制样式
      * @param cell  样式配置
      */
-    void globalStyleConfig(BaseCellProperty cell);
+    default void globalStyleConfig(BaseCellProperty cell){}
     default void globalStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
         this.cloneStyleProperties(cell,cellStyle);
     }
@@ -32,7 +32,7 @@ public interface AxolotlCellStyleConfig {
      * 程序常用样式配置优先级 此处配置 > 全局样式
      * @param cell  样式配置
      */
-    void commonStyleConfig(BaseCellProperty cell);
+    default void commonStyleConfig(BaseCellProperty cell){}
 
     default void commonStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
         this.cloneStyleProperties(cell,cellStyle);
@@ -44,7 +44,7 @@ public interface AxolotlCellStyleConfig {
      * 表头样式配置优先级   Header对象内配置 > 此处配置 > 全局样式
      * @param cell  样式配置
      */
-    void headerStyleConfig(BaseCellProperty cell);
+    default void headerStyleConfig(BaseCellProperty cell){}
 
     default void headerStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
         this.cloneStyleProperties(cell,cellStyle);
@@ -56,7 +56,7 @@ public interface AxolotlCellStyleConfig {
      * 标题样式配置优先级  此处配置 > 全局样式
      * @param cell  样式配置
      */
-    void titleStyleConfig(BaseCellProperty cell);
+    default void titleStyleConfig(BaseCellProperty cell){}
 
     default void titleStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
         this.cloneStyleProperties(cell,cellStyle);
@@ -70,7 +70,7 @@ public interface AxolotlCellStyleConfig {
      * @param cell  样式配置
      * @param fieldInfo 单元格与内容信息
      */
-    void dataStyleConfig(BaseCellProperty cell, AbstractStyleRender.FieldInfo fieldInfo);
+    default void dataStyleConfig(BaseCellProperty cell, AbstractStyleRender.FieldInfo fieldInfo){}
 
     /**
      * 导入配置
