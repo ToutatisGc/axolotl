@@ -18,6 +18,7 @@ public interface AxolotlCellStyleConfig {
      * 渲染器初始化时调用 多次写入时，该方法只会被调用一次。
      * 全局样式配置优先级 AutoWriteConfig内样式有关配置 > 此处配置 > 预制样式
      * @param cell  样式配置
+     * TODO 变量名
      */
     default void globalStyleConfig(BaseCellProperty cell){}
     default void globalStyleConfig(BaseCellProperty cell, CellStyleProperty cellStyle){
