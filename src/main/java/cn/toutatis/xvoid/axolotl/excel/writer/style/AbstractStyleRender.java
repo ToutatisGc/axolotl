@@ -1,10 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
-import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.GlobalCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.*;
@@ -30,7 +28,6 @@ import org.slf4j.Logger;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
@@ -157,7 +154,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             sheet.setDefaultColumnStyle(i, defaultStyle);
             sheet.setDefaultColumnWidth(12);
         }
-        sheet.setDefaultRowHeight((short) 400);
+        sheet.setDefaultRowHeight(StyleHelper.STANDARD_ROW_HEIGHT);
     }
 
     /**
@@ -233,7 +230,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 CellStyle usedCellStyle = headerDefaultCellStyle;
                 usedCellStyle = getCellStyle(header, usedCellStyle);
                 Row row = ExcelToolkit.createOrCatchRow(sheet, alreadyWriteRow);
-                row.setHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
+                row.setHeight(StyleHelper.STANDARD_ROW_HEIGHT);
 
                 Cell cell = row.createCell(headerColumnCount, CellType.STRING);
                 String title = header.getName();
@@ -252,7 +249,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     headerRecursiveInfo.setStartColumn(headerColumnCount);
                     headerRecursiveInfo.setAlreadyWriteColumn(headerColumnCount);
                     headerRecursiveInfo.setCellStyle(headerDefaultCellStyle);
-                    headerRecursiveInfo.setRowHeight(StyleHelper.STANDARD_HEADER_ROW_HEIGHT);
+                    headerRecursiveInfo.setRowHeight(StyleHelper.STANDARD_ROW_HEIGHT);
                     recursionRenderHeaders(sheet,childs, headerRecursiveInfo);
                 }else{
                     cellAddresses = new CellRangeAddress(alreadyWriteRow, (alreadyWriteRow +headerMaxDepth)-1, headerColumnCount, headerColumnCount);
@@ -511,28 +508,28 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
         alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
         SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
+        dataRow.setHeight(StyleHelper.STANDARD_ROW_HEIGHT);
         int writtenColumn = START_POSITION;
-        int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex)+1;
-        // 写入序号
-        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
-            SXSSFCell cell = dataRow.createCell(writtenColumn);
-            cell.setCellValue(serialNumber);
-            cell.setCellStyle(rowStyle);
-            writtenColumnMap.put(writtenColumn++,1);
-        }
+        int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
         // 写入数据
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
         unmappedColumnCount =  new HashMap<>();
         columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
         boolean columnMappingEmpty = columnMapping.isEmpty();
-        boolean useOrderField = true;
+        // 写入序号
+        boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
+        if (autoInsertSerialNumber){
+            SXSSFCell cell = dataRow.createCell(writtenColumn);
+            cell.setCellValue(serialNumber);
+            cell.setCellStyle(rowStyle);
+            writtenColumnMap.put(columnMappingEmpty?writtenColumn++:0,1);
+        }
         for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
             String fieldName = dataEntry.getKey();
             SXSSFCell cell;
             if (columnMappingEmpty){
                 cell = dataRow.createCell(writtenColumn);
             }else{
-                useOrderField = false;
                 if (columnMapping.containsKey(fieldName)){
                     cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(fieldName),null);
                 }else {
@@ -544,12 +541,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }
             }
             Object value = dataEntry.getValue();
-            int columnNumber = useOrderField ? writtenColumn : columnMapping.get(fieldName);
+            int columnNumber = columnMappingEmpty ? writtenColumn : columnMapping.get(fieldName);
             FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
             this.renderColumn(fieldInfo,cell);
-            if (useOrderField){
+            if (columnMappingEmpty){
                 writtenColumnMap.put(writtenColumn++,1);
             }else{
                 writtenColumnMap.put(columnNumber,1);
@@ -557,8 +554,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
         // 将未使用的的单元格赋予空值
         for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {
+            if (autoInsertSerialNumber && alreadyColumnIdx == 0){
+                continue;
+            }
             SXSSFCell cell = null;
-            if (useOrderField){
+            if (columnMappingEmpty){
                 if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
                     cell = dataRow.createCell(alreadyColumnIdx);
                 }
@@ -646,6 +646,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 Font font = StyleHelper.createWorkBookFont(
                         workbook, globalFontName, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
                 );
+                font.setColor(workbook.getFontAt(cellStyle.getFontIndex()).getColor());
                 StyleHelper.setCellStyleAlignmentCenter(totalCellStyle);
                 totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
                 totalCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -764,6 +765,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public CellStyle createBlackMainTextCellStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor){
         return createStyle(borderStyle, borderColor, cellColor,
                 globalFontName, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.BLACK);
+    }
+
+    public CellStyle createWhiteMainTextCellStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor){
+        return createStyle(borderStyle, borderColor, cellColor,
+                globalFontName, StyleHelper.STANDARD_TEXT_FONT_SIZE, false, IndexedColors.WHITE);
     }
 
     public CellStyle createStyle(BorderStyle borderStyle, IndexedColors borderColor, AxolotlColor cellColor,Font font) {

@@ -38,8 +38,6 @@ public class StyleHelper {
      */
     public static final AxolotlColor STANDARD_THEME_COLOR = WHITE_COLOR;
 
-
-
     /**
      * 默认起始位置
      */
@@ -56,24 +54,25 @@ public class StyleHelper {
     public static final Short STANDARD_TITLE_ROW_HEIGHT = 600;
 
     /**
-     * 默认表头行高
+     * 默认行高
      */
-    public static final Short STANDARD_HEADER_ROW_HEIGHT = 350;
+    public static final Short STANDARD_ROW_HEIGHT = 400;
 
     /**
      * 默认文本字体大小
      */
     public static final Short STANDARD_TEXT_FONT_SIZE = 12;
-    /**
-     * 身份证号长度
-     */
-    public static final Integer SERIAL_NUMBER_LENGTH = 5120;
+
 
     /**
      * 默认文本格式化索引
      */
     public static final short DATA_FORMAT_PLAIN_TEXT_INDEX = 49;
 
+    /**
+     * 身份证号长度
+     */
+    public static final Integer SERIAL_NUMBER_LENGTH = 5120;
 
     static {
         PRESET_CELL_LENGTH_MAP.put("姓名",3500);

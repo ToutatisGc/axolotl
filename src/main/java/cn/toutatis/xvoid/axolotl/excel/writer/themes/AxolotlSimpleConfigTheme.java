@@ -76,11 +76,11 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
 
     private Short titleRowHeight = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
 
-    private Short headerRowHeight = StyleHelper.STANDARD_HEADER_ROW_HEIGHT;
+    private Short headerRowHeight = StyleHelper.STANDARD_ROW_HEIGHT;
 
-    private Short dataRowHeight = StyleHelper.STANDARD_HEADER_ROW_HEIGHT;
+    private Short dataRowHeight = StyleHelper.STANDARD_ROW_HEIGHT;
 
-    private Short commonRowHeight = StyleHelper.STANDARD_HEADER_ROW_HEIGHT;
+    private Short commonRowHeight = StyleHelper.STANDARD_ROW_HEIGHT;
 
     private Short columnWidth = (short) 12;
 
@@ -240,30 +240,26 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
             alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
             SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
             int writtenColumn = START_POSITION;
-            int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex)+1;
-            // 写入序号
-            if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
-                //写入序号只能设置列宽 行高继承内容
-                //设置列宽
-                sheet.setColumnWidth(writtenColumn,commonCellStyle.getColumnWidth());
-                SXSSFCell cell = dataRow.createCell(writtenColumn);
-                cell.setCellValue(serialNumber);
-                cell.setCellStyle(defaultCellStyle);
-                writtenColumnMap.put(writtenColumn++,1);
-            }
+            int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
             // 写入数据
             Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
             unmappedColumnCount =  new HashMap<>();
             columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
             boolean columnMappingEmpty = columnMapping.isEmpty();
-            boolean useOrderField = true;
+            // 写入序号
+            boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
+            if (autoInsertSerialNumber){
+                SXSSFCell cell = dataRow.createCell(writtenColumn);
+                cell.setCellValue(serialNumber);
+                cell.setCellStyle(defaultCellStyle);
+                writtenColumnMap.put(columnMappingEmpty?writtenColumn++:0,1);
+            }
             for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
                 String fieldName = dataEntry.getKey();
                 SXSSFCell cell;
                 if (columnMappingEmpty){
                     cell = dataRow.createCell(writtenColumn);
                 }else{
-                    useOrderField = false;
                     if (columnMapping.containsKey(fieldName)){
                         cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(fieldName),null);
                     }else {
@@ -275,7 +271,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                     }
                 }
                 Object value = dataEntry.getValue();
-                int columnNumber = useOrderField ? writtenColumn : columnMapping.get(fieldName);
+                int columnNumber = columnMappingEmpty ? writtenColumn : columnMapping.get(fieldName);
                 FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
 
                 //获取内容样式
@@ -305,7 +301,7 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
                 cell.setCellStyle(createCellStyle(dataStyle));
                 // 渲染数据到单元格
                 this.renderColumn(fieldInfo,cell);
-                if (useOrderField){
+                if (columnMappingEmpty){
                     writtenColumnMap.put(writtenColumn++,1);
                 }else{
                     writtenColumnMap.put(columnNumber,1);
@@ -313,8 +309,11 @@ public class AxolotlSimpleConfigTheme extends AbstractStyleRender implements Exc
             }
             // 将未使用的的单元格赋予空值
             for (int alreadyColumnIdx = 0; alreadyColumnIdx < context.getAlreadyWrittenColumns().get(switchSheetIndex); alreadyColumnIdx++) {
+                if (autoInsertSerialNumber && alreadyColumnIdx == 0){
+                    continue;
+                }
                 SXSSFCell cell = null;
-                if (useOrderField){
+                if (columnMappingEmpty){
                     if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
                         cell = dataRow.createCell(alreadyColumnIdx);
                     }
