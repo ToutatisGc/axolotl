@@ -1,5 +1,8 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.components;
+package cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellBorder;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellFont;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -53,12 +56,12 @@ public class CellConfigProperty {
     /**
      * 边框样式
      */
-    private CellBorder border;
+    private AxolotlCellBorder border;
 
     /**
      * 字体样式
      */
-    private CellFont font;
+    private AxolotlCellFont font;
 
 
 }

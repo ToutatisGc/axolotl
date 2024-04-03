@@ -20,9 +20,9 @@ import java.util.Map;
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
-public class SimpleBlackTheme extends AbstractStyleRender implements ExcelStyleRender {
+public class AxolotlSimpleBlackTheme extends AbstractStyleRender implements ExcelStyleRender {
 
-    private static final Logger LOGGER = LoggerToolkit.getLogger(SimpleBlackTheme.class);
+    private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlSimpleBlackTheme.class);
 
     private static final AxolotlColor THEME_COLOR_XSSF = new AxolotlColor(255,255,255);
 
@@ -30,7 +30,7 @@ public class SimpleBlackTheme extends AbstractStyleRender implements ExcelStyleR
 
     private Font MAIN_TEXT_FONT;
 
-    public SimpleBlackTheme() {
+    public AxolotlSimpleBlackTheme() {
         super(LOGGER);
     }
     @Override

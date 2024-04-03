@@ -1,8 +1,8 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.style;
+package cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.CellConfigProperty;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.CellBorder;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.CellFont;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellBorder;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellFont;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.style.CellPropertyHolder;
 import org.apache.commons.beanutils.BeanUtils;
@@ -13,7 +13,7 @@ import org.apache.commons.beanutils.BeanUtils;
  * @version 1.0
  * @data 2024/3/28 11:22
  */
-public interface AxolotlCellStyleConfig {
+public interface ConfigurableStyleConfig {
 
     /**
      * 配置全局样式
@@ -85,7 +85,7 @@ public interface AxolotlCellStyleConfig {
         if(cellConfigProperty.getFillPatternType() != null){
             cellStyleProperty.setFillPatternType(cellConfigProperty.getFillPatternType());
         }
-        CellBorder border = cellConfigProperty.getBorder();
+        AxolotlCellBorder border = cellConfigProperty.getBorder();
         if(border != null){
             if(border.getBaseBorderStyle() != null){
                 cellStyleProperty.setBaseBorderStyle(border.getBaseBorderStyle());
@@ -118,7 +118,7 @@ public interface AxolotlCellStyleConfig {
                 cellStyleProperty.setRightBorderColor(border.getRightBorderColor());
             }
         }
-        CellFont font = cellConfigProperty.getFont();
+        AxolotlCellFont font = cellConfigProperty.getFont();
         if(font != null){
             if(font.getBold() != null){
                 cellStyleProperty.setBold(font.getBold());

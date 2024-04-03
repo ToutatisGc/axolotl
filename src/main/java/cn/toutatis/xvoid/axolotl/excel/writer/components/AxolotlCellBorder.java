@@ -2,9 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
 import lombok.Data;
 import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.VerticalAlignment;
 
 /**
  * 单元格边框 配置
@@ -13,7 +11,7 @@ import org.apache.poi.ss.usermodel.VerticalAlignment;
  * @data 2024/3/29 0:47
  */
 @Data
-public class CellBorder {
+public class AxolotlCellBorder {
     /**
      * 边框默认样式
      */

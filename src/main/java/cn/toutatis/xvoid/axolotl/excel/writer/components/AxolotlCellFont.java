@@ -1,7 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
 import lombok.Data;
-import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
 
 /**
@@ -11,7 +10,7 @@ import org.apache.poi.ss.usermodel.IndexedColors;
  * @data 2024/3/29 0:47
  */
 @Data
-public class CellFont {
+public class AxolotlCellFont {
 
     /**
      * 字体名称
