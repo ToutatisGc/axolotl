@@ -1,17 +1,12 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.themes;
+package cn.toutatis.xvoid.axolotl.excel.writer.themes.standard;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
-import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
-
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -19,22 +14,19 @@ import java.util.Map;
 
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
-public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements ExcelStyleRender {
+public class AxolotlMidnightTheme extends AbstractStyleRender {
 
-    private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlIndustrialOrangeTheme.class);
-
-    private static final AxolotlColor THEME_COLOR = AxolotlColor.create(247,202,142);
+    private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlMidnightTheme.class);
 
     private static final String FONT_NAME = "Calibri";
-
-    public AxolotlIndustrialOrangeTheme() {
+    public AxolotlMidnightTheme() {
         super(LOGGER);
     }
 
     @Override
     public AxolotlWriteResult init(SXSSFSheet sheet) {
         if (isFirstBatch()){
-            this.checkedAndUseCustomTheme(FONT_NAME,THEME_COLOR);
+            this.checkedAndUseCustomTheme(FONT_NAME,null);
         }
         return super.init(sheet);
     }
@@ -45,15 +37,21 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
         AxolotlWriteResult writeTitle = createTitleRow(sheet);
 
         // 2.创建表头单元格样式
-        Font font = this.createFont(getGlobalFontName(), StyleHelper.STANDARD_TEXT_FONT_SIZE, true, IndexedColors.BLACK);
-        CellStyle headerDefaultCellStyle = this.createStyle(BorderStyle.MEDIUM, IndexedColors.BLACK, THEME_COLOR, font);
+        Font headerFont = createWhiteMainTextFont();
+        headerFont.setBold(true);
+        CellStyle headerDefaultCellStyle = this.createStyle(BorderStyle.THIN, IndexedColors.BLACK, AxolotlColor.create(34,44,71), headerFont);
+        headerDefaultCellStyle.setBorderTop(BorderStyle.NONE);
+        headerDefaultCellStyle.setBorderBottom(BorderStyle.NONE);
         headerDefaultCellStyle.setWrapText(true);
         // 3.渲染表头
         AxolotlWriteResult headerWriteResult = this.defaultRenderHeaders(sheet, headerDefaultCellStyle);
 
         // 4.合并表头
         if (writeTitle.isWrite()){
-            this.mergeTitleRegion(sheet,context.getAlreadyWrittenColumns().get(context.getSwitchSheetIndex()),headerDefaultCellStyle);
+            Font titleFont = createWhiteMainTextFont();
+            titleFont.setFontHeightInPoints(StyleHelper.STANDARD_TITLE_FONT_SIZE);
+            CellStyle titleStyle = createStyle(BorderStyle.NONE, IndexedColors.BLACK, AxolotlColor.create(53, 80, 125), titleFont);
+            this.mergeTitleRegion(sheet,context.getAlreadyWrittenColumns().get(context.getSwitchSheetIndex()),titleStyle);
         }
 
         return headerWriteResult;
@@ -61,7 +59,9 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
 
     @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
-        CellStyle dataStyle = this.createBlackMainTextCellStyle(BorderStyle.THIN, IndexedColors.BLACK, StyleHelper.WHITE_COLOR);
+        CellStyle dataStyle = this.createWhiteMainTextCellStyle(BorderStyle.NONE, IndexedColors.BLACK, AxolotlColor.create(39,56,86));
+        dataStyle.setBorderTop(BorderStyle.THIN);
+        dataStyle.setBorderBottom(BorderStyle.THIN);
         StyleHelper.setCellAsPlainText(dataStyle);
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
         if (!columnMapping.isEmpty()){
@@ -74,7 +74,13 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
     }
 
     @Override
-    public AxolotlWriteResult finish(SXSSFSheet sheet) {
-        return super.finish(sheet);
+    public void fillWhiteCell(Sheet sheet, String fontName) {
+        CellStyle defaultStyle = createWhiteMainTextCellStyle(BorderStyle.NONE, IndexedColors.WHITE, AxolotlColor.create(52, 64, 90));
+        // 将默认样式应用到所有单元格
+        for (int i = 0; i < 26; i++) {
+            sheet.setDefaultColumnStyle(i, defaultStyle);
+            sheet.setDefaultColumnWidth(12);
+        }
+        sheet.setDefaultRowHeight(StyleHelper.STANDARD_ROW_HEIGHT);
     }
 }
