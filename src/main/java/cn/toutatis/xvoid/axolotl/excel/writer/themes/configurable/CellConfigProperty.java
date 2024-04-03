@@ -9,7 +9,7 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 
 /**
- * 封装单元格配置属性
+ * 单元格配置属性
  * @author 张智凯
  * @version 1.0
  * @data 2024/3/29 0:49

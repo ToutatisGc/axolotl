@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 /**
  * 下拉框支持
- * TODO 校验等方法
  * @author Toutatis_Gc
  * @param <T> 选项泛型
  */
@@ -45,7 +44,7 @@ public class AxolotlSelectBox<T> {
         }
 
         AxolotlSelectBox<String> selectBox = new AxolotlSelectBox<>(value, options);
-        if(!selectBox.getOptions().contains(value)){
+        if((!selectBox.getOptions().isEmpty()) && (!selectBox.getOptions().contains(value))){
             selectBox.setValue(null);
         }
         return selectBox;

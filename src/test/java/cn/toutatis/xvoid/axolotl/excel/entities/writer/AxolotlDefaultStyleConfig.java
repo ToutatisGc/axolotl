@@ -3,12 +3,15 @@ package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellBorder;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellFont;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.CellConfigProperty;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.ConfigurableStyleConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.IndexedColors;
+
+import java.util.Map;
 
 /**
  * @author 张智凯
@@ -28,7 +31,8 @@ public class AxolotlDefaultStyleConfig implements ConfigurableStyleConfig {
     }
 
     @Override
-    public void commonStyleConfig(CellConfigProperty cell) {
+    public void commonStyleConfig(Map<ExcelWritePolicy,CellConfigProperty> cell) {
+        CellConfigProperty cellConfigProperty = new CellConfigProperty();
         AxolotlCellBorder axolotlCellBorder = new AxolotlCellBorder();
         axolotlCellBorder.setBaseBorderStyle(BorderStyle.NONE);
 
@@ -37,9 +41,26 @@ public class AxolotlDefaultStyleConfig implements ConfigurableStyleConfig {
         axolotlCellBorder.setBottomBorderColor(IndexedColors.BLACK);
         axolotlCellBorder.setBorderBottomStyle(BorderStyle.THIN);
 
-        axolotlCellBorder.setLeftBorderColor(IndexedColors.BLACK);
-        axolotlCellBorder.setBorderLeftStyle(BorderStyle.MEDIUM);
-        cell.setBorder(axolotlCellBorder);
+        cellConfigProperty.setBorder(axolotlCellBorder);
+        cellConfigProperty.setForegroundColor(new AxolotlColor(255,47,47));
+        cell.put(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,cellConfigProperty);
+
+
+        CellConfigProperty cellConfigProperty1 = new CellConfigProperty();
+        AxolotlCellBorder axolotlCellBorder1 = new AxolotlCellBorder();
+        axolotlCellBorder1.setBaseBorderStyle(BorderStyle.NONE);
+
+        axolotlCellBorder1.setTopBorderColor(IndexedColors.BLACK);
+        axolotlCellBorder1.setBorderTopStyle(BorderStyle.THIN);
+        axolotlCellBorder1.setBottomBorderColor(IndexedColors.BLACK);
+        axolotlCellBorder1.setBorderBottomStyle(BorderStyle.THIN);
+
+        axolotlCellBorder1.setLeftBorderColor(IndexedColors.BLACK);
+        axolotlCellBorder1.setBorderLeftStyle(BorderStyle.MEDIUM);
+
+        cellConfigProperty1.setBorder(axolotlCellBorder1);
+        cellConfigProperty1.setForegroundColor(new AxolotlColor(28,250,154));
+        cell.put(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,cellConfigProperty1);
     }
 
     @Override

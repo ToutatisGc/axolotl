@@ -3,6 +3,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.style;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlSelectBox;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
@@ -548,7 +549,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
-            this.renderColumn(fieldInfo,cell);
+            this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
             if (columnMappingEmpty){
                 writtenColumnMap.put(writtenColumn++,1);
             }else{
@@ -582,19 +583,45 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
 
     /**
      * 渲染列数据
+     * @param sheet 工作表
      * @param fieldInfo 字段信息
      * @param cell 单元格
+     * @param unmappedColumnCount 未使用的的单元格 列索引
      */
-    public void renderColumn(FieldInfo fieldInfo,Cell cell){
+    public void renderColumn(SXSSFSheet sheet,FieldInfo fieldInfo,Cell cell,Map<Integer, Integer> unmappedColumnCount){
         Object value = fieldInfo.getValue();
         if (value == null){
             cell.setCellValue(writeConfig.getBlankValue());
         }else{
-            calculateColumns(fieldInfo);
-            value = writeConfig.getDataInverter().convert(value);
-            int columnIndex = fieldInfo.getColumnIndex();
-            cell.setCellValue(value.toString());
-            unmappedColumnCount.remove(columnIndex);
+            if(fieldInfo.getClazz() == AxolotlSelectBox.class){
+                AxolotlSelectBox<String> selectBox = ((AxolotlSelectBox<?>) value).convertPropertiesToString(writeConfig.getDataInverter());
+                List<String> options = selectBox.getOptions();
+                if(!options.isEmpty()){
+                    ExcelToolkit.createDropDownList(
+                            sheet,
+                            selectBox.getOptions().toArray(new String[options.size()]),
+                            fieldInfo.getRowIndex(),
+                            fieldInfo.getRowIndex(),
+                            fieldInfo.getColumnIndex(),
+                            fieldInfo.getColumnIndex());
+                }
+                String defaultVal = selectBox.getValue();
+                if(defaultVal == null){
+                    defaultVal = writeConfig.getBlankValue();
+                }
+                fieldInfo = new FieldInfo(fieldInfo.getFieldName(),defaultVal,fieldInfo.getColumnIndex(),fieldInfo.getRowIndex());
+                fieldInfo.setClazz(String.class);
+                calculateColumns(fieldInfo);
+                int columnIndex = fieldInfo.getColumnIndex();
+                cell.setCellValue(defaultVal);
+                unmappedColumnCount.remove(columnIndex);
+            }else{
+                calculateColumns(fieldInfo);
+                value = writeConfig.getDataInverter().convert(value);
+                int columnIndex = fieldInfo.getColumnIndex();
+                cell.setCellValue(value.toString());
+                unmappedColumnCount.remove(columnIndex);
+            }
         }
     }
 

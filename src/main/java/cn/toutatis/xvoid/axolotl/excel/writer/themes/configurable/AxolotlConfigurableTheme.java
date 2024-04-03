@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
+import static cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
@@ -42,31 +43,25 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
  */
 public class AxolotlConfigurableTheme extends AbstractStyleRender implements ExcelStyleRender {
 
-
-    /**
-     * 全局默认行高
-     */
-    public final Short DEFAULT_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
-
     /**
      * 标题默认行高
      */
-    public final Short TITLE_ROW_HEIGHT = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
+    public static final Short TITLE_ROW_HEIGHT = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
 
     /**
      * 表头默认行高
      */
-    public final Short HEADER_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
+    public static final Short HEADER_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
 
     /**
      * 内容默认行高
      */
-    public final Short DATA_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
+    public static final Short DATA_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
 
     /**
      * 默认列宽
      */
-    public final Short DEFAULT_COLUMN_WIDTH = (short) 12;
+    public static final Short DEFAULT_COLUMN_WIDTH = (short) 12;
 
     /**
      * 日志
@@ -95,9 +90,8 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
     /**
      * 程序写入单元格属性
-     * TODO 删掉
      */
-    private CellPropertyHolder commonCellPropHolder;
+    private Map<ExcelWritePolicy,CellPropertyHolder> commonCellPropHolder;
 
     /**
      * 样式配置类
@@ -140,17 +134,9 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             }
             debug(LOGGER,"全局样式读取完毕");
 
-            //读取系统列样式配置
-            CellConfigProperty commonConfig = new CellConfigProperty();
-            configurableStyleConfig.commonStyleConfig(commonConfig);
-            commonCellPropHolder = configurableStyleConfig.cloneStyleProperties(commonConfig,globalCellPropHolder);
-            if(commonCellPropHolder.getRowHeight() == null){
-                commonCellPropHolder.setRowHeight(DEFAULT_ROW_HEIGHT);
-            }
-            if(commonCellPropHolder.getColumnWidth() == null){
-                commonCellPropHolder.setColumnWidth(DEFAULT_COLUMN_WIDTH);
-            }
-            debug(LOGGER,"程序常用列样式读取完毕");
+            //程序写入单元格样式配置
+            commonCellPropHolder = configurableStyleConfig.loadCommonConfigFromDefault(globalCellPropHolder);
+            debug(LOGGER,"程序写入单元格样式读取完毕");
 
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
             String sheetName = writeConfig.getSheetName();
@@ -213,7 +199,8 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
         //创建系统列单元格样式 用于序号与空值填充
-        XSSFCellStyle commonCellStyle = (XSSFCellStyle) createCellStyle(commonCellPropHolder);
+        CellPropertyHolder cellProperty = commonCellPropHolder.get(AUTO_INSERT_SERIAL_NUMBER);
+     //   XSSFCellStyle commonCellStyle = (XSSFCellStyle) createCellStyle(commonCellPropHolder);
         for (Object datum : data) {
             // 获取对象属性
             HashMap<String, Object> dataMap = new LinkedHashMap<>();
@@ -247,11 +234,18 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
             boolean columnMappingEmpty = columnMapping.isEmpty();
             // 写入序号
-            boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
+            int serialNumberColumnNumber = -1;
+            boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER);
             if (autoInsertSerialNumber){
                 SXSSFCell cell = dataRow.createCell(writtenColumn);
                 cell.setCellValue(serialNumber);
-                cell.setCellStyle(commonCellStyle);
+                if(cellProperty != null){
+                    //设置行高 执行顺序为1 优先级较低
+                    dataRow.setHeight(cellProperty.getRowHeight());
+                    cell.setCellStyle(createCellStyle(cellProperty));
+                }else{
+                    serialNumberColumnNumber = writtenColumn;
+                }
                 writtenColumnMap.put(columnMappingEmpty?writtenColumn++:0,1);
             }
             for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
@@ -278,7 +272,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(fieldName, value, columnNumber, alreadyWriteRow));
                 CellPropertyHolder dataCellPropHolder = configurableStyleConfig.cloneStyleProperties(dataConfig, globalCellPropHolder);
                 if(dataCellPropHolder.getRowHeight() == null){
-                    dataCellPropHolder.setRowHeight(this.DATA_ROW_HEIGHT);
+                    dataCellPropHolder.setRowHeight(DATA_ROW_HEIGHT);
                 }
                 List<Header> headers = context.getHeaders().get(switchSheetIndex);
                 if(dataCellPropHolder.getColumnWidth() == null && (headers == null || headers.isEmpty())){
@@ -296,11 +290,21 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 cell.setCellStyle(createCellStyle(dataCellPropHolder));
                 FieldInfo fieldInfo = new FieldInfo(fieldName, value, columnNumber ,alreadyWriteRow);
                 // 渲染数据到单元格
-                this.renderColumn(fieldInfo,cell,sheet);
+                this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
                 if (columnMappingEmpty){
                     writtenColumnMap.put(writtenColumn++,1);
                 }else{
                     writtenColumnMap.put(columnNumber,1);
+                }
+            }
+            if(serialNumberColumnNumber != -1){
+                if(!dataMap.isEmpty()){
+                    //取编号后第一个单元格的样式
+                    CellStyle cellStyle = dataRow.getCell(serialNumberColumnNumber+1).getCellStyle();
+                    dataRow.getCell(serialNumberColumnNumber).setCellStyle(cellStyle);
+                }else{
+                    //编号后第一个单元格没有数据 取全局样式
+                    dataRow.getCell(serialNumberColumnNumber).setCellStyle(createCellStyle(globalCellPropHolder));
                 }
             }
             // 将未使用的的单元格赋予空值
@@ -323,7 +327,11 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 }
                 if (cell != null){
                     cell.setCellValue(writeConfig.getBlankValue());
-                    cell.setCellStyle(commonCellStyle);
+                    if(cellProperty != null){
+                        cell.setCellStyle(createCellStyle(cellProperty));
+                    }else{
+                        cell.setCellStyle(createCellStyle(globalCellPropHolder));
+                    }
                     //空值填充不设置行高列宽
                 }
             }
@@ -337,21 +345,27 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     @Override
     public AxolotlWriteResult finish(SXSSFSheet sheet) {
         debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
+        CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING);
         int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(context.getSwitchSheetIndex());
         // 创建结尾合计行
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
             Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(context.getSwitchSheetIndex());
             debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
             SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
-            row.setHeight(commonCellPropHolder.getRowHeight());
+            if(cellProperty == null){
+                //未配置 取上一行行高
+                row.setHeight(sheet.getRow(sheet.getLastRowNum() - 1).getHeight());
+            }else{
+                row.setHeight(cellProperty.getRowHeight());
+            }
             DataInverter<?> dataInverter = writeConfig.getDataInverter();
             HashSet<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes();
             for (int i = 0; i < alreadyWrittenColumns; i++) {
                 SXSSFCell cell = row.createCell(i);
                 String cellValue = writeConfig.getBlankValue();
-                if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
+                if (i == 0 && writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER)){
                     cellValue = "合计";
-                    sheet.setColumnWidth(i, commonCellPropHolder.getColumnWidth());
+                   // sheet.setColumnWidth(i, commonCellPropHolder.getColumnWidth());
                 }
                 if (endingTotalMapping.containsKey(i)){
                     if (calculateColumnIndexes.contains(i) || (calculateColumnIndexes.size() == 1 && calculateColumnIndexes.contains(-1))){
@@ -361,25 +375,31 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                     }
                 }
                 cell.setCellValue(cellValue);
-                //合计部分样式继承上一行
-                CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
-                SXSSFWorkbook workbook = sheet.getWorkbook();
-                CellStyle totalCellStyle = workbook.createCellStyle();
-                StyleHelper.setCellStyleAlignment(totalCellStyle,cellStyle.getAlignment(),cellStyle.getVerticalAlignment());
-                totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
-                totalCellStyle.setFillPattern(cellStyle.getFillPattern());
-                totalCellStyle.setFont(workbook.getFontAt(cellStyle.getFontIndex()));
 
-                totalCellStyle.setBorderBottom(cellStyle.getBorderBottom());
-                totalCellStyle.setBorderLeft(cellStyle.getBorderLeft());
-                totalCellStyle.setBorderRight(cellStyle.getBorderRight());
-                totalCellStyle.setBorderTop(cellStyle.getBorderTop());
-                totalCellStyle.setLeftBorderColor(cellStyle.getLeftBorderColor());
-                totalCellStyle.setRightBorderColor(cellStyle.getRightBorderColor());
-                totalCellStyle.setTopBorderColor(cellStyle.getTopBorderColor());
-                totalCellStyle.setBottomBorderColor(cellStyle.getBottomBorderColor());
-                totalCellStyle.setDataFormat(StyleHelper.DATA_FORMAT_PLAIN_TEXT_INDEX);
-                cell.setCellStyle(totalCellStyle);
+                if(cellProperty == null){
+                    //未配置 合计部分样式继承上一行
+                    CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
+                    SXSSFWorkbook workbook = sheet.getWorkbook();
+                    CellStyle totalCellStyle = workbook.createCellStyle();
+                    StyleHelper.setCellStyleAlignment(totalCellStyle,cellStyle.getAlignment(),cellStyle.getVerticalAlignment());
+                    totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
+                    totalCellStyle.setFillPattern(cellStyle.getFillPattern());
+                    totalCellStyle.setFont(workbook.getFontAt(cellStyle.getFontIndex()));
+
+                    totalCellStyle.setBorderBottom(cellStyle.getBorderBottom());
+                    totalCellStyle.setBorderLeft(cellStyle.getBorderLeft());
+                    totalCellStyle.setBorderRight(cellStyle.getBorderRight());
+                    totalCellStyle.setBorderTop(cellStyle.getBorderTop());
+                    totalCellStyle.setLeftBorderColor(cellStyle.getLeftBorderColor());
+                    totalCellStyle.setRightBorderColor(cellStyle.getRightBorderColor());
+                    totalCellStyle.setTopBorderColor(cellStyle.getTopBorderColor());
+                    totalCellStyle.setBottomBorderColor(cellStyle.getBottomBorderColor());
+                    totalCellStyle.setDataFormat(StyleHelper.DATA_FORMAT_PLAIN_TEXT_INDEX);
+                    cell.setCellStyle(totalCellStyle);
+                }else{
+                    cell.setCellStyle(createCellStyle(cellProperty));
+                }
+
             }
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
@@ -397,49 +417,6 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }
         return new AxolotlWriteResult(true, "完成结束阶段");
     }
-
-    /**
-     * 渲染列数据
-     * @param fieldInfo 字段信息
-     * @param cell 单元格
-     */
-    private void renderColumn(FieldInfo fieldInfo,Cell cell,SXSSFSheet sheet){
-        Object value = fieldInfo.getValue();
-        if (value == null){
-            cell.setCellValue(writeConfig.getBlankValue());
-        }else{
-            if(fieldInfo.getClazz() == AxolotlSelectBox.class){
-                AxolotlSelectBox<String> selectBox = ((AxolotlSelectBox<?>) value).convertPropertiesToString(writeConfig.getDataInverter());
-                List<String> options = selectBox.getOptions();
-                if(!options.isEmpty()){
-                    ExcelToolkit.createDropDownList(
-                            sheet,
-                            selectBox.getOptions().toArray(new String[options.size()]),
-                            fieldInfo.getRowIndex(),
-                            fieldInfo.getRowIndex(),
-                            fieldInfo.getColumnIndex(),
-                            fieldInfo.getColumnIndex());
-                }
-                String defaultVal = selectBox.getValue();
-                if(defaultVal == null){
-                    defaultVal = writeConfig.getBlankValue();
-                }
-                fieldInfo = new FieldInfo(fieldInfo.getFieldName(),defaultVal,fieldInfo.getColumnIndex(),fieldInfo.getRowIndex());
-                fieldInfo.setClazz(String.class);
-                calculateColumns(fieldInfo);
-                int columnIndex = fieldInfo.getColumnIndex();
-                cell.setCellValue(defaultVal);
-                unmappedColumnCount.remove(columnIndex);
-            }else{
-                calculateColumns(fieldInfo);
-                value = writeConfig.getDataInverter().convert(value);
-                int columnIndex = fieldInfo.getColumnIndex();
-                cell.setCellValue(value.toString());
-                unmappedColumnCount.remove(columnIndex);
-            }
-        }
-    }
-
 
 
     /**
@@ -497,9 +474,19 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         int alreadyWriteRow = context.getAlreadyWriteRow().getOrDefault(context.getSwitchSheetIndex(),-1);
         if (headers != null && !headers.isEmpty()){
             List<Header> cacheHeaders;
-            if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
+            if (writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER)){
+                CellPropertyHolder cellProperty = commonCellPropHolder.get(AUTO_INSERT_SERIAL_NUMBER);
                 cacheHeaders = new ArrayList<>();
-                cacheHeaders.add(new Header("序号"));
+                if(cellProperty == null){
+                    //未配置 走表头默认样式
+                    cacheHeaders.add(new Header("序号"));
+                }else{
+                    //配置 走程序写入单元格的列宽
+                    Header header = new Header("序号");
+                    header.setCustomCellStyle(createCellStyle(cellProperty));
+                    header.setColumnWidth(cellProperty.getColumnWidth());
+                    cacheHeaders.add(header);
+                }
                 cacheHeaders.addAll(headers);
             }else{
                 cacheHeaders = headers;
