@@ -47,18 +47,33 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
 
     /**
-     * TODO 注释
+     * 全局默认行高
      */
     public final Short DEFAULT_ROW_HEIGHT = StyleHelper.STANDARD_ROW_HEIGHT;
 
+    /**
+     * 标题默认行高
+     */
     public final Short TITLE_ROW_HEIGHT = StyleHelper.STANDARD_TITLE_ROW_HEIGHT;
 
+    /**
+     * 表头默认行高
+     */
     public final Short HEADER_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
 
+    /**
+     * 内容默认行高
+     */
     public final Short DATA_ROW_HEIGHT = DEFAULT_ROW_HEIGHT;
 
+    /**
+     * 默认列宽
+     */
     public final Short DEFAULT_COLUMN_WIDTH = (short) 12;
 
+    /**
+     * 日志
+     */
     private static final Logger LOGGER = LoggerToolkit.getLogger(AxolotlConfigurableTheme.class);
 
     /**
@@ -396,20 +411,27 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         if (value == null){
             cell.setCellValue(writeConfig.getBlankValue());
         }else{
-            if(returnsMany(fieldInfo.getClazz())){
-                // TODO 下拉框支持
-                List<String> list = null;
-                if(fieldInfo.getClazz().isArray()){
-                    list = new ArrayList<Object>(Arrays.asList((Object[]) value)).stream().filter(Objects::nonNull)
-                            .map(Object::toString) // 将每个对象转换为字符串
-                            .collect(Collectors.toList());
-                }else{
-                    list = ((List<Object>) value).stream().filter(Objects::nonNull)
-                            .map(Object::toString) // 将每个对象转换为字符串
-                            .collect(Collectors.toList());
+            if(fieldInfo.getClazz() == AxolotlSelectBox.class){
+                AxolotlSelectBox<String> selectBox = ((AxolotlSelectBox<?>) value).convertPropertiesToString(writeConfig.getDataInverter());
+                List<String> options = selectBox.getOptions();
+                if(!options.isEmpty()){
+                    ExcelToolkit.createDropDownList(
+                            sheet,
+                            selectBox.getOptions().toArray(new String[options.size()]),
+                            fieldInfo.getRowIndex(),
+                            fieldInfo.getRowIndex(),
+                            fieldInfo.getColumnIndex(),
+                            fieldInfo.getColumnIndex());
                 }
-                createDropDownList(sheet,list.toArray(new String[list.size()]),fieldInfo.getRowIndex(),fieldInfo.getRowIndex(),fieldInfo.getColumnIndex(),fieldInfo.getColumnIndex());
+                String defaultVal = selectBox.getValue();
+                if(defaultVal == null){
+                    defaultVal = writeConfig.getBlankValue();
+                }
+                fieldInfo = new FieldInfo(fieldInfo.getFieldName(),defaultVal,fieldInfo.getColumnIndex(),fieldInfo.getRowIndex());
+                fieldInfo.setClazz(String.class);
+                calculateColumns(fieldInfo);
                 int columnIndex = fieldInfo.getColumnIndex();
+                cell.setCellValue(defaultVal);
                 unmappedColumnCount.remove(columnIndex);
             }else{
                 calculateColumns(fieldInfo);
@@ -421,40 +443,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }
     }
 
-    /**
-     * TODO 删掉
-     * 判断返回值类型是否是集合或者数组类型
-     * @param returnType 类型
-     * @return 是否是集合或者数组类型
-     */
-    public boolean returnsMany(Class<?> returnType) {
-        //判断返回类型是否是集合类型
-        boolean isCollection = Collection.class.isAssignableFrom(returnType);
-        //判断返回类型是否是数组类型
-        boolean isArray = returnType.isArray();
-        return isCollection || isArray;
-    }
 
-    /**
-     * TODO 用SelectBox
-     * 创建下拉列表选项(单元格下拉框数据小于255字节时使用)
-     *
-     * @param sheet    所在Sheet页面
-     * @param values   下拉框的选项值
-     * @param firstRow 起始行（从0开始）
-     * @param lastRow  终止行（从0开始）
-     * @param firstCol 起始列（从0开始）
-     * @param lastCol  终止列（从0开始）
-     */
-    private void createDropDownList(Sheet sheet, String[] values, int firstRow, int lastRow, int firstCol, int lastCol) {
-        DataValidationHelper helper = sheet.getDataValidationHelper();
-        CellRangeAddressList addressList = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
-        DataValidationConstraint constraint = helper.createExplicitListConstraint(values);
-        DataValidation dataValidation = helper.createValidation(constraint, addressList);
-        dataValidation.setSuppressDropDownArrow(true);
-        dataValidation.setShowErrorBox(true);
-        sheet.addValidationData(dataValidation);
-    }
 
     /**
      * 填充空白单元格

@@ -10,6 +10,7 @@ import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
@@ -256,6 +257,26 @@ public class ExcelToolkit {
             }
         }
         return headerList;
+    }
+
+    /**
+     * 创建下拉列表选项(单元格下拉框数据小于255字节时使用)
+     *
+     * @param sheet    所在Sheet页面
+     * @param values   下拉框的选项值
+     * @param firstRow 起始行（从0开始）
+     * @param lastRow  终止行（从0开始）
+     * @param firstCol 起始列（从0开始）
+     * @param lastCol  终止列（从0开始）
+     */
+    public static void createDropDownList(Sheet sheet, String[] values, int firstRow, int lastRow, int firstCol, int lastCol) {
+        DataValidationHelper helper = sheet.getDataValidationHelper();
+        CellRangeAddressList addressList = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
+        DataValidationConstraint constraint = helper.createExplicitListConstraint(values);
+        DataValidation dataValidation = helper.createValidation(constraint, addressList);
+        dataValidation.setSuppressDropDownArrow(true);
+        dataValidation.setShowErrorBox(true);
+        sheet.addValidationData(dataValidation);
     }
 
 }

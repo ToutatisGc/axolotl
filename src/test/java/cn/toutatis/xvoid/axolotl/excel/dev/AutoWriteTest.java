@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -299,12 +300,8 @@ public class AutoWriteTest {
         headers.add(new Header("通道","six"));
 
         ArrayList<JSONObject> data = new ArrayList<>();
-        ArrayList<Object> objects = new ArrayList<>();
-        objects.add(1);
-        objects.add(2);
-        objects.add(3);
-        String[] objects1 = {"1","2","4","5"};
-        AxolotlSelectBox<String> stringAxolotlSelectBox = new AxolotlSelectBox<>("阶段1", List.of("阶段1", "阶段2", "阶段3"));
+        AxolotlSelectBox<String> stringAxolotlSelectBox = new AxolotlSelectBox<>("阶段5", null);
+     //   AxolotlSelectBox<LocalDate> stringAxolotlSelectBox = new AxolotlSelectBox<>(LocalDate.now(), List.of(LocalDate.now()));
         for (int i = 0; i < 50; i++) {
             JSONObject map = new JSONObject(true);
 //            HashMap<String, String> map = new HashMap<>();
