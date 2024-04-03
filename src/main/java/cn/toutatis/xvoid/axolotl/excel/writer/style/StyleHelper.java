@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.style.CellPropertyHolder;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.CellPropertyHolder;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
