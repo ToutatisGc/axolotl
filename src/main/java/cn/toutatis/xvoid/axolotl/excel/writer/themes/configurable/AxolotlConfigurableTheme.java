@@ -15,6 +15,7 @@ import cn.toutatis.xvoid.toolkit.validator.Validator;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFCell;
@@ -126,7 +127,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         if(isFirstBatch()){
             CellConfigProperty globalConfig = new CellConfigProperty();
             configurableStyleConfig.globalStyleConfig(globalConfig);
-            globalCellPropHolder = configurableStyleConfig.cloneStyleProperties(globalConfig,globalCellPropHolder);
+            globalCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(globalConfig,globalCellPropHolder);
             String fontName = writeConfig.getFontName();
             if (fontName != null){
                 debug(LOGGER, "使用自定义字体：%s",fontName);
@@ -135,7 +136,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             debug(LOGGER,"全局样式读取完毕");
 
             //程序写入单元格样式配置
-            commonCellPropHolder = configurableStyleConfig.loadCommonConfigFromDefault(globalCellPropHolder);
+            commonCellPropHolder = ConfigurableStyleConfig.loadCommonConfigFromDefault(globalCellPropHolder,configurableStyleConfig);
             debug(LOGGER,"程序写入单元格样式读取完毕");
 
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
@@ -162,7 +163,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         //读取表头配置
         CellConfigProperty headerConfig = new CellConfigProperty();
         configurableStyleConfig.headerStyleConfig(headerConfig);
-        headerCellPropHolder = configurableStyleConfig.cloneStyleProperties(headerConfig,globalCellPropHolder);
+        headerCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(headerConfig,globalCellPropHolder);
         if(headerCellPropHolder.getRowHeight() == null){
             headerCellPropHolder.setRowHeight(HEADER_ROW_HEIGHT);
         }
@@ -171,7 +172,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         //读取标题配置
         CellConfigProperty titleConfig = new CellConfigProperty();
         configurableStyleConfig.titleStyleConfig(titleConfig);
-        titleCellPropHolder = configurableStyleConfig.cloneStyleProperties(titleConfig,globalCellPropHolder);
+        titleCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(titleConfig,globalCellPropHolder);
         if(titleCellPropHolder.getRowHeight() == null){
             titleCellPropHolder.setRowHeight(TITLE_ROW_HEIGHT);
         }
@@ -270,7 +271,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 //读取内容样式配置
                 CellConfigProperty dataConfig = new CellConfigProperty();
                 configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(fieldName, value, columnNumber, alreadyWriteRow));
-                CellPropertyHolder dataCellPropHolder = configurableStyleConfig.cloneStyleProperties(dataConfig, globalCellPropHolder);
+                CellPropertyHolder dataCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(dataConfig, globalCellPropHolder);
                 if(dataCellPropHolder.getRowHeight() == null){
                     dataCellPropHolder.setRowHeight(DATA_ROW_HEIGHT);
                 }
@@ -414,6 +415,18 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         for (Map.Entry<Integer, Integer> heightEntry : specialRowHeightMapping.entrySet()) {
             debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
             sheet.getRow(heightEntry.getKey()).setHeightInPoints(heightEntry.getValue());
+        }
+        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS)){
+            warn(LOGGER,"即将隐藏空白列，增加导出耗时");
+            int maxColumnIndex = -1;
+            for (Row cells : sheet) {
+                maxColumnIndex = Math.max(cells.getLastCellNum(),maxColumnIndex);
+            }
+            if (maxColumnIndex > -1){
+                for (int i = maxColumnIndex; i < SpreadsheetVersion.EXCEL2007.getMaxColumns(); i++) {
+                    sheet.setColumnHidden(i,true);
+                }
+            }
         }
         return new AxolotlWriteResult(true, "完成结束阶段");
     }
@@ -675,7 +688,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
-                CellPropertyHolder headerStyle = configurableStyleConfig.copyConfigFromDefault(defaultCellStyle);
+                CellPropertyHolder headerStyle = ConfigurableStyleConfig.copyConfigFromDefault(defaultCellStyle);
                 if(axolotlCellStyle.getBorderLeftStyle() != null){
                     headerStyle.setBorderLeftStyle(axolotlCellStyle.getBorderLeftStyle());
                 }
@@ -732,7 +745,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      * @return 样式
      */
     private CellStyle createCellStyle(CellPropertyHolder cellProperty){
-        CellPropertyHolder propertyHolder = configurableStyleConfig.copyConfigFromDefault(cellProperty);
+        CellPropertyHolder propertyHolder = ConfigurableStyleConfig.copyConfigFromDefault(cellProperty);
         propertyHolder.setColumnWidth(null);
         propertyHolder.setRowHeight(null);
         if(cellStyleCache.containsKey(propertyHolder)){

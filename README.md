@@ -747,17 +747,18 @@ autoWriteConfig.setThemeStyleRender(theme);
 
 在写入数据时，支持写入策略来对数据进行处理。
 
-| 策略名称                               | 使用范围 | 说明                               |
-| -------------------------------------- | -------- | ---------------------------------- |
-| AUTO_CATCH_COLUMN_LENGTH               | 自动写入 | 自动计算列长度                     |
-| AUTO_INSERT_SERIAL_NUMBER              | 自动写入 | 自动在第一列插入编号               |
-| AUTO_FILL_DEFAULT_CELL_WHITE           | 自动写入 | 默认填充单元格为白色               |
-| AUTO_INSERT_TOTAL_IN_ENDING            | 自动写入 | 自动在结尾插入合计行               |
-| TEMPLATE_SHIFT_WRITE_ROW               | 模板写入 | 数据写入自动将数据写入下移到下一行 |
-| TEMPLATE_PLACEHOLDER_FILL_DEFAULT      | 模板写入 | 为没有指定的占位符填充默认值       |
-| TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL | 模板写入 | 空值是否使用模板填充               |
-| TEMPLATE_NON_TEMPLATE_CELL_FILL        | 模板写入 | 非模板单元格是否模板填充           |
-| EXCEPTION_RETURN_RESULT                | 通用     | 异常将返回结果，不抛出异常         |
+| 策略名称                               | 使用范围 | 说明                                                         |
+| -------------------------------------- | -------- | ------------------------------------------------------------ |
+| AUTO_CATCH_COLUMN_LENGTH               | 自动写入 | 自动计算列长度                                               |
+| AUTO_INSERT_SERIAL_NUMBER              | 自动写入 | 自动在第一列插入编号                                         |
+| AUTO_FILL_DEFAULT_CELL_WHITE           | 自动写入 | 默认填充单元格为白色                                         |
+| AUTO_INSERT_TOTAL_IN_ENDING            | 自动写入 | 自动在结尾插入合计行                                         |
+| AUTO_HIDDEN_BLANK_COLUMNS              | 自动写入 | 默认隐藏工作表空白列<br /><font color='red'>将影响导出性能和增大存储空间</font> |
+| TEMPLATE_SHIFT_WRITE_ROW               | 模板写入 | 数据写入自动将数据写入下移到下一行                           |
+| TEMPLATE_PLACEHOLDER_FILL_DEFAULT      | 模板写入 | 为没有指定的占位符填充默认值                                 |
+| TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL | 模板写入 | 空值是否使用模板填充                                         |
+| TEMPLATE_NON_TEMPLATE_CELL_FILL        | 模板写入 | 非模板单元格是否模板填充                                     |
+| EXCEPTION_RETURN_RESULT                | 通用     | 异常将返回结果，不抛出异常                                   |
 
 ### 4.2 PDF操作
 

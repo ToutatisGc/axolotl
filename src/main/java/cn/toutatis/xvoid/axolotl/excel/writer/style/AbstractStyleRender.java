@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.model.StylesTable;
@@ -706,6 +707,19 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
             sheet.getRow(heightEntry.getKey()).setHeightInPoints(heightEntry.getValue());
         }
+        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS)){
+            warn(LOGGER,"即将隐藏空白列，增加导出耗时");
+            int maxColumnIndex = -1;
+            for (Row cells : sheet) {
+                maxColumnIndex = Math.max(cells.getLastCellNum(),maxColumnIndex);
+            }
+            if (maxColumnIndex > -1){
+                for (int i = maxColumnIndex; i < SpreadsheetVersion.EXCEL2007.getMaxColumns(); i++) {
+                    sheet.setColumnHidden(i,true);
+                }
+            }
+        }
+
         return new AxolotlWriteResult(true, "完成结束阶段");
     }
 

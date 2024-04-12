@@ -30,6 +30,12 @@ public enum ExcelWritePolicy {
     AUTO_INSERT_TOTAL_IN_ENDING(Type.BOOLEAN, true, true),
 
     /**
+     * 默认隐藏工作表空白列
+     * 注意：将影响导出性能和增大存储空间
+     */
+    AUTO_HIDDEN_BLANK_COLUMNS(Type.BOOLEAN, false, false),
+
+    /**
      * 数据写入时，自动将数据写入到下一行
      * 不会影响原有模板数据的位置
      */
