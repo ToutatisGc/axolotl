@@ -6,7 +6,7 @@ Author: Toutais_Gc zhangzk
 
 ## Part.1 概述
 
-​	Axolotl系统提供了强大的自动写入Excel功能，使用户能够轻松地将系统中的数据导出到Excel文件中。通过主题配置，用户可以实现对生成Excel文件样式的统一管理，从而确保所有导出的数据都具有一致的外观和格式。
+​	Axolotl框架提供了强大的自动写入Excel功能，使用户能够轻松地将系统中的数据导出到Excel文件中。通过主题配置，用户可以实现对生成Excel文件样式的统一管理，从而确保所有导出的数据都具有一致的外观和格式。
 
 ## Part.2 标准主题配置
 
@@ -42,9 +42,45 @@ Author: Toutais_Gc zhangzk
 | createFont               | 创建字体。                                               |
 | createStyle              | 创建单元格样式。                                         |
 
+## Part.4 可配置主题
+
+```
+// TODO 迁移
+```
+
+## Part.5 组件说明
+
+### 5.1 配置类
+
+#### 5.1.1 表头 Header
+
+​	自动写入器写入时需要指定表头`Header`在工作表中显示表头单元格。
+
+#### 5.1.2 颜色 AxolotlColor
+
+​	POI中颜色使用`IndexedColor`枚举类指定，只有部分颜色。如需使用更多颜色，可以指定使用`AxolotlColor.create(255,255,255,0)`方法指定RGB颜色，并且可以使用`toXssfColor()`转换为`XSSFColor`颜色。
+
+<div align='center'>
+    <font><b>IndexedColor色卡</b></font>
+</div>
+
 ![内置色卡](./IndexedColors内置颜色.png)
 
+<div align='center'>
+    <font><b>单元格填充模式 FillPatternType</b></font>
+</div>
+
 ![填充样式](./FillPatternType填充样式.png)
+
+#### 5.1.3 单元格样式 AxolotlCellStyle
+
+
+
+### 5.2 组件类
+
+#### 5.2.1 下拉框 AxolotlSelectBox
+
+
 
 ## 可配置主题：
 
