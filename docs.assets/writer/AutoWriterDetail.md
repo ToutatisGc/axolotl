@@ -4,15 +4,16 @@
 
 ![填充样式](./FillPatternType填充样式.png)
 
-#### 可配置主题：
+## 可配置主题：
 
 ​          可配置主题 **AxolotlConfigurableTheme** 支持对标题、表头、内容的单元格进行自定义样式配置，有助于快速开发出满足需求的主题。
 
 
 
-##### ConfigurableStyleConfig 接口： 为可配置主题的配置接口，该接口提供了自定义标题、表头、内容等区域的单元格的样式配置方法。
+### ConfigurableStyleConfig 接口： 为可配置主题的配置接口，该接口提供了自定义标题、表头、内容等区域的单元格的样式配置方法。
 
 ```java
+
 
 public interface ConfigurableStyleConfig {
 
@@ -61,7 +62,7 @@ public interface ConfigurableStyleConfig {
 
 
 
-##### 单元格可配置属性 CellConfigProperty：用于传递单元格行高、列宽与单元格常用样式等单元格配置属性
+### 单元格可配置属性 CellConfigProperty：用于传递单元格行高、列宽与单元格常用样式等单元格配置属性
 
 ```java
 public class CellConfigProperty {
@@ -110,7 +111,7 @@ public class CellConfigProperty {
 }
 ```
 
-##### 边框样式配置属性 AxolotlCellBorder：
+### 边框样式配置属性 AxolotlCellBorder：
 
 ```java
 public class AxolotlCellBorder {
@@ -167,7 +168,7 @@ public class AxolotlCellBorder {
 }
 ```
 
-##### 字体样式配置属性 AxolotlCellFont：
+### 字体样式配置属性 AxolotlCellFont：
 
 ```java
 public class AxolotlCellFont {
@@ -208,7 +209,7 @@ public class AxolotlCellFont {
 
 
 
-##### 预制值：
+### 预制值：
 
 预制值是**单元格可配置属性**的默认值，若某个**单元格可配置属性**未进行任何自定义配置则会使用预制值填充。
 
@@ -251,7 +252,7 @@ defaultStyle.setStrikeout(false);
 
 
 
-##### 样式配置生效的优先级与依赖关系：
+### 样式配置生效的优先级与依赖关系：
 
  * **全局样式配置：**是优先级最低的配置，该配置可用于所有位置的单元格样式配置，若不配置则使用预制值（不同位置的单元格的预制值属性会有所不同）,在**AutoWriteConfig** 内有关样式的配置优先级高于在此处的配置            **优先级**：AutoWriteConfig 内有关样式的配置 > 此处配置 > 预制值
 
@@ -303,7 +304,7 @@ public void globalStyleConfig(CellConfigProperty cell) {
 
 
 
-##### 标题样式配置说明：
+### 标题样式配置说明：
 
 ​        此处主要用于控制标题区域内单元格的样式，标题单元格是由多个单元格列合并而来，列宽与表头区域的总宽度相同，因此**不支持配置列宽**。
 
@@ -328,7 +329,7 @@ public void titleStyleConfig(CellConfigProperty cell) {
 
 
 
-##### 表头样式配置说明：
+### 表头样式配置说明：
 
 ​        此处主要用于配置表头区域内单元格的通用样式，若需要分别配置每一个表头单元格的样式可以在对应的Header对象中进行指定。
 
@@ -362,11 +363,11 @@ public void headerStyleConfig(CellConfigProperty cell) {
 
 
 
-##### 内容样式配置说明：
+### 内容样式配置说明：
 
 ​        此处主要控制处于内容区域内的单元格样式，每渲染一个单元格前都会重新读取一次配置，同时会传入单元格与渲染内容的相关信息，可根据这些信息对单元格作出不同的样式配置。
 
-##### 单元格内容信息  FieldInfo：
+### 单元格内容信息  FieldInfo：
 
 ```java
 //该类保存了单元格内容的相关信息及单元格的行索引与列索引
@@ -399,7 +400,7 @@ public static class FieldInfo{
 }
 ```
 
-##### 配置方式：
+### 配置方式：
 
 ```java
 @Override
@@ -432,7 +433,7 @@ public void dataStyleConfig(CellConfigProperty cell, AbstractStyleRender.FieldIn
 
 
 
-##### （特殊）程序写入的单元格样式配置说明：
+### （特殊）程序写入的单元格样式配置说明：
 
 ​        程序写入的单元格是指由特性配置产生的写入，这些写入是由程序完成的。目前有 ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER（自动在第一列插入编号） 和  ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING （自动在结尾插入合计行） 这两种特性可以配置写入的单元格样式。
 
@@ -448,7 +449,7 @@ public void dataStyleConfig(CellConfigProperty cell, AbstractStyleRender.FieldIn
  *                    合计行单元格支持行高配置、样式配置
  *                    样式：不配置则自动取上一行单元格的样式   行高：不配置则自动取上一行的行高    列宽：不支持配置，继承上一行
 
-##### 配置方式：
+### 配置方式：
 
 ```java
 @Override
@@ -465,13 +466,13 @@ public void commonStyleConfig(Map<ExcelWritePolicy,CellConfigProperty> cell) {
 }
 ```
 
-##### 注意：目前一种特性写入的所有单元格只能支持同一种样式配置。如需更精细化配置建议手动配置写入这些单元格，将他们纳入表头或内容中再进行样式控制。
+### 注意：目前一种特性写入的所有单元格只能支持同一种样式配置。如需更精细化配置建议手动配置写入这些单元格，将他们纳入表头或内容中再进行样式控制。
 
 
 
 
 
-##### 可配置主题的使用：
+### 可配置主题的使用：
 
 1.创建一个类并实现ConfigurableStyleConfig接口，重写对应方法并完成样式配置（配置方法可参考上文的样式配置说明）
 
