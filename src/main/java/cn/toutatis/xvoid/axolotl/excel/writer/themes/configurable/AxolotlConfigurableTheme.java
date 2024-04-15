@@ -106,6 +106,9 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
     public AxolotlConfigurableTheme(ConfigurableStyleConfig configurableStyleConfig) {
         super(LOGGER);
+        if(configurableStyleConfig == null){
+            throw new AxolotlWriteException("无法加载样式配置，请传入配置类");
+        }
         this.configurableStyleConfig = configurableStyleConfig;
     }
 
