@@ -1,14 +1,56 @@
+# Axolotl自定义主题说明
 
+![Banner](../../docs.assets/banner.png)
+
+Author: Toutais_Gc zhangzk
+
+## Part.1 概述
+
+​	Axolotl系统提供了强大的自动写入Excel功能，使用户能够轻松地将系统中的数据导出到Excel文件中。通过主题配置，用户可以实现对生成Excel文件样式的统一管理，从而确保所有导出的数据都具有一致的外观和格式。
+
+## Part.2 标准主题配置
+
+​	主题样式是通过实现`cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender`接口定制。使用此接口可完全按照开发者需求定制样式。
+
+接口分为几个生命周期，在不同的生命周期下操作不同的数据和样式：
+
+| 生命周期 | 方法名称     | 说明                                                         |
+| -------- | ------------ | ------------------------------------------------------------ |
+| 初始化   | init         | **初始化在多次写入中只生效一次。<br />**该阶段应当实现变量的注入和赋值，例如颜色的指定。 |
+| 渲染表头 | renderHeader | **渲染表头在多次写入中只生效一次。<br />**该阶段应当实现标题的写入和表头的渲染。 |
+| 渲染数据 | renderData   | 渲染数据列表中的数据。                                       |
+| 结束阶段 | finish       | 关闭写入器前所执行的操作。                                   |
+
+## Part.3 抽象类集成
+
+​	 使用`ExcelStyleRender`类定制主题过于的自由并且需要大量的适配，推荐继承`AbstractStyleRender`类，该类中已经编写了基本所需的写入方法。
+
+​	如果需要修改部分内容也可以重写其中的方法而不破坏调用时序。
+
+**AbstractStyleRender类中的方法：**
+
+| 方法                     | 说明                                                     |
+| ------------------------ | -------------------------------------------------------- |
+| isFirstBatch             | 判断是否是第一批写入数据。                               |
+| checkedAndUseCustomTheme | **必须在初始化阶段调用。**<br />检查主题字体和主题颜色。 |
+| fillWhiteCell            | 初始化填充空白表格样式。                                 |
+| createTitleRow           | 创建标题行。                                             |
+| mergeTitleRegion         | 合并标题行。                                             |
+| defaultRenderHeaders     | 渲染表头的默认方法，支持Header嵌套。                     |
+| defaultRenderNextData    | 使用主题样式渲染实体数据，每一个实体占用一行。           |
+| renderColumn             | 渲染实体对应每一列的数据。                               |
+| createFont               | 创建字体。                                               |
+| createStyle              | 创建单元格样式。                                         |
 
 ![内置色卡](./IndexedColors内置颜色.png)
 
 ![填充样式](./FillPatternType填充样式.png)
 
-#### 可配置主题：
+## 可配置主题：
 
 ​          可配置主题 AxolotlConfigurableTheme 支持对标题、表头、内容的单元格进行自定义样式配置，有助于快速开发出满足需求的主题。
 
-##### ConfigurableStyleConfig 接口：
+### ConfigurableStyleConfig 接口：
 
 ​         ConfigurableStyleConfig 是可配置主题的配置接口，该接口提供了自定义标题、表头、内容等单元格的样式配置方法，通过实现类重写这些方法来进行配置。
 
@@ -66,7 +108,7 @@ public interface ConfigurableStyleConfig {
 
 
 
-##### 单元格可配置属性 CellConfigProperty：
+### 单元格可配置属性 CellConfigProperty：
 
 ```java
 //单元格可配置属性  支持单元格行高、列宽与单元格常用样式的配置
@@ -122,7 +164,7 @@ public class CellConfigProperty {
 }
 ```
 
-##### 边框样式 AxolotlCellBorder：
+### 边框样式 AxolotlCellBorder：
 
 ```java
 public class AxolotlCellBorder {
@@ -181,7 +223,7 @@ public class AxolotlCellBorder {
 
 
 
-##### 字体样式 AxolotlCellFont：
+### 字体样式 AxolotlCellFont：
 
 ```java
 public class AxolotlCellFont {
@@ -222,7 +264,7 @@ public class AxolotlCellFont {
 
 
 
-##### 预制值：
+### 预制值：
 
 预制值是**单元格可配置属性**的默认值，若某个**单元格可配置属性**未进行任何自定义配置则会使用预制值填充。
 
@@ -265,13 +307,13 @@ defaultStyle.setStrikeout(false);
 
 
 
-##### CellConfigProperty的配置方法：
+### CellConfigProperty的配置方法：
 
 ​     全局样式：重写方法 **globalStyleConfig(CellConfigProperty cellConfig)** ，调用形参 **(CellConfigProperty cellConfig)** 的  **set方法** 为需要配置的属性赋值，即可完成配置。
 
 
 
-##### 可配置主题的使用：
+### 可配置主题的使用：
 
 ```java
 //1、创建一个类并实现ConfigurableStyleConfig接口
