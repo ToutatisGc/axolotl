@@ -148,10 +148,22 @@ List<TestEntity> datas = new ArrayList<>();
 axolotlAutoExcelWriter.writeToTemplate(0, map, datas);
 ```
 
-###### <2> 预设样式写入
+###### <2> 自动写入
 
-```
-// 等待支持
+```java
+// 创建配置
+AutoWriteConfig config = new AutoWriteConfig();
+config.setTitle("设置标题");
+// 设置输出位置
+config.setOutputStream(new FileOutputStream("test.xlsx"));
+List<Header> headers = new ArrayList<>();
+// 添加表头和数据
+headers.add(new Header("添加表头"));
+ArrayList<POJO> data = new ArrayList<>();
+// 创建写入器
+AxolotlAutoExcelWriter aaew = Axolotls.getAutoExcelWriter(config);
+// 写入数据
+autoExcelWriter.write(headers,data);
 ```
 
 ### 3.3 PDF 文档操作
@@ -360,7 +372,7 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 
 ##### 4.1.1.7 StreamReader流读取器支持
 
-​	在读取大的Excel文件（文件大小>=15M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据40w行数据左右时将占用10G内存,时间在1min左右。
+​	在读取大的Excel文件（文件大小>=15M）时，将文件转换为数据加载进内存时会占用大量的时间和内存，在单个Sheet中数据40w行数据左右时将分配10G内存,时间在1min左右。
 
 ​	在读取此类大文件时可以使用 **AxolotlStreamExcelReader** 以流的方式读取数据，减少加载时间和内存占用，该读取器相较于**AxolotlExcelReader** 失去了很多特性，例如获取指定位置数据，分页等。
 
@@ -815,7 +827,7 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 <dependency>
 	<groupId>cn.toutatis</groupId>
 	<artifactId>axolotl</artifactId>
-	<version>0.0.8-ALPHA-8</version>
+	<version>1.0.14</version>
 		<exclusions>
             <exclusion>
             	<groupId>org.slf4j</groupId>
@@ -872,7 +884,7 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
 ## Part.6 相关链接
 
-[📂GitHub VOID框架支持库](https://github.com/ToutatisGc/VOID)
+[📂VOID框架支持库](https://github.com/ToutatisGc/VOID)
 
 [📂Apache POI官方网站](https://poi.apache.org/)
 

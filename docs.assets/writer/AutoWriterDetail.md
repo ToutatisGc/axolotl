@@ -1,8 +1,86 @@
+# Axolotl自定义主题说明
 
+![Banner](../../docs.assets/banner.png)
+
+Author: Toutais_Gc zhangzk
+
+## Part.1 概述
+
+​	Axolotl框架提供了强大的自动写入Excel功能，使用户能够轻松地将系统中的数据导出到Excel文件中。通过主题配置，用户可以实现对生成Excel文件样式的统一管理，从而确保所有导出的数据都具有一致的外观和格式。
+
+## Part.2 标准主题配置
+
+​	主题样式是通过实现`cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender`接口定制。使用此接口可完全按照开发者需求定制样式。
+
+接口分为几个生命周期，在不同的生命周期下操作不同的数据和样式：
+
+| 生命周期 | 方法名称     | 说明                                                         |
+| -------- | ------------ | ------------------------------------------------------------ |
+| 初始化   | init         | **初始化在多次写入中只生效一次。<br />**该阶段应当实现变量的注入和赋值，例如颜色的指定。 |
+| 渲染表头 | renderHeader | **渲染表头在多次写入中只生效一次。<br />**该阶段应当实现标题的写入和表头的渲染。 |
+| 渲染数据 | renderData   | 渲染数据列表中的数据。                                       |
+| 结束阶段 | finish       | 关闭写入器前所执行的操作。                                   |
+
+## Part.3 抽象类集成
+
+​	 使用`ExcelStyleRender`类定制主题过于的自由并且需要大量的适配，推荐继承`AbstractStyleRender`类，该类中已经编写了基本所需的写入方法。
+
+​	如果需要修改部分内容也可以重写其中的方法而不破坏调用时序。
+
+**AbstractStyleRender类中的方法：**
+
+| 方法                     | 说明                                                     |
+| ------------------------ | -------------------------------------------------------- |
+| isFirstBatch             | 判断是否是第一批写入数据。                               |
+| checkedAndUseCustomTheme | **必须在初始化阶段调用。**<br />检查主题字体和主题颜色。 |
+| fillWhiteCell            | 初始化填充空白表格样式。                                 |
+| createTitleRow           | 创建标题行。                                             |
+| mergeTitleRegion         | 合并标题行。                                             |
+| defaultRenderHeaders     | 渲染表头的默认方法，支持Header嵌套。                     |
+| defaultRenderNextData    | 使用主题样式渲染实体数据，每一个实体占用一行。           |
+| renderColumn             | 渲染实体对应每一列的数据。                               |
+| createFont               | 创建字体。                                               |
+| createStyle              | 创建单元格样式。                                         |
+
+## Part.4 可配置主题
+
+```
+// TODO 迁移
+```
+
+## Part.5 组件说明
+
+### 5.1 配置类
+
+#### 5.1.1 表头 Header
+
+​	自动写入器写入时需要指定表头`Header`在工作表中显示表头单元格。
+
+#### 5.1.2 颜色 AxolotlColor
+
+​	POI中颜色使用`IndexedColor`枚举类指定，只有部分颜色。如需使用更多颜色，可以指定使用`AxolotlColor.create(255,255,255,0)`方法指定RGB颜色，并且可以使用`toXssfColor()`转换为`XSSFColor`颜色。
+
+<div align='center'>
+    <font><b>IndexedColor色卡</b></font>
+</div>
 
 ![内置色卡](./IndexedColors内置颜色.png)
 
+<div align='center'>
+    <font><b>单元格填充模式 FillPatternType</b></font>
+</div>
+
 ![填充样式](./FillPatternType填充样式.png)
+
+#### 5.1.3 单元格样式 AxolotlCellStyle
+
+
+
+### 5.2 组件类
+
+#### 5.2.1 下拉框 AxolotlSelectBox
+
+
 
 ## 可配置主题：
 
@@ -202,10 +280,10 @@ public class AxolotlCellFont {
      * 使用水平删除线
      */
     private Boolean strikeout;
+
+
 }
 ```
-
-
 
 
 
