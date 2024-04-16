@@ -7,6 +7,7 @@ import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -101,7 +102,19 @@ public class CommonWriteConfig {
      * @param field 字段
      * @param dict 字典
      */
+    public void setDict(String field, List<?> dict) {
+        this.setDict(getSheetIndex(), field, dict);
+    }
+
+    /**
+     * 设置字典映射
+     * @param field 字段
+     * @param dict 字典
+     */
     public void setDict(int sheetIndex,String field, List<?> dict) {
+        if (Validator.strIsBlank(field)){
+            throw new IllegalArgumentException("字段不能为空");
+        }
         Map<String,Field> cache = new HashMap<>();
         if (dict != null && !dict.isEmpty()){
             Map<String,String> dictMap = new HashMap<>();
@@ -175,7 +188,12 @@ public class CommonWriteConfig {
      * @param dict 字典
      */
     public void setDict(int sheetIndex,String field,Map<String,String> dict) {
-        dictionaryMapping.put(sheetIndex,field,dict);
+        if (Validator.strIsBlank(field)){
+            throw new IllegalArgumentException("字段不能为空");
+        }
+        if (dict!= null && !dict.isEmpty()){
+            dictionaryMapping.put(sheetIndex,field,dict);
+        }
     }
 
     /**

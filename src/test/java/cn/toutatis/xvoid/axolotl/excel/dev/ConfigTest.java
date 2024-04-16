@@ -29,6 +29,15 @@ public class ConfigTest {
         dict.add(new DictTestFullEntity("TES_002", "状态异常"));
         dict.add(new DictTestFullEntity("TES_003", "状态失效"));
         autoWriteConfig.setDict(0,"status", dict);
+        autoWriteConfig.setDict(0,"payStatus",Map.of(
+                "PAY_001","拉起支付",
+                "PAY_002","支付成功",
+                "PAY_003","取消支付"));
+        System.err.println(autoWriteConfig.getDictionaryMapping());
+
+        var w = autoWriteConfig.getDict(0, "status1");
+        System.err.println(w);
+
     }
 
 }

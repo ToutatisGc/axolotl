@@ -8,6 +8,10 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 表头信息
+ * @author Toutatis_Gc
+ */
 @Data
 public class Header {
 
@@ -85,7 +89,7 @@ public class Header {
         this.childs = List.of(childs);
     }
 
-    public Header(String name, String fieldName,boolean participateInCalculate, Header... childs ) {
+    public Header(String name, String fieldName,boolean participateInCalculate, Header... childs) {
         this.name = name;
         this.fieldName = fieldName;
         this.childs = List.of(childs);
