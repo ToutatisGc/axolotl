@@ -44,54 +44,13 @@ Author: Toutais_Gc zhangzk
 
 ## Part.4 可配置主题
 
-```
-// TODO 迁移
-```
-
-## Part.5 组件说明
-
-### 5.1 配置类
-
-#### 5.1.1 表头 Header
-
-​	自动写入器写入时需要指定表头`Header`在工作表中显示表头单元格。
-
-#### 5.1.2 颜色 AxolotlColor
-
-​	POI中颜色使用`IndexedColor`枚举类指定，只有部分颜色。如需使用更多颜色，可以指定使用`AxolotlColor.create(255,255,255,0)`方法指定RGB颜色，并且可以使用`toXssfColor()`转换为`XSSFColor`颜色。
-
-<div align='center'>
-    <font><b>IndexedColor色卡</b></font>
-</div>
-
-![内置色卡](./IndexedColors内置颜色.png)
-
-<div align='center'>
-    <font><b>单元格填充模式 FillPatternType</b></font>
-</div>
-
-![填充样式](./FillPatternType填充样式.png)
-
-#### 5.1.3 单元格样式 AxolotlCellStyle
-
-
-
-### 5.2 组件类
-
-#### 5.2.1 下拉框 AxolotlSelectBox
-
-
-
-## 可配置主题：
-
 ​          可配置主题 **AxolotlConfigurableTheme** 支持对标题、表头、内容的单元格进行自定义样式配置，有助于快速开发出满足需求的主题。
 
+### 接口 ConfigurableStyleConfig
 
-
-### ConfigurableStyleConfig 接口： 为可配置主题的配置接口，该接口提供了自定义标题、表头、内容等区域的单元格的样式配置方法。
+​	为可配置主题的配置接口，该接口提供了自定义标题、表头、内容等区域的单元格的样式配置方法。
 
 ```java
-
 
 public interface ConfigurableStyleConfig {
 
@@ -140,7 +99,9 @@ public interface ConfigurableStyleConfig {
 
 
 
-### 单元格可配置属性 CellConfigProperty：用于传递单元格行高、列宽与单元格常用样式等单元格配置属性
+### 单元格可配置属性 CellConfigProperty
+
+​	用于传递单元格行高、列宽与单元格常用样式等单元格配置属性。
 
 ```java
 public class CellConfigProperty {
@@ -189,7 +150,7 @@ public class CellConfigProperty {
 }
 ```
 
-### 边框样式配置属性 AxolotlCellBorder：
+### 边框样式配置属性 AxolotlCellBorder
 
 ```java
 public class AxolotlCellBorder {
@@ -246,7 +207,7 @@ public class AxolotlCellBorder {
 }
 ```
 
-### 字体样式配置属性 AxolotlCellFont：
+### 字体样式配置属性 AxolotlCellFont
 
 ```java
 public class AxolotlCellFont {
@@ -287,11 +248,11 @@ public class AxolotlCellFont {
 
 
 
-### 预制值：
+### 预制值
 
-预制值是**单元格可配置属性**的默认值，若某个**单元格可配置属性**未进行任何自定义配置则会使用预制值填充。
+​	预制值是**单元格可配置属性**的默认值，若某个**单元格可配置属性**未进行任何自定义配置则会使用预制值填充。
 
-以下是一些**单元格可配置属性**的预制值 ⬇
+**单元格可配置属性的预制值 ：**
 
 ```
 //单元格水平对齐方式
@@ -322,11 +283,21 @@ defaultStyle.setStrikeout(false);
 
 **部分属性的预制值因生效的单元格所处区域不同而有所区别：**
 
-**行高 rowHeight：**标题：600    表头、内容、程序写入单元格：400  
+**行高 rowHeight：**
 
-**列宽 columnWidth：**表头：依据表头单元格的值经过计算得出   内容：继承表头，当没有表头时，指定列宽为 12   程序写入单元格：12
+​	标题：`600`
 
-**程序写入的单元格的预制值请参照下文 ->程序写入的单元格样式配置说明**
+​	表头、内容、程序写入单元格：`400` 
+
+**列宽 columnWidth：**
+
+​	表头：依据表头单元格的值经过计算得出
+
+​	内容：继承表头，当没有表头时，指定列宽为 `12` 
+
+​	程序写入单元格：`12`
+
+**程序写入的单元格的预制值请参照下文 -> 程序写入的单元格样式配置说明**
 
 
 
@@ -340,11 +311,11 @@ defaultStyle.setStrikeout(false);
 
  * **内容样式配置：**初始配置与全局样式配置一致，在此处配置的属性优先级大于全局样式     此处的配置**会被读取多次**，每渲染一个内容单元格前都会读取一次配置     **优先级**：此处配置 > 全局样式
 
-   
+    
 
 
 
-**关于配置属性有效性的说明：**
+**关于配置属性有效的说明：**
 
  *                    开启 **ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH（自动列宽）** 特性后列宽的设置将**不会生效**
  *                    **行高与列宽配置的时效性：**受渲染顺序的影响，后渲染的行高、列宽会**覆盖**掉先渲染的行高、列宽
@@ -402,8 +373,6 @@ public void titleStyleConfig(CellConfigProperty cell) {
     cell.setFont(axolotlCellFont);
 }
 ```
-
-
 
 
 
@@ -478,6 +447,8 @@ public static class FieldInfo{
 }
 ```
 
+
+
 ### 配置方式：
 
 ```java
@@ -544,15 +515,13 @@ public void commonStyleConfig(Map<ExcelWritePolicy,CellConfigProperty> cell) {
 }
 ```
 
-### 注意：目前一种特性写入的所有单元格只能支持同一种样式配置。如需更精细化配置建议手动配置写入这些单元格，将他们纳入表头或内容中再进行样式控制。
-
-
+​	注意：目前一种特性写入的所有单元格只能支持同一种样式配置。如需更精细化配置建议手动配置写入这些单元格，将他们纳入表头或内容中再进行样式控制。
 
 
 
 ### 可配置主题的使用：
 
-1.创建一个类并实现ConfigurableStyleConfig接口，重写对应方法并完成样式配置（配置方法可参考上文的样式配置说明）
+​	1. 创建一个类并实现ConfigurableStyleConfig接口，重写对应方法并完成样式配置（配置方法可参考上文的样式配置说明）。
 
 ```java
 public class AxolotlDefaultStyleConfig implements ConfigurableStyleConfig {
@@ -603,7 +572,7 @@ public class AxolotlDefaultStyleConfig implements ConfigurableStyleConfig {
 }
 ```
 
-2.将配置类实例或它的Class类通过有参构造传入AxolotlConfigurableTheme主题中，并把主题配置到AutoWriteConfig中
+​	2. 将配置类实例或它的Class类通过有参构造传入AxolotlConfigurableTheme主题中，并把主题配置到AutoWriteConfig中。
 
 ```java
 AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
@@ -611,3 +580,37 @@ commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme(new AxolotlDe
 //或者
 commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class);
 ```
+
+## Part.5 组件说明
+
+### 5.1 配置类
+
+#### 5.1.1 表头 Header
+
+​	自动写入器写入时需要指定表头`Header`在工作表中显示表头单元格。
+
+#### 5.1.2 颜色 AxolotlColor
+
+​	POI中颜色使用`IndexedColor`枚举类指定，只有部分颜色。如需使用更多颜色，可以指定使用`AxolotlColor.create(255,255,255,0)`方法指定RGB颜色，并且可以使用`toXssfColor()`转换为`XSSFColor`颜色。
+
+<div align='center'>
+    <font><b>IndexedColor色卡</b></font>
+</div>
+
+![内置色卡](./IndexedColors内置颜色.png)
+
+<div align='center'>
+    <font><b>单元格填充模式 FillPatternType</b></font>
+</div>
+
+![填充样式](./FillPatternType填充样式.png)
+
+#### 5.1.3 单元格样式 AxolotlCellStyle
+
+
+
+### 5.2 组件类
+
+#### 5.2.1 下拉框 AxolotlSelectBox
+
+

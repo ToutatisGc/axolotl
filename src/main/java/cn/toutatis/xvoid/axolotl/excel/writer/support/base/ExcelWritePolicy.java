@@ -66,6 +66,12 @@ public enum ExcelWritePolicy {
      * false:抛出异常
      */
     SIMPLE_EXCEPTION_RETURN_RESULT(Type.BOOLEAN, true, true),
+
+    /**
+     * 是否使用getter方法
+     * 取消则直接使用反射字段值
+     */
+    SIMPLE_USE_GETTER_METHOD(Type.BOOLEAN, true, true)
     ;
 
     /**

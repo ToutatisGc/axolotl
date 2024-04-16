@@ -47,22 +47,22 @@ public class StyleHelper {
     /**
      * 默认标题字体大小
      */
-    public static final Short STANDARD_TITLE_FONT_SIZE = 18;
+    public static final short STANDARD_TITLE_FONT_SIZE = 18;
 
     /**
      * 默认标题行高
      */
-    public static final Short STANDARD_TITLE_ROW_HEIGHT = 600;
+    public static final short STANDARD_TITLE_ROW_HEIGHT = 600;
 
     /**
      * 默认行高
      */
-    public static final Short STANDARD_ROW_HEIGHT = 400;
+    public static final short STANDARD_ROW_HEIGHT = 400;
 
     /**
      * 默认文本字体大小
      */
-    public static final Short STANDARD_TEXT_FONT_SIZE = 12;
+    public static final short STANDARD_TEXT_FONT_SIZE = 12;
 
 
     /**
@@ -73,7 +73,7 @@ public class StyleHelper {
     /**
      * 身份证号长度
      */
-    public static final Integer SERIAL_NUMBER_LENGTH = 5120;
+    public static final int SERIAL_NUMBER_LENGTH = 5120;
 
     static {
         PRESET_CELL_LENGTH_MAP.put("姓名",3500);
