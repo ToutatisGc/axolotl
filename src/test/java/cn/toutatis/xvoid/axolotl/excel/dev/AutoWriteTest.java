@@ -18,6 +18,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.AxolotlConfigu
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -40,15 +41,15 @@ public class AutoWriteTest {
         commonWriteConfig.setTitle("测试表");
         commonWriteConfig.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
-        headers.add(new Header("名称",List.of(new Header("姓名"),new Header("花名"))));
-        headers.add(new Header("期限", List.of(new Header("年"), new Header("月"))));
+        headers.add(new Header("名称", Lists.newArrayList(new Header("姓名"), new Header("花名"))));
+        headers.add(new Header("期限", Lists.newArrayList(new Header("年"), new Header("月"))));
         AxolotlCellStyle axolotlCellStyle1 = new AxolotlCellStyle();
         axolotlCellStyle1.setForegroundColor(new AxolotlColor(0,231,185));
         Header header1 = new Header("金额");
         header1.setColumnWidth(10000);
         Header header = new Header("账面数",
-                List.of(new Header("经济",
-                        List.of(new Header("数量"), new Header("金额"))), new Header("数量"), header1));
+                Lists.newArrayList(new Header("经济",
+                        Lists.newArrayList(new Header("数量"), new Header("金额"))), new Header("数量"), header1));
         header.setAxolotlCellStyle(axolotlCellStyle1);
         headers.add(header);
         Header remark = new Header("备注");
@@ -93,7 +94,7 @@ public class AutoWriteTest {
         headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
         headers.add(new Header("总市值（亿元）",StockEntity::getTotalValue));
         headers.add(new Header("流通市值（亿元）",StockEntity::getCirculationMarketValue));
-        List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
+        List<Header> subHeader1 = Lists.newArrayList(new Header("TTM"), new Header("15E"),new Header("16E"));
         headers.add(new Header("每股收益", subHeader1));
         headers.add(new Header("市盈率PE", subHeader1));
         headers.add(new Header("市净率PB（LF）"));
@@ -175,8 +176,8 @@ public class AutoWriteTest {
     public void testCalculateHeaders(){
         List<Header> headers = new ArrayList<>();
         headers.add(new Header("名称"));
-        headers.add(new Header("期限", List.of(new Header("年"),new Header("月"))));
-        headers.add(new Header("账面数", List.of(new Header("经济",List.of(new Header("数量"),new Header("金额"))),new Header("非经济",List.of(new Header("数量"),new Header("金额"))))));
+        headers.add(new Header("期限", Lists.newArrayList(new Header("年"),new Header("月"))));
+        headers.add(new Header("账面数", Lists.newArrayList(new Header("经济",Lists.newArrayList(new Header("数量"),new Header("金额"))),new Header("非经济",Lists.newArrayList(new Header("数量"),new Header("金额"))))));
         int maxDepth = ExcelToolkit.getMaxDepth(headers, 0);
         Assert.assertEquals(3,maxDepth);
         for (Header header : headers) {
@@ -211,7 +212,7 @@ public class AutoWriteTest {
             headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
             headers.add(new Header("总市值（亿元）",StockEntity::getTotalValue));
             headers.add(new Header("流通市值（亿元）",StockEntity::getCirculationMarketValue));
-            List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
+            List<Header> subHeader1 = Lists.newArrayList(new Header("TTM"), new Header("15E"),new Header("16E"));
             headers.add(new Header("每股收益", subHeader1));
             headers.add(new Header("市盈率PE", subHeader1));
             headers.add(new Header("市净率PB（LF）"));
@@ -254,7 +255,7 @@ public class AutoWriteTest {
         headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
         headers.add(new Header("总市值（亿元）",StockEntity::getTotalValue));
         headers.add(new Header("流通市值（亿元）",StockEntity::getCirculationMarketValue));
-        List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
+        List<Header> subHeader1 = Lists.newArrayList(new Header("TTM"), new Header("15E"),new Header("16E"));
         headers.add(new Header("每股收益", subHeader1));
         headers.add(new Header("市盈率PE", subHeader1));
         headers.add(new Header("市净率PB（LF）"));
@@ -303,7 +304,7 @@ public class AutoWriteTest {
 
         ArrayList<JSONObject> data = new ArrayList<>();
        // AxolotlSelectBox<String> stringAxolotlSelectBox = new AxolotlSelectBox<>("阶段5", null);
-        AxolotlSelectBox<LocalDate> stringAxolotlSelectBox = new AxolotlSelectBox<>(LocalDate.now(), List.of(LocalDate.now()));
+        AxolotlSelectBox<LocalDate> stringAxolotlSelectBox = new AxolotlSelectBox<>(LocalDate.now(), Lists.newArrayList(LocalDate.now()));
         for (int i = 0; i < 50; i++) {
             JSONObject map = new JSONObject(true);
 //            HashMap<String, String> map = new HashMap<>();

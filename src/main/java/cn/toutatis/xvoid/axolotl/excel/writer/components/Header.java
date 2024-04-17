@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
 import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
 import cn.toutatis.xvoid.toolkit.clazz.XFunc;
+import com.google.common.collect.Lists;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
 
@@ -73,12 +74,13 @@ public class Header {
 
     public Header(String name, Header... childs) {
         this.name = name;
-        this.childs = List.of(childs);
+        
+        this.childs = Lists.newArrayList(childs);
     }
 
     public Header(String name, boolean participateInCalculate, Header... childs) {
         this.name = name;
-        this.childs = List.of(childs);
+        this.childs = Lists.newArrayList(childs);
         this.participateInCalculate = participateInCalculate;
     }
 
@@ -86,13 +88,13 @@ public class Header {
     public Header(String name, String fieldName, Header... childs) {
         this.name = name;
         this.fieldName = fieldName;
-        this.childs = List.of(childs);
+        this.childs = Lists.newArrayList(childs);
     }
 
     public Header(String name, String fieldName,boolean participateInCalculate, Header... childs) {
         this.name = name;
         this.fieldName = fieldName;
-        this.childs = List.of(childs);
+        this.childs = Lists.newArrayList(childs);
         this.participateInCalculate = participateInCalculate;
     }
 

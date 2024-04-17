@@ -112,9 +112,9 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             debug(LOGGER, "使用自定义字体：%s",fontName);
             setGlobalFontName(fontName);
         }else{
-            setGlobalFontName(Objects.requireNonNullElse(themeFont, StyleHelper.STANDARD_FONT_NAME));
+            setGlobalFontName(themeFont != null ? themeFont : StyleHelper.STANDARD_FONT_NAME);
         }
-        this.setThemeColor(Objects.requireNonNullElse(themeColor, StyleHelper.STANDARD_THEME_COLOR));
+        this.setThemeColor(themeColor != null ? themeColor : StyleHelper.STANDARD_THEME_COLOR);
     }
 
     @Override
@@ -491,8 +491,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public void defaultRenderNextData(SXSSFSheet sheet,Object data,CellStyle rowStyle){
         // 获取对象属性
         HashMap<String, Object> dataMap = new LinkedHashMap<>();
-        if (data instanceof Map map) {
-            dataMap.putAll(map);
+        if (data instanceof Map) {
+            dataMap.putAll((Map)data);
         }else{
             List<Field> fields = ReflectToolkit.getAllFields(data.getClass(), true);
             fields.forEach(field -> {

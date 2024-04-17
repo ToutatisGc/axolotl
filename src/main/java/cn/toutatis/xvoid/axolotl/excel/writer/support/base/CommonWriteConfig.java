@@ -121,7 +121,8 @@ public class CommonWriteConfig {
             Field keyField = null;
             Field valueField = null;
             for (Object item : dict) {
-                if (item instanceof Map<?, ?> itemMap) {
+                if (item instanceof Map<?, ?>) {
+                    Map<?, ?> itemMap =(Map<?, ?>) item;
                     if (itemMap.containsKey(_dictKey) && itemMap.containsKey(_dictValue)) {
                         dictMap.put(itemMap.get(_dictKey).toString(), itemMap.get(_dictValue).toString());
                     } else {

@@ -208,8 +208,8 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         for (Object datum : data) {
             // 获取对象属性
             HashMap<String, Object> dataMap = new LinkedHashMap<>();
-            if (datum instanceof Map map) {
-                dataMap.putAll(map);
+            if (datum instanceof Map) {
+                dataMap.putAll((Map) datum);
             }else{
                 List<Field> fields = ReflectToolkit.getAllFields(datum.getClass(), true);
                 fields.forEach(field -> {

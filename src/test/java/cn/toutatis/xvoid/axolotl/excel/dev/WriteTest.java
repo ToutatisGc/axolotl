@@ -64,7 +64,7 @@ public class WriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
         AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
-        Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
+        //Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             JSONObject json = new JSONObject(true);
@@ -86,7 +86,7 @@ public class WriteTest {
             LIST.add(dmsRegReceivables);
         }
 
-        axolotlAutoExcelWriter.write(map, LIST);
+        axolotlAutoExcelWriter.write(null, LIST);
         axolotlAutoExcelWriter.close();
     }
 
@@ -115,8 +115,8 @@ public class WriteTest {
                 datas2.add(sch);
             }
             axolotlAutoExcelWriter.write(null, datas2);
-            Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
-            axolotlAutoExcelWriter.write(map, null);
+//            Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
+//            axolotlAutoExcelWriter.write(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
                 JSONObject sch = new JSONObject();
@@ -125,15 +125,15 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            axolotlAutoExcelWriter.write(Map.of("age",50), datas);
-            datas.clear();
-            for (int i = 0; i < 5; i++) {
-                JSONObject sch = new JSONObject();
-                sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
-                sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
-                sch.put("graduate", true);
-                datas.add(sch);
-            }
+//            axolotlAutoExcelWriter.write(Map.of("age",50), datas);
+//            datas.clear();
+//            for (int i = 0; i < 5; i++) {
+//                JSONObject sch = new JSONObject();
+//                sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
+//                sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+//                sch.put("graduate", true);
+//                datas.add(sch);
+//            }
             axolotlAutoExcelWriter.write(null, datas);
         }
     }

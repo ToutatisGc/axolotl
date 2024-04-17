@@ -40,7 +40,7 @@ public class AxolotlSelectBox<T> {
             value = dataInverter.convert(this.value).toString();
         }
         if(this.options != null){
-            options = this.options.stream().filter(Objects::nonNull).map(o -> dataInverter.convert(o).toString()).toList();
+            options = this.options.stream().filter(Objects::nonNull).map(o -> dataInverter.convert(o).toString()).collect(Collectors.toList());
         }
 
         AxolotlSelectBox<String> selectBox = new AxolotlSelectBox<>(value, options);
