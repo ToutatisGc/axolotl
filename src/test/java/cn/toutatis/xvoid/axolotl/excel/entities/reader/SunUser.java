@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * @author 张智凯
  * @version 1.0
- * @data 2024/3/1 16:03
+ *  2024/3/1 16:03
  */
 @Data
 public class SunUser {

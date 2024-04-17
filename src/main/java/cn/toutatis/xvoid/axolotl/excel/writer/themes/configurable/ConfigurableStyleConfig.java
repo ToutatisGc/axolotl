@@ -19,7 +19,7 @@ import static cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.Axolotl
  * 单元格样式配置
  * @author 张智凯
  * @version 1.0
- * @data 2024/3/28 11:22
+ *  2024/3/28 11:22
  */
 public interface ConfigurableStyleConfig {
 

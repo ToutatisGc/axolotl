@@ -12,7 +12,7 @@ import org.apache.poi.ss.usermodel.VerticalAlignment;
  * 单元格配置属性
  * @author 张智凯
  * @version 1.0
- * @data 2024/3/29 0:49
+ *  2024/3/29 0:49
  */
 @Data
 public class CellConfigProperty {

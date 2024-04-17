@@ -40,7 +40,7 @@ import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
  * 可配置主题
  * @author 张智凯
  * @version 1.0
- * @data 2024/3/28 9:21
+ *  2024/3/28 9:21
  */
 public class AxolotlConfigurableTheme extends AbstractStyleRender implements ExcelStyleRender {
 

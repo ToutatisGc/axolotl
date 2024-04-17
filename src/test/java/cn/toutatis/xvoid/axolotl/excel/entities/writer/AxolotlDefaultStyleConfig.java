@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * @author 张智凯
  * @version 1.0
- * @data 2024/3/30 3:14
+ *  2024/3/30 3:14
  */
 public class AxolotlDefaultStyleConfig implements ConfigurableStyleConfig {
     @Override
