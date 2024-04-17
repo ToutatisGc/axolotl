@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.CommonWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 
 import java.util.List;
@@ -49,5 +49,5 @@ public interface ExcelStyleRender {
      * 在渲染完成后，调用该方法。
      * 在Close()方法中调用。
      */
-    AxolotlWriteResult finish();
+    AxolotlWriteResult finish(SXSSFSheet sheet);
 }

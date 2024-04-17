@@ -799,6 +799,18 @@ public abstract class AxolotlAbstractExcelReader<T> {
             }
             throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,msg);
         }
+        Sheet indexSheet = workBookContext.getIndexSheet(sheetIndex);
+        if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.ALLOW_READ_HIDDEN_SHEET)){
+            LoggerHelper.warn(LOGGER,"工作表[%s]为隐藏表，请注意数据正确。",sheetIndex+1);
+        }else{
+            Workbook workbook = getWorkBookContext().getWorkbook();
+            if (workbook.isSheetHidden(sheetIndex) || workbook.isSheetVeryHidden(sheetIndex)){
+                String message = LoggerHelper.format("工作表[%s]为隐藏表",sheetIndex+1);
+                LoggerHelper.error(LOGGER,message);
+                throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,message);
+            }
+        }
+        readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.ALLOW_READ_HIDDEN_SHEET);
         Class<?> castClass = readerConfig.getCastClass();
         if (castClass == null){
             throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,"读取的类型对象不能为空");
@@ -824,7 +836,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
             if (!readerConfig.isReadAsObject()){
                 LOGGER.info("未设置读取的结束行,将被默认修正为读取该表最大行数");
             }
-            readerConfig.setEndIndex(workBookContext.getIndexSheet(sheetIndex).getLastRowNum()+1);
+            readerConfig.setEndIndex(indexSheet.getLastRowNum()+1);
         }
     }
 

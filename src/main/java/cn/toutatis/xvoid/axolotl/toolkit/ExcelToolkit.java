@@ -2,19 +2,21 @@ package cn.toutatis.xvoid.axolotl.toolkit;
 
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetHeader;
 import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Excel工具类
@@ -231,13 +233,62 @@ public class ExcelToolkit {
     }
 
     /**
-     *
-     * @param workbook
-     * @param sheetIndex
-     * @param sheetName
+     * 获取表头最大深度
+     * @param headers 表头
+     * @param depth 深度
+     * @return 最大深度
      */
-    public static void createAssignIndexSheet(Workbook workbook, int sheetIndex,String sheetName){
+    public static int getMaxDepth(List<Header> headers, int depth) {
+        int maxDepth = depth;
+        for (Header header : headers) {
+            if (header.getChilds() != null) {
+                int subDepth = getMaxDepth(header.getChilds(), depth + 1);
+                if (subDepth > maxDepth) {
+                    maxDepth = subDepth;
+                }
+            }
+        }
+        return maxDepth;
+    }
 
+    /**
+     * 获取实体类表头
+     * @param clazz 类
+     * @return 表头
+     */
+    public static List<Header> getHeaderList(Class<?> clazz) {
+        ArrayList<Header> headerList = new ArrayList<>();
+        List<Field> list = ReflectToolkit.getAllFields(clazz, true);
+        for (Field field : list) {
+            SheetHeader sheetHeader = field.getDeclaredAnnotation(SheetHeader.class);
+            if (sheetHeader != null) {
+                Header header = new Header(sheetHeader.name());
+                header.setFieldName(field.getName());
+                header.setColumnWidth(sheetHeader.width());
+                headerList.add(header);
+            }
+        }
+        return headerList;
+    }
+
+    /**
+     * 创建下拉列表选项(单元格下拉框数据小于255字节时使用)
+     *
+     * @param sheet    所在Sheet页面
+     * @param values   下拉框的选项值
+     * @param firstRow 起始行（从0开始）
+     * @param lastRow  终止行（从0开始）
+     * @param firstCol 起始列（从0开始）
+     * @param lastCol  终止列（从0开始）
+     */
+    public static void createDropDownList(Sheet sheet, String[] values, int firstRow, int lastRow, int firstCol, int lastCol) {
+        DataValidationHelper helper = sheet.getDataValidationHelper();
+        CellRangeAddressList addressList = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
+        DataValidationConstraint constraint = helper.createExplicitListConstraint(values);
+        DataValidation dataValidation = helper.createValidation(constraint, addressList);
+        dataValidation.setSuppressDropDownArrow(true);
+        dataValidation.setShowErrorBox(true);
+        sheet.addValidationData(dataValidation);
     }
 
 }

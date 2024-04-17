@@ -3,7 +3,7 @@ package cn.toutatis.xvoid.axolotl;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlStreamExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.writer.*;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 
 import java.io.File;
 import java.io.InputStream;
@@ -98,7 +98,7 @@ public class Axolotls {
      * @param datas 列表数据
      * @return 写入结果
      */
-    public static AxolotlWriteResult templateWrite(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas){
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas){
         TemplateWriteConfig templateWriteConfig = new TemplateWriteConfig();
         templateWriteConfig.setOutputStream(outputStream);
         AxolotlTemplateExcelWriter templateExcelWriter = getTemplateExcelWriter(template, templateWriteConfig);

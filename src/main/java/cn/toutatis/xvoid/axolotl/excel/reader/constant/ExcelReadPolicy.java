@@ -30,6 +30,11 @@ public enum ExcelReadPolicy {
      */
     SPREAD_MERGING_REGION(Type.BOOLEAN, true,true),
 
+    /**
+     * 允许读取隐藏工作表
+     */
+    ALLOW_READ_HIDDEN_SHEET(Type.BOOLEAN, true,false),
+
     /*行数据配置*/
     /**
      * 空行也视为有效数据

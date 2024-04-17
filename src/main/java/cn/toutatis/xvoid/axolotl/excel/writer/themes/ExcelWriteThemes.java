@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.themes;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.standard.*;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -11,7 +12,12 @@ import lombok.SneakyThrows;
 @Getter
 public enum ExcelWriteThemes {
 
-    $DEFAULT("默认主题样式", AxolotlClassicalTheme.class);
+    $DEFAULT("默认主题样式", AxolotlClassicalTheme.class),
+    MIDNIGHT("午夜蓝", AxolotlMidnightTheme.class),
+    SIMPLE_BLACK("经典黑", AxolotlSimpleBlackTheme.class),
+    ADMINISTRATION_RED("行政红", AxolotlAdministrationRedTheme.class),
+    HAZE_BLUE("雾霾蓝", AxolotlHazeBlueTheme.class),
+    INDUSTRIAL_ORANGE("工业橙", AxolotlIndustrialOrangeTheme.class);
 
     /**
      * 样式名称
