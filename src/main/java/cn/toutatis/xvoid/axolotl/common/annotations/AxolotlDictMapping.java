@@ -13,6 +13,11 @@ import java.lang.annotation.*;
 public @interface AxolotlDictMapping {
 
     /**
+     * 映射字段名
+     */
+    String value() default "";
+
+    /**
      * 标记字段是否被映射
      */
     boolean isUsage() default true;
@@ -20,7 +25,7 @@ public @interface AxolotlDictMapping {
     /**
      * 字典映射生效的工作表
      */
-    int[] effectSheetIndex() default {0};
+    int[] effectSheetIndex() default {};
 
     /**
      * 静态字典
@@ -34,4 +39,10 @@ public @interface AxolotlDictMapping {
      * 字典未匹配到的默认值
      */
     String defaultValue() default "";
+
+    /**
+     * 字典映射策略
+     */
+    DictMappingPolicy mappingPolicy() default DictMappingPolicy.KEEP_ORIGIN;
+
 }

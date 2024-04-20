@@ -155,7 +155,7 @@ public class AutoWriteTest {
     }
 
     @Test
-    public void testAnno() throws FileNotFoundException {
+    public void testAnno() throws IOException {
         List<AnnoEntity> list = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             AnnoEntity annoEntity = new AnnoEntity();
@@ -168,6 +168,7 @@ public class AutoWriteTest {
         autoWriteConfig.setOutputStream(new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx"));
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
         autoExcelWriter.write(list);
+        autoExcelWriter.close();
     }
 
     @Test

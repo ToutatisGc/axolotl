@@ -1,6 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriteIgnore;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBox;
@@ -11,6 +13,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.toolkit.FieldToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -19,6 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -32,9 +36,13 @@ import org.slf4j.Logger;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static cn.hutool.core.bean.BeanUtil.getFieldName;
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
@@ -509,7 +517,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public static class FieldInfo{
 
         /**
-         * 属性所属的类
+         * 属性类型
          */
         private Class<?> clazz;
 
@@ -556,6 +564,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * 默认行为渲染数据
      * @param sheet 工作表
      */
+
     @SuppressWarnings({"rawtypes","unchecked"})
     public void defaultRenderNextData(SXSSFSheet sheet,Object data,CellStyle rowStyle){
         // 获取对象属性
@@ -563,17 +572,50 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         if (data instanceof Map map) {
             dataMap.putAll(map);
         }else{
-            List<Field> fields = ReflectToolkit.getAllFields(data.getClass(), true);
-            fields.forEach(field -> {
-                field.setAccessible(true);
-                String fieldName = field.getName();
-                try {
-                    dataMap.put(fieldName,field.get(data));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                    throw new AxolotlWriteException("获取对象字段错误");
-                }
-            });
+            Class<?> dataClass = data.getClass();
+            if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD)){
+                ArrayList<Method> getterMethods = ReflectToolkit.getGetterMethods(dataClass);
+                for (Method getterMethod : getterMethods) {
+                    if (Modifier.isPublic(getterMethod.getModifiers())){
+                        AxolotlWriteIgnore ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
+                        if (ignore != null){continue;}
+                        String fieldName = ReflectToolkit.convertGetterToFieldName(getterMethod.getName());
+                        Field field = FieldToolkit.recursionGetField(dataClass, fieldName);
+                        if (field != null){
+                            ignore = field.getAnnotation(AxolotlWriteIgnore.class);
+                            if (ignore != null){continue;}
+                        }
+                        int parameterCount = getterMethod.getParameterCount();
+                        if (parameterCount == 0){
+                            Object invokeValue = null;
+                            try {
+
+                                invokeValue = getterMethod.invoke(data);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                                throw new AxolotlWriteException(""+e.getMessage());
+                            }
+                            dataMap.put(fieldName,invokeValue);
+                        }else{
+                            LoggerHelper.debug(LOGGER,format("方法[%s]参数数量大于0将跳过",get));
+                        }
+                    }else{
+
+                    }
+                    }
+            }else {
+                List<Field> fields = ReflectToolkit.getAllFields(dataClass, true);
+                fields.forEach(field -> {
+                    field.setAccessible(true);
+                    String fieldName = field.getName();
+                    try {
+                        dataMap.put(fieldName, field.get(data));
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                        throw new AxolotlWriteException("获取对象字段错误");
+                    }
+                });
+            }
         }
         // 初始化内容
         HashMap<Integer, Integer> writtenColumnMap = new HashMap<>();
@@ -689,7 +731,60 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 calculateColumns(fieldInfo);
                 // TODO GET方法,用ReflectToolkit,同步你的可配置主题相同代码
                 // TODO 字典转换
+
                 value = writeConfig.getDataInverter().convert(value);
+                //字典值转换
+                Object dataInstance = fieldInfo.getDataInstance();
+                if(!(dataInstance instanceof Map<?,?>)){
+                    Field field = FieldToolkit.recursionGetField(dataInstance.getClass(), fieldInfo.getFieldName());
+                    AxolotlDictMapping dictMappingInfo = field.getAnnotation(AxolotlDictMapping.class);
+                    if (dictMappingInfo != null){
+                        int sheetIndex = context.getSwitchSheetIndex();
+                        if(dictMappingInfo.isUsage()){
+                            int[] sheetIndexs = dictMappingInfo.effectSheetIndex();
+                            boolean isUsage = false;
+                            if(sheetIndexs.length != 0){
+                                for (int index : sheetIndexs) {
+                                    if(index == sheetIndex){
+                                        isUsage = true;
+                                        break;
+                                    }
+                                }
+                            }else{
+                                isUsage = true;
+                            }
+                            if(isUsage){
+                                //映射字段名
+                                String mappingFieldName;
+                                if(StringUtils.isNotEmpty(dictMappingInfo.value())){
+                                    mappingFieldName = dictMappingInfo.value();
+                                }else{
+                                    mappingFieldName = fieldInfo.fieldName;
+                                }
+                                Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, mappingFieldName);
+                                if(!dictMapping.isEmpty()){
+
+
+
+                                }
+
+
+                            }
+                        }
+                    }
+                    }
+
+
+
+
+
+
+
+
+
+
+
+
                 int columnIndex = fieldInfo.getColumnIndex();
                 cell.setCellValue(value.toString());
                 unmappedColumnCount.remove(columnIndex);

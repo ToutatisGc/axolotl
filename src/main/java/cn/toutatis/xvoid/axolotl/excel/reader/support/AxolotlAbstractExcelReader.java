@@ -12,6 +12,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastA
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.toolkit.FieldToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -531,7 +532,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
      */
     @SneakyThrows
     protected void assignValueToField(Object instance,Object adaptiveValue, EntityCellMappingInfo<?> mappingInfo,ReaderConfig<?> readerConfig){
-        Field field = recursionGetField(instance.getClass(),mappingInfo.getFieldName());
+        Field field = FieldToolkit.recursionGetField(instance.getClass(),mappingInfo.getFieldName());
         assert field != null;
         field.setAccessible(true);
         // TODO 赋值调用SETTER特性
@@ -543,17 +544,6 @@ public abstract class AxolotlAbstractExcelReader<T> {
             }
         }else {
             field.set(instance, adaptiveValue);
-        }
-    }
-
-    private Field recursionGetField(Class<?> clazz,String fieldName){
-        try {
-            return clazz.getDeclaredField(fieldName);
-        } catch (NoSuchFieldException e) {
-            if (clazz.getSuperclass() != null){
-                return recursionGetField(clazz.getSuperclass(),fieldName);
-            }
-            return null;
         }
     }
 
