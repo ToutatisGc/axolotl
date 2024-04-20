@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetHeader;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetTitle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.SheetHeader;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.SheetTitle;
 import lombok.Data;
 
 @Data

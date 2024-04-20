@@ -1,16 +1,14 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support.base;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlDictKey;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlDictValue;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
-import lombok.SneakyThrows;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -71,6 +69,7 @@ public class CommonWriteConfig {
      * 字典映射
      */
     private HashBasedTable<Integer,String,Map<String,String>> dictionaryMapping = HashBasedTable.create();
+
     /**
      * 字典键值对名称指定
      */

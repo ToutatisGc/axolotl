@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.components;
+package cn.toutatis.xvoid.axolotl.excel.writer.components.configuration;
 
 import lombok.Data;
 import org.apache.poi.ss.usermodel.IndexedColors;

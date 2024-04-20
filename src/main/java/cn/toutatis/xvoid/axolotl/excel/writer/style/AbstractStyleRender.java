@@ -1,17 +1,15 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlSelectBox;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBox;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
-import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.CellPropertyHolder;
-import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.ConfigurableStyleConfig;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -516,6 +514,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         private Class<?> clazz;
 
         /**
+         * 数据实例
+         * TODO GETTER特性调用本身字段get方法
+         */
+        private Object dataInstance;
+
+        /**
          * 属性名称
          */
         private final String fieldName;
@@ -683,6 +687,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 unmappedColumnCount.remove(columnIndex);
             }else{
                 calculateColumns(fieldInfo);
+                // TODO GET方法,用ReflectToolkit,同步你的可配置主题相同代码
+                // TODO 字典转换
                 value = writeConfig.getDataInverter().convert(value);
                 int columnIndex = fieldInfo.getColumnIndex();
                 cell.setCellValue(value.toString());

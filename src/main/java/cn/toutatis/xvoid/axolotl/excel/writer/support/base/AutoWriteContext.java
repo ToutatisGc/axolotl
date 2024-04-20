@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support.base;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

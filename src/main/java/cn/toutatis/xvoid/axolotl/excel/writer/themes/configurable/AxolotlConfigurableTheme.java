@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.*;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.*;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
@@ -22,7 +22,6 @@ import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.slf4j.Logger;
 
 import java.io.Serializable;

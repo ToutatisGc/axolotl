@@ -1,8 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellBorder;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellFont;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellBorder;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellFont;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.CellConfigProperty;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;

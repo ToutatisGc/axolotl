@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlDictKey;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
 import lombok.Data;
 
 @Data

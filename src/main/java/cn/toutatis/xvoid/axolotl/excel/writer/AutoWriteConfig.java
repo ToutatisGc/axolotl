@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetTitle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.SheetTitle;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;

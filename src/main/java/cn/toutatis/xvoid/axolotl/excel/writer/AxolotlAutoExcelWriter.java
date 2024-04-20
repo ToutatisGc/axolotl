@@ -5,7 +5,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import com.google.common.collect.Lists;
@@ -83,6 +83,12 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         return null;
     }
 
+    /**
+     * 仅写入列表数据
+     * @param data 列表数据
+     * @return 写入结果
+     * @throws AxolotlWriteException 写入异常
+     */
     public AxolotlWriteResult write(List<?> data) throws AxolotlWriteException {
         return this.write(Lists.newArrayList(),data);
     }

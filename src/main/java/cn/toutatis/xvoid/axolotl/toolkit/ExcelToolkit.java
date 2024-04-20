@@ -2,8 +2,8 @@ package cn.toutatis.xvoid.axolotl.toolkit;
 
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetHeader;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.SheetHeader;
 import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;

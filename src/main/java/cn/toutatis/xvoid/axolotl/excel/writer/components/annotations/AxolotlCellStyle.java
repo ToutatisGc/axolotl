@@ -1,4 +1,4 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.components;
+package cn.toutatis.xvoid.axolotl.excel.writer.components.annotations;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -14,15 +14,16 @@ import java.lang.annotation.Target;
  * 自定义样式注解
  * 效果与AxolotlCellStyle一致
  * @author Toutatis_Gc
+ * TODO 将注解转换为CellStyle
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AxolotlCellStyleAnno {
+public @interface AxolotlCellStyle {
 
     /**
      * 前景色
      */
-    short[] foregroundColor() default {0,0,0};
+    short[] foregroundColor() default {255,255,255};
 
     /**
      * 填充模式

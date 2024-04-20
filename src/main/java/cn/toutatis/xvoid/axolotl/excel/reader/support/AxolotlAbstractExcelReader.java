@@ -534,6 +534,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
         Field field = recursionGetField(instance.getClass(),mappingInfo.getFieldName());
         assert field != null;
         field.setAccessible(true);
+        // TODO 赋值调用SETTER特性
+        // TODO 字典转换
         Object o = field.get(instance);
         if (o!= null){
             if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.FIELD_EXIST_OVERRIDE)){
