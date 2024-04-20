@@ -2,10 +2,12 @@ package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
 import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
 import cn.toutatis.xvoid.toolkit.clazz.XFunc;
+import lombok.Builder;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -94,6 +96,51 @@ public class Header {
         this.fieldName = fieldName;
         this.childs = List.of(childs);
         this.participateInCalculate = participateInCalculate;
+    }
+
+    public Header name(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public Header fieldName(String fieldName) {
+        this.fieldName = fieldName;
+        return this;
+    }
+
+    public Header columnPosition(int columnPosition) {
+        this.columnPosition = columnPosition;
+        return this;
+    }
+
+    public Header childs(Header... header) {
+        this.childs = List.of(header);
+        return this;
+    }
+
+    public Header childs(List<Header> childs) {
+        this.childs = childs;
+        return this;
+    }
+
+    public Header customCellStyle(CellStyle customCellStyle) {
+        this.customCellStyle = customCellStyle;
+        return this;
+    }
+
+    public Header axolotlCellStyle(AxolotlCellStyle axolotlCellStyle) {
+        this.axolotlCellStyle = axolotlCellStyle;
+        return this;
+    }
+
+    public Header columnWidth(int columnWidth) {
+        this.columnWidth = columnWidth;
+        return this;
+    }
+
+    public Header participateInCalculate(boolean participateInCalculate) {
+        this.participateInCalculate = participateInCalculate;
+        return this;
     }
 
     /**

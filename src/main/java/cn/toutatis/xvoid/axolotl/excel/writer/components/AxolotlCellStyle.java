@@ -1,6 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components;
 
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 
 @Data
@@ -96,4 +98,93 @@ public class AxolotlCellStyle {
      */
     private Boolean strikeout;
 
+    public AxolotlCellStyle foregroundColor(AxolotlColor foregroundColor) {
+        this.foregroundColor = foregroundColor;
+        return this;
+    }
+
+    public AxolotlCellStyle fillPatternType(FillPatternType fillPatternType) {
+        this.fillPatternType = fillPatternType;
+        return this;
+    }
+
+    public AxolotlCellStyle horizontalAlignment(HorizontalAlignment horizontalAlignment) {
+        this.horizontalAlignment = horizontalAlignment;
+        return this;
+    }
+
+    public AxolotlCellStyle verticalAlignment(VerticalAlignment verticalAlignment) {
+        this.verticalAlignment = verticalAlignment;
+        return this;
+    }
+
+    public AxolotlCellStyle borderTopStyle(BorderStyle borderTopStyle) {
+        this.borderTopStyle = borderTopStyle;
+        return this;
+    }
+
+    public AxolotlCellStyle topBorderColor(IndexedColors topBorderColor) {
+        this.topBorderColor = topBorderColor;
+        return this;
+    }
+
+    public AxolotlCellStyle borderBottomStyle(BorderStyle borderBottomStyle) {
+        this.borderBottomStyle = borderBottomStyle;
+        return this;
+    }
+
+    public AxolotlCellStyle bottomBorderColor(IndexedColors bottomBorderColor) {
+        this.bottomBorderColor = bottomBorderColor;
+        return this;
+    }
+
+    public AxolotlCellStyle borderLeftStyle(BorderStyle borderLeftStyle) {
+        this.borderLeftStyle = borderLeftStyle;
+        return this;
+    }
+
+    public AxolotlCellStyle leftBorderColor(IndexedColors leftBorderColor) {
+        this.leftBorderColor = leftBorderColor;
+        return this;
+    }
+
+    public AxolotlCellStyle borderRightStyle(BorderStyle borderRightStyle) {
+        this.borderRightStyle = borderRightStyle;
+        return this;
+    }
+
+    public AxolotlCellStyle rightBorderColor(IndexedColors rightBorderColor) {
+        this.rightBorderColor = rightBorderColor;
+        return this;
+    }
+
+    public AxolotlCellStyle fontName(String fontName) {
+        this.fontName = fontName;
+        return this;
+    }
+
+    public AxolotlCellStyle fontSize(Short fontSize) {
+        this.fontSize = fontSize;
+        return this;
+    }
+
+    public AxolotlCellStyle fontColor(IndexedColors fontColor) {
+        this.fontColor = fontColor;
+        return this;
+    }
+
+    public AxolotlCellStyle fontBold(Boolean fontBold) {
+        this.fontBold = fontBold;
+        return this;
+    }
+
+    public AxolotlCellStyle italic(Boolean italic) {
+        this.italic = italic;
+        return this;
+    }
+
+    public AxolotlCellStyle strikeout(Boolean strikeout) {
+        this.strikeout = strikeout;
+        return this;
+    }
 }

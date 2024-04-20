@@ -62,4 +62,53 @@ public class AxolotlCellBorder {
      */
     private IndexedColors rightBorderColor;
 
+    public AxolotlCellBorder baseBorderStyle(BorderStyle baseBorderStyle) {
+        this.baseBorderStyle = baseBorderStyle;
+        return this;
+    }
+
+    public AxolotlCellBorder baseBorderColor(IndexedColors baseBorderColor) {
+        this.baseBorderColor = baseBorderColor;
+        return this;
+    }
+
+    public AxolotlCellBorder borderTopStyle(BorderStyle borderTopStyle) {
+        this.borderTopStyle = borderTopStyle;
+        return this;
+    }
+
+    public AxolotlCellBorder topBorderColor(IndexedColors topBorderColor) {
+        this.topBorderColor = topBorderColor;
+        return this;
+    }
+
+    public AxolotlCellBorder borderBottomStyle(BorderStyle borderBottomStyle) {
+        this.borderBottomStyle = borderBottomStyle;
+        return this;
+    }
+
+    public AxolotlCellBorder bottomBorderColor(IndexedColors bottomBorderColor) {
+        this.bottomBorderColor = bottomBorderColor;
+        return this;
+    }
+
+    public AxolotlCellBorder borderLeftStyle(BorderStyle borderLeftStyle) {
+        this.borderLeftStyle = borderLeftStyle;
+        return this;
+    }
+
+    public AxolotlCellBorder leftBorderColor(IndexedColors leftBorderColor) {
+        this.leftBorderColor = leftBorderColor;
+        return this;
+    }
+
+    public AxolotlCellBorder borderRightStyle(BorderStyle borderRightStyle) {
+        this.borderRightStyle = borderRightStyle;
+        return this;
+    }
+
+    public AxolotlCellBorder rightBorderColor(IndexedColors rightBorderColor) {
+        this.rightBorderColor = rightBorderColor;
+        return this;
+    }
 }

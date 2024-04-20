@@ -42,5 +42,33 @@ public class AxolotlCellFont {
      */
     private Boolean strikeout;
 
+    public AxolotlCellFont fontName(String fontName) {
+        this.fontName = fontName;
+        return this;
+    }
 
+    public AxolotlCellFont bold(Boolean bold) {
+        this.bold = bold;
+        return this;
+    }
+
+    public AxolotlCellFont fontSize(Short fontSize) {
+        this.fontSize = fontSize;
+        return this;
+    }
+
+    public AxolotlCellFont fontColor(IndexedColors fontColor) {
+        this.fontColor = fontColor;
+        return this;
+    }
+
+    public AxolotlCellFont italic(Boolean italic) {
+        this.italic = italic;
+        return this;
+    }
+
+    public AxolotlCellFont strikeout(Boolean strikeout) {
+        this.strikeout = strikeout;
+        return this;
+    }
 }

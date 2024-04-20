@@ -725,15 +725,27 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 if(axolotlCellStyle.getFontName() != null){
                     headerStyle.setFontName(axolotlCellStyle.getFontName());
                 }
-                if(axolotlCellStyle.getFontSize() != -1){
+                if(axolotlCellStyle.getFontSize() != null){
                     headerStyle.setFontSize(axolotlCellStyle.getFontSize());
                 }
                 if(axolotlCellStyle.getFontColor() != null){
                     headerStyle.setFontColor(axolotlCellStyle.getFontColor());
                 }
-                headerStyle.setBold(axolotlCellStyle.isFontBold());
-                headerStyle.setItalic(axolotlCellStyle.isItalic());
-                headerStyle.setStrikeout(axolotlCellStyle.isStrikeout());
+                if(axolotlCellStyle.getFontBold() != null){
+                    headerStyle.setBold(axolotlCellStyle.getFontBold());
+                }
+                if(axolotlCellStyle.getItalic() != null){
+                    headerStyle.setItalic(axolotlCellStyle.getItalic());
+                }
+                if(axolotlCellStyle.getStrikeout() != null){
+                    headerStyle.setStrikeout(axolotlCellStyle.getStrikeout());
+                }
+                if(axolotlCellStyle.getHorizontalAlignment() != null){
+                    headerStyle.setHorizontalAlignment(axolotlCellStyle.getHorizontalAlignment());
+                }
+                if(axolotlCellStyle.getVerticalAlignment() != null){
+                    headerStyle.setVerticalAlignment(axolotlCellStyle.getVerticalAlignment());
+                }
                 debug(LOGGER,"["+header.getName()+"] Header内部样式配置读取完毕,优先级:中");
                 return createCellStyle(headerStyle);
             }else{

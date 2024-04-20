@@ -285,7 +285,7 @@ public class AutoWriteTest {
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
         commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme(new AxolotlDefaultStyleConfig()));
         //commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.$DEFAULT);
-        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS,true);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS,false);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
@@ -294,8 +294,19 @@ public class AutoWriteTest {
         commonWriteConfig.setBlankValue("-");
         commonWriteConfig.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
-        headers.add(new Header("杆塔及拉线","one"));
-        headers.add(new Header("导、地线","two"));
+
+        /*AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
+        axolotlCellStyle.setForegroundColor(new AxolotlColor(155,123,147));
+        Header header = new Header("杆塔及拉线", "one");
+        header.setAxolotlCellStyle(axolotlCellStyle);
+        headers.add(header);*/
+
+        headers.add(new Header("导、地线","two")
+                .axolotlCellStyle(
+                        new AxolotlCellStyle()
+                                .foregroundColor(new AxolotlColor(155,123,147))
+                )
+        );
         headers.add(new Header("绝缘子","three"));
         headers.add(new Header("金属附件及附属设备","four"));
         headers.add(new Header("基础及接地","five"));
