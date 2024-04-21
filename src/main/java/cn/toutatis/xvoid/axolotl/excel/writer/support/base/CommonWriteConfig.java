@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.support.base;
 
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
+import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +71,11 @@ public class CommonWriteConfig {
      * 字典映射
      */
     private HashBasedTable<Integer,String,Map<String,String>> dictionaryMapping = HashBasedTable.create();
+
+    /**
+     * 字典映射策略
+     */
+    private HashMap<Integer,Map<DictMappingPolicy,String>> dictMappingPolicys = new LinkedHashMap<>();
 
     /**
      * 字典键值对名称指定
@@ -202,8 +209,56 @@ public class CommonWriteConfig {
      * @return 字典映射
      */
     public Map<String, String> getDict(int sheetIndex, String field) {
-        return dictionaryMapping.get(sheetIndex,field);
+        Map<String, String> dict = dictionaryMapping.get(sheetIndex, field);
+        if(dict == null){
+            return new LinkedHashMap<>();
+        }
+        return dict;
     }
+
+    /**
+     * 设置字典映射策略
+     * @param sheetIndex sheet索引
+     * @param dictMappingPolicy 映射策略
+     * @param defaultValue 字典未匹配到的默认值
+     */
+    public void setDictMappingPolicys(int sheetIndex,DictMappingPolicy dictMappingPolicy,String defaultValue){
+        if(dictMappingPolicy != null){
+            dictMappingPolicys.put(sheetIndex,Map.of(dictMappingPolicy,defaultValue));
+        }
+    }
+
+    /**
+     * 设置字典映射策略
+     * @param dictMappingPolicy 映射策略
+     * @param defaultValue 字典未匹配到的默认值
+     */
+    public void setDictMappingPolicys(DictMappingPolicy dictMappingPolicy,String defaultValue){
+        this.setDictMappingPolicys(getSheetIndex(),dictMappingPolicy,defaultValue);
+    }
+
+    /**
+     * 获取字典映射策略
+     * @param sheetIndex sheet索引
+     * @return
+     */
+    public Map<DictMappingPolicy, String> getDictMappingPolicy(int sheetIndex) {
+        Map<DictMappingPolicy, String> dictMappingPolicy = dictMappingPolicys.get(sheetIndex);
+        if(dictMappingPolicy == null || dictMappingPolicy.isEmpty()){
+            setDefaultDictMappingPolicy(sheetIndex);
+            return dictMappingPolicys.get(sheetIndex);
+        }
+        return dictMappingPolicy;
+    }
+
+    /**
+     * 设置字典默认映射策略
+     * @param sheetIndex sheet索引
+     */
+    private void setDefaultDictMappingPolicy(int sheetIndex) {
+        setDictMappingPolicys(sheetIndex,DictMappingPolicy.KEEP_ORIGIN,"");
+    }
+
     /**
      * 关闭输出流
      */

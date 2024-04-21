@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
@@ -79,7 +80,11 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         }else {
             sheet = workbook.getSheetAt(switchSheetIndex);
         }
-        styleRender.renderData(sheet, datas);
+        if(datas != null){
+            styleRender.renderData(sheet, datas);
+        }else{
+            styleRender.renderData(sheet, new ArrayList<>());
+        }
         return null;
     }
 

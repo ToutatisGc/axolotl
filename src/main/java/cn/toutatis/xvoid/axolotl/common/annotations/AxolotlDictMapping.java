@@ -35,14 +35,4 @@ public @interface AxolotlDictMapping {
      */
     String[] staticDict() default {};
 
-    /**
-     * 字典未匹配到的默认值
-     */
-    String defaultValue() default "";
-
-    /**
-     * 字典映射策略
-     */
-    DictMappingPolicy mappingPolicy() default DictMappingPolicy.KEEP_ORIGIN;
-
 }

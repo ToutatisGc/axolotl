@@ -206,22 +206,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      //   XSSFCellStyle commonCellStyle = (XSSFCellStyle) createCellStyle(commonCellPropHolder);
         for (Object datum : data) {
             // 获取对象属性
-            HashMap<String, Object> dataMap = new LinkedHashMap<>();
-            if (datum instanceof Map map) {
-                dataMap.putAll(map);
-            }else{
-                List<Field> fields = ReflectToolkit.getAllFields(datum.getClass(), true);
-                fields.forEach(field -> {
-                    field.setAccessible(true);
-                    String fieldName = field.getName();
-                    try {
-                        dataMap.put(fieldName,field.get(datum));
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                        throw new AxolotlWriteException("获取对象字段错误");
-                    }
-                });
-            }
+            HashMap<String, Object> dataMap = this.getDataMap(datum);
             // 初始化内容
             HashMap<Integer, Integer> writtenColumnMap = new HashMap<>();
             int switchSheetIndex = getContext().getSwitchSheetIndex();
@@ -237,6 +222,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
             boolean columnMappingEmpty = columnMapping.isEmpty();
             // 写入序号
+            //序号列索引
             int serialNumberColumnNumber = -1;
             boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER);
             if (autoInsertSerialNumber){
@@ -272,7 +258,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
                 //读取内容样式配置
                 CellConfigProperty dataConfig = new CellConfigProperty();
-                configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(fieldName, value, columnNumber, alreadyWriteRow));
+                configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(datum, fieldName, value, columnNumber, alreadyWriteRow));
                 CellPropertyHolder dataCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(dataConfig, globalCellPropHolder);
                 if(dataCellPropHolder.getRowHeight() == null){
                     dataCellPropHolder.setRowHeight(DATA_ROW_HEIGHT);
@@ -291,7 +277,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
                 // 对单元格设置样式
                 cell.setCellStyle(createCellStyle(dataCellPropHolder));
-                FieldInfo fieldInfo = new FieldInfo(fieldName, value, columnNumber ,alreadyWriteRow);
+                FieldInfo fieldInfo = new FieldInfo(datum, fieldName, value, columnNumber ,alreadyWriteRow);
                 // 渲染数据到单元格
                 this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
                 if (columnMappingEmpty){
@@ -301,6 +287,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 }
             }
             if(serialNumberColumnNumber != -1){
+                //没有指定 程序写入单元格样式
                 if(!dataMap.isEmpty()){
                     //取编号后第一个单元格的样式
                     CellStyle cellStyle = dataRow.getCell(serialNumberColumnNumber+1).getCellStyle();

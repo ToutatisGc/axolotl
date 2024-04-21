@@ -1,6 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMappingPolicy;
+import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriteIgnore;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
@@ -42,7 +44,7 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.*;
 
-import static cn.hutool.core.bean.BeanUtil.getFieldName;
+import static cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy.*;
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
@@ -525,7 +527,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          * 数据实例
          * TODO GETTER特性调用本身字段get方法
          */
-        private Object dataInstance;
+        private final Object dataInstance;
 
         /**
          * 属性名称
@@ -547,7 +549,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          */
         private final int rowIndex;
 
-        public FieldInfo(String fieldName, Object value, int columnIndex,int rowIndex) {
+        public FieldInfo(Object dataInstance, String fieldName, Object value, int columnIndex,int rowIndex) {
+            this.dataInstance = dataInstance;
             if (value != null){
                 this.clazz = value.getClass();
             }
@@ -568,55 +571,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     @SuppressWarnings({"rawtypes","unchecked"})
     public void defaultRenderNextData(SXSSFSheet sheet,Object data,CellStyle rowStyle){
         // 获取对象属性
-        HashMap<String, Object> dataMap = new LinkedHashMap<>();
-        if (data instanceof Map map) {
-            dataMap.putAll(map);
-        }else{
-            Class<?> dataClass = data.getClass();
-            if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD)){
-                ArrayList<Method> getterMethods = ReflectToolkit.getGetterMethods(dataClass);
-                for (Method getterMethod : getterMethods) {
-                    if (Modifier.isPublic(getterMethod.getModifiers())){
-                        AxolotlWriteIgnore ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
-                        if (ignore != null){continue;}
-                        String fieldName = ReflectToolkit.convertGetterToFieldName(getterMethod.getName());
-                        Field field = FieldToolkit.recursionGetField(dataClass, fieldName);
-                        if (field != null){
-                            ignore = field.getAnnotation(AxolotlWriteIgnore.class);
-                            if (ignore != null){continue;}
-                        }
-                        int parameterCount = getterMethod.getParameterCount();
-                        if (parameterCount == 0){
-                            Object invokeValue = null;
-                            try {
-
-                                invokeValue = getterMethod.invoke(data);
-                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                e.printStackTrace();
-                                throw new AxolotlWriteException(""+e.getMessage());
-                            }
-                            dataMap.put(fieldName,invokeValue);
-                        }else{
-                            LoggerHelper.debug(LOGGER,format("方法[%s]参数数量大于0将跳过",get));
-                        }
-                    }else{
-
-                    }
-                    }
-            }else {
-                List<Field> fields = ReflectToolkit.getAllFields(dataClass, true);
-                fields.forEach(field -> {
-                    field.setAccessible(true);
-                    String fieldName = field.getName();
-                    try {
-                        dataMap.put(fieldName, field.get(data));
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                        throw new AxolotlWriteException("获取对象字段错误");
-                    }
-                });
-            }
-        }
+        HashMap<String, Object> dataMap = getDataMap(data);
         // 初始化内容
         HashMap<Integer, Integer> writtenColumnMap = new HashMap<>();
         int switchSheetIndex = getContext().getSwitchSheetIndex();
@@ -658,7 +613,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
             Object value = dataEntry.getValue();
             int columnNumber = columnMappingEmpty ? writtenColumn : columnMapping.get(fieldName);
-            FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
+            FieldInfo fieldInfo = new FieldInfo(data, fieldName, value,columnNumber ,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
             this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
@@ -694,6 +649,73 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     }
 
     /**
+     * 获取对象属性
+     * @param data 数据对象
+     * @return
+     */
+    public HashMap<String, Object> getDataMap(Object data){
+        if(data == null){
+            return new LinkedHashMap<>();
+        }
+        // 获取对象属性
+        HashMap<String, Object> dataMap = new LinkedHashMap<>();
+        if (data instanceof Map map) {
+            dataMap.putAll(map);
+        }else{
+            Class<?> dataClass = data.getClass();
+            if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD)){
+                ArrayList<Method> getterMethods = ReflectToolkit.getGetterMethods(dataClass);
+                for (Method getterMethod : getterMethods) {
+                    if (Modifier.isPublic(getterMethod.getModifiers())){
+                        AxolotlWriteIgnore ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
+                        if (ignore != null){continue;}
+                        String fieldName = null;
+                        try {
+                            fieldName = ReflectToolkit.convertGetterToFieldName(getterMethod.getName());
+                        } catch (Exception e) {
+                            LoggerHelper.debug(LOGGER,format("方法[%s]解析属性名称失败将跳过",getterMethod.getName()));
+                            continue;
+                        }
+                        Field field = FieldToolkit.recursionGetField(dataClass, fieldName);
+                        if (field != null){
+                            ignore = field.getAnnotation(AxolotlWriteIgnore.class);
+                            if (ignore != null){continue;}
+                        }
+                        int parameterCount = getterMethod.getParameterCount();
+                        if (parameterCount == 0){
+                            Object invokeValue = null;
+                            try {
+                                invokeValue = getterMethod.invoke(data);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                                throw new AxolotlWriteException("调用getter获取属性值失败:"+e.getMessage());
+                            }
+                            dataMap.put(fieldName,invokeValue);
+                        }else{
+                            LoggerHelper.debug(LOGGER,format("方法[%s]参数数量大于0将跳过",getterMethod.getName()));
+                        }
+                    }else{
+                        LoggerHelper.debug(LOGGER,format("方法[%s]为私有方法将跳过",getterMethod.getName()));
+                    }
+                }
+            }else {
+                List<Field> fields = ReflectToolkit.getAllFields(dataClass, true);
+                fields.forEach(field -> {
+                    field.setAccessible(true);
+                    String fieldName = field.getName();
+                    try {
+                        dataMap.put(fieldName, field.get(data));
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                        throw new AxolotlWriteException("获取对象字段错误");
+                    }
+                });
+            }
+        }
+        return dataMap;
+    }
+
+    /**
      * 渲染列数据
      * @param sheet 工作表
      * @param fieldInfo 字段信息
@@ -721,7 +743,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 if(defaultVal == null){
                     defaultVal = writeConfig.getBlankValue();
                 }
-                fieldInfo = new FieldInfo(fieldInfo.getFieldName(),defaultVal,fieldInfo.getColumnIndex(),fieldInfo.getRowIndex());
+                fieldInfo = new FieldInfo(fieldInfo.getDataInstance(),fieldInfo.getFieldName(),defaultVal,fieldInfo.getColumnIndex(),fieldInfo.getRowIndex());
                 fieldInfo.setClazz(String.class);
                 calculateColumns(fieldInfo);
                 int columnIndex = fieldInfo.getColumnIndex();
@@ -731,65 +753,181 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 calculateColumns(fieldInfo);
                 // TODO GET方法,用ReflectToolkit,同步你的可配置主题相同代码
                 // TODO 字典转换
-
                 value = writeConfig.getDataInverter().convert(value);
-                //字典值转换
-                Object dataInstance = fieldInfo.getDataInstance();
-                if(!(dataInstance instanceof Map<?,?>)){
-                    Field field = FieldToolkit.recursionGetField(dataInstance.getClass(), fieldInfo.getFieldName());
-                    AxolotlDictMapping dictMappingInfo = field.getAnnotation(AxolotlDictMapping.class);
-                    if (dictMappingInfo != null){
-                        int sheetIndex = context.getSwitchSheetIndex();
-                        if(dictMappingInfo.isUsage()){
-                            int[] sheetIndexs = dictMappingInfo.effectSheetIndex();
-                            boolean isUsage = false;
-                            if(sheetIndexs.length != 0){
-                                for (int index : sheetIndexs) {
-                                    if(index == sheetIndex){
-                                        isUsage = true;
-                                        break;
-                                    }
-                                }
-                            }else{
-                                isUsage = true;
-                            }
-                            if(isUsage){
-                                //映射字段名
-                                String mappingFieldName;
-                                if(StringUtils.isNotEmpty(dictMappingInfo.value())){
-                                    mappingFieldName = dictMappingInfo.value();
-                                }else{
-                                    mappingFieldName = fieldInfo.fieldName;
-                                }
-                                Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, mappingFieldName);
-                                if(!dictMapping.isEmpty()){
-
-
-
-                                }
-
-
-                            }
-                        }
-                    }
-                    }
-
-
-
-
-
-
-
-
-
-
-
-
+                //设置单元格值
                 int columnIndex = fieldInfo.getColumnIndex();
-                cell.setCellValue(value.toString());
+                //字典值转换
+                cell.setCellValue(convertDictCodeToName(fieldInfo, value.toString()));
                 unmappedColumnCount.remove(columnIndex);
             }
         }
+    }
+
+    /**
+     * 字典值转换 从编码到名称
+     * @param fieldInfo 属性相关信息
+     * @param value 单元格值
+     * @return
+     */
+    public String convertDictCodeToName(FieldInfo fieldInfo,String value){
+        Object dataInstance = fieldInfo.getDataInstance();
+        int sheetIndex = context.getSwitchSheetIndex();
+        if(!(dataInstance instanceof Map<?,?>)){
+            Field field = FieldToolkit.recursionGetField(dataInstance.getClass(), fieldInfo.getFieldName());
+            if(field != null){
+                AxolotlDictMapping dictMappingInfo = field.getAnnotation(AxolotlDictMapping.class);
+                if (dictMappingInfo != null){
+                    //带有 AxolotlDictMapping 注解的处理
+                    //是否进行字典值处理
+                    if(dictMappingInfo.isUsage()){
+                        int[] sheetIndexs = dictMappingInfo.effectSheetIndex();
+                        boolean isUsage = false;
+                        if(sheetIndexs.length != 0){
+                            for (int index : sheetIndexs) {
+                                if(index == sheetIndex){
+                                    isUsage = true;
+                                    break;
+                                }
+                            }
+                        }else{
+                            isUsage = true;
+                        }
+                        if(isUsage){
+                            //映射字段名
+                            String mappingFieldName;
+                            if(StringUtils.isNotEmpty(dictMappingInfo.value())){
+                                mappingFieldName = dictMappingInfo.value();
+                            }else{
+                                mappingFieldName = fieldInfo.getFieldName();
+                            }
+                            Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, mappingFieldName);
+                            //静态字典
+                            if(dictMappingInfo.staticDict().length > 0 && dictMappingInfo.staticDict().length%2 == 0){
+                                //使用静态字典处理
+                                dictMapping = new LinkedHashMap<>();
+                                for (int i = 0; i < dictMappingInfo.staticDict().length; i++) {
+                                    if (i % 2 != 0) {
+                                        dictMapping.put(dictMappingInfo.staticDict()[i-1],dictMappingInfo.staticDict()[i]);
+                                    }
+                                }
+                            }
+                            if(!dictMapping.isEmpty()){
+                                String dictName = dictMapping.get(value);
+                                if(dictName == null){
+                                    AxolotlDictMappingPolicy dictMappingPolicyAnno = field.getAnnotation(AxolotlDictMappingPolicy.class);
+                                    if(dictMappingPolicyAnno != null){
+                                        if(dictMappingPolicyAnno.mappingPolicy().equals(KEEP_ORIGIN)){
+                                            //保留字段原值
+                                            //  value = value.toString();
+                                        }else if(dictMappingPolicyAnno.mappingPolicy().equals(USE_DEFAULT)){
+                                            //使用字段默认值
+                                            value = dictMappingPolicyAnno.defaultValue();
+                                        }else if(dictMappingPolicyAnno.mappingPolicy().equals(NULL_VALUE)){
+                                            //设置为空
+                                            value = null;
+                                        }
+                                    }else{
+                                        Map<DictMappingPolicy, String> dictMappingPolicy = writeConfig.getDictMappingPolicy(sheetIndex);
+                                        if(dictMappingPolicy.containsKey(KEEP_ORIGIN)){
+                                            //保留字段原值
+                                            //  value = value.toString();
+                                        }else if(dictMappingPolicy.containsKey(USE_DEFAULT)){
+                                            //使用字段默认值
+                                            value = dictMappingPolicy.get(USE_DEFAULT);
+                                        }else if(dictMappingPolicy.containsKey(NULL_VALUE)){
+                                            //设置为空
+                                            value = null;
+                                        }
+                                    }
+                                }else{
+                                    value = dictName;
+                                }
+                            }
+                        }
+                    }
+                }else{
+                    //没有 AxolotlDictMapping 注解的处理
+                    Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, fieldInfo.getFieldName());
+                    if(!dictMapping.isEmpty()){
+                        String dictName = dictMapping.get(value);
+                        if(dictName == null){
+                            AxolotlDictMappingPolicy dictMappingPolicyAnno = field.getAnnotation(AxolotlDictMappingPolicy.class);
+                            if(dictMappingPolicyAnno != null){
+                                if(dictMappingPolicyAnno.mappingPolicy().equals(KEEP_ORIGIN)){
+                                    //保留字段原值
+                                    //  value = value.toString();
+                                }else if(dictMappingPolicyAnno.mappingPolicy().equals(USE_DEFAULT)){
+                                    //使用字段默认值
+                                    value = dictMappingPolicyAnno.defaultValue();
+                                }else if(dictMappingPolicyAnno.mappingPolicy().equals(NULL_VALUE)){
+                                    //设置为空
+                                    value = null;
+                                }
+                            }else{
+                                Map<DictMappingPolicy, String> dictMappingPolicy = writeConfig.getDictMappingPolicy(sheetIndex);
+                                if(dictMappingPolicy.containsKey(KEEP_ORIGIN)){
+                                    //保留字段原值
+                                    //  value = value.toString();
+                                }else if(dictMappingPolicy.containsKey(USE_DEFAULT)){
+                                    //使用字段默认值
+                                    value = dictMappingPolicy.get(USE_DEFAULT);
+                                }else if(dictMappingPolicy.containsKey(NULL_VALUE)){
+                                    //设置为空
+                                    value = null;
+                                }
+                            }
+                        }else{
+                            value = dictName;
+                        }
+                    }
+                }
+            }else{
+                //getter方法 使用全局字典值映射策略
+                Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, fieldInfo.getFieldName());
+                if(!dictMapping.isEmpty()){
+                    String dictName = dictMapping.get(value);
+                    if(dictName == null){
+                        Map<DictMappingPolicy, String> dictMappingPolicy = writeConfig.getDictMappingPolicy(sheetIndex);
+                        if(dictMappingPolicy.containsKey(KEEP_ORIGIN)){
+                            //保留字段原值
+                            //  value = value.toString();
+                        }else if(dictMappingPolicy.containsKey(USE_DEFAULT)){
+                            //使用字段默认值
+                            value = dictMappingPolicy.get(USE_DEFAULT);
+                        }else if(dictMappingPolicy.containsKey(NULL_VALUE)){
+                            //设置为空
+                            value = null;
+                        }
+                    }else{
+                        value = dictName;
+                    }
+                }
+            }
+        }else{
+            //map 使用全局字典值映射策略  fieldName可能为null 需要判断
+            if(fieldInfo.getFieldName() != null){
+                Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, fieldInfo.getFieldName());
+                if(!dictMapping.isEmpty()){
+                    String dictName = dictMapping.get(value);
+                    if(dictName == null){
+                        Map<DictMappingPolicy, String> dictMappingPolicy = writeConfig.getDictMappingPolicy(sheetIndex);
+                        if(dictMappingPolicy.containsKey(KEEP_ORIGIN)){
+                            //保留字段原值
+                            //  value = value.toString();
+                        }else if(dictMappingPolicy.containsKey(USE_DEFAULT)){
+                            //使用字段默认值
+                            value = dictMappingPolicy.get(USE_DEFAULT);
+                        }else if(dictMappingPolicy.containsKey(NULL_VALUE)){
+                            //设置为空
+                            value = null;
+                        }
+                    }else{
+                        value = dictName;
+                    }
+                }
+            }
+        }
+        return value;
     }
 
     /**
