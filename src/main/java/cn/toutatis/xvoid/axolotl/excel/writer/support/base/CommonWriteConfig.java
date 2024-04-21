@@ -222,7 +222,7 @@ public class CommonWriteConfig {
      * @param dictMappingPolicy 映射策略
      * @param defaultValue 字典未匹配到的默认值
      */
-    public void setDictMappingPolicys(int sheetIndex,DictMappingPolicy dictMappingPolicy,String defaultValue){
+    public void setDictMappingPolicy(int sheetIndex,DictMappingPolicy dictMappingPolicy,String defaultValue){
         if(dictMappingPolicy != null){
             dictMappingPolicys.put(sheetIndex,Map.of(dictMappingPolicy,defaultValue));
         }
@@ -233,8 +233,8 @@ public class CommonWriteConfig {
      * @param dictMappingPolicy 映射策略
      * @param defaultValue 字典未匹配到的默认值
      */
-    public void setDictMappingPolicys(DictMappingPolicy dictMappingPolicy,String defaultValue){
-        this.setDictMappingPolicys(getSheetIndex(),dictMappingPolicy,defaultValue);
+    public void setDictMappingPolicy(DictMappingPolicy dictMappingPolicy,String defaultValue){
+        this.setDictMappingPolicy(getSheetIndex(),dictMappingPolicy,defaultValue);
     }
 
     /**
@@ -256,7 +256,7 @@ public class CommonWriteConfig {
      * @param sheetIndex sheet索引
      */
     private void setDefaultDictMappingPolicy(int sheetIndex) {
-        setDictMappingPolicys(sheetIndex,DictMappingPolicy.KEEP_ORIGIN,"");
+        setDictMappingPolicy(sheetIndex,DictMappingPolicy.KEEP_ORIGIN,"");
     }
 
     /**
