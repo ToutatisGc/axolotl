@@ -279,7 +279,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 cell.setCellStyle(createCellStyle(dataCellPropHolder));
                 FieldInfo fieldInfo = new FieldInfo(datum, fieldName, value, columnNumber ,alreadyWriteRow);
                 // 渲染数据到单元格
-                this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
+//                this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
                 if (columnMappingEmpty){
                     writtenColumnMap.put(writtenColumn++,1);
                 }else{
