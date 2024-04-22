@@ -35,4 +35,6 @@ public @interface AxolotlDictMapping {
      */
     String[] staticDict() default {};
 
+    boolean useManualConfigPriority() default true;
+
 }
