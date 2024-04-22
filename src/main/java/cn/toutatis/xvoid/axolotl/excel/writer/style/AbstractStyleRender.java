@@ -567,7 +567,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
     }
 
-    private Map<Integer, Integer> unmappedColumnCount;
+    protected Map<Integer, Integer> unmappedColumnCount;
 
     /**
      * 默认行为渲染数据

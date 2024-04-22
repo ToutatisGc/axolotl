@@ -197,7 +197,6 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         return headerWriteResult;
     }
 
-    private Map<Integer, Integer> unmappedColumnCount;
     private boolean alreadyNotice = false;
     @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
@@ -280,6 +279,8 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 FieldInfo fieldInfo = new FieldInfo(datum, fieldName, value, columnNumber ,alreadyWriteRow);
                 // 渲染数据到单元格
 //                this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
+                this.renderColumn(fieldInfo,cell);
+                unmappedColumnCount.remove(fieldInfo.getColumnIndex());
                 if (columnMappingEmpty){
                     writtenColumnMap.put(writtenColumn++,1);
                 }else{
