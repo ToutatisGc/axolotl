@@ -1,9 +1,12 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support.base;
 
+import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
 import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DefaultDataInverter;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -73,15 +76,21 @@ public class CommonWriteConfig {
     private HashBasedTable<Integer,String,Map<String,String>> dictionaryMapping = HashBasedTable.create();
 
     /**
-     * 字典映射策略
+     * Map映射指定键名
      */
-    private HashMap<Integer,Map<DictMappingPolicy,String>> dictMappingPolicys = new LinkedHashMap<>();
+    public static final String DICT_MAP_TYPE_POLICY_PREFIX = Meta.MODULE_NAME.toUpperCase()+"_DICT_MAPPING_POLICY_%s";
+    public static final String DICT_MAP_TYPE_DEFAULT_PREFIX = Meta.MODULE_NAME.toUpperCase()+"_DICT_MAPPING_DEFAULT_%s";
 
     /**
      * 字典键值对名称指定
      */
     private String _dictKey = "key";
     private String _dictValue = "value";
+
+    /**
+     * 数据转换器
+     */
+    private DataInverter<?> dataInverter = new DefaultDataInverter();
 
     /**
      * 添加读取策略
@@ -214,49 +223,6 @@ public class CommonWriteConfig {
             return new LinkedHashMap<>();
         }
         return dict;
-    }
-
-    /**
-     * 设置字典映射策略
-     * @param sheetIndex sheet索引
-     * @param dictMappingPolicy 映射策略
-     * @param defaultValue 字典未匹配到的默认值
-     */
-    public void setDictMappingPolicy(int sheetIndex,DictMappingPolicy dictMappingPolicy,String defaultValue){
-        if(dictMappingPolicy != null){
-            dictMappingPolicys.put(sheetIndex,Map.of(dictMappingPolicy,defaultValue));
-        }
-    }
-
-    /**
-     * 设置字典映射策略
-     * @param dictMappingPolicy 映射策略
-     * @param defaultValue 字典未匹配到的默认值
-     */
-    public void setDictMappingPolicy(DictMappingPolicy dictMappingPolicy,String defaultValue){
-        this.setDictMappingPolicy(getSheetIndex(),dictMappingPolicy,defaultValue);
-    }
-
-    /**
-     * 获取字典映射策略
-     * @param sheetIndex sheet索引
-     * @return
-     */
-    public Map<DictMappingPolicy, String> getDictMappingPolicy(int sheetIndex) {
-        Map<DictMappingPolicy, String> dictMappingPolicy = dictMappingPolicys.get(sheetIndex);
-        if(dictMappingPolicy == null || dictMappingPolicy.isEmpty()){
-            setDefaultDictMappingPolicy(sheetIndex);
-            return dictMappingPolicys.get(sheetIndex);
-        }
-        return dictMappingPolicy;
-    }
-
-    /**
-     * 设置字典默认映射策略
-     * @param sheetIndex sheet索引
-     */
-    private void setDefaultDictMappingPolicy(int sheetIndex) {
-        setDictMappingPolicy(sheetIndex,DictMappingPolicy.KEEP_ORIGIN,"");
     }
 
     /**

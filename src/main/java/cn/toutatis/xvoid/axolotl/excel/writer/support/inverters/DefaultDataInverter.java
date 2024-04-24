@@ -8,6 +8,11 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+/**
+ * <p>默认数据转换器</p>
+ * <p>写入器写入时会将值默认转换为常用格式的字符串以保证变量以标准字面量的形式展示，不会被第三方软件影响导出效果。</p>
+ * @author Toutatis_Gc
+ */
 public class DefaultDataInverter implements DataInverter<Object> {
 
     @Override
@@ -15,7 +20,7 @@ public class DefaultDataInverter implements DataInverter<Object> {
         if (value != null){
             Class<?> valueClass = value.getClass();
             if (valueClass == Double.class || valueClass == Float.class){
-                return String.format("%.2f",value);
+                return String.format("%."+AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE+"f", value);
             }
             if (valueClass == BigDecimal.class){
                 BigDecimal decimal = (BigDecimal) value;

@@ -60,10 +60,6 @@ public class AutoWriteConfig extends CommonWriteConfig {
      */
     private ExcelStyleRender styleRender = ExcelWriteThemes.$DEFAULT.getRender();
 
-    /**
-     * 数据转换器
-     */
-    private DataInverter<?> dataInverter = new DefaultDataInverter();
 
     /**
      * 空值填充字符

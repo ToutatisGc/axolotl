@@ -72,7 +72,12 @@ public enum ExcelWritePolicy {
      * 取消则直接使用反射字段值
      * TODO 使用ReflectToolkit
      */
-    SIMPLE_USE_GETTER_METHOD(Type.BOOLEAN, true, false)
+    SIMPLE_USE_GETTER_METHOD(Type.BOOLEAN, true, false),
+
+    /**
+     * 是否使用字典转换
+     */
+    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, true, false)
     ;
 
     /**

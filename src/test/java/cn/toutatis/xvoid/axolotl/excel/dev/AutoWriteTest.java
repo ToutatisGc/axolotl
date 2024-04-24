@@ -87,6 +87,7 @@ public class AutoWriteTest {
         List<Header> headers = new ArrayList<>();
         headers.add(new Header("代码","code"));
         headers.add(new Header("简称","intro"));
+        headers.add(new Header("是否特别处理",StockEntity::getSt));
         headers.add(new Header("最新日期","localDateTimeStr"));
         headers.add(new Header("最新收盘价（元）",StockEntity::getClosingPrice));
         headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
@@ -100,6 +101,7 @@ public class AutoWriteTest {
         ArrayList<StockEntity> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             StockEntity stockEntity = new StockEntity();
+            stockEntity.setSt(i % 2 == 0 ? "1":"0");
             stockEntity.setCode(RandomStringUtils.randomNumeric(8));
             StringBuilder sb = new StringBuilder();
             for (int i1 = 0; i1 < 10; i1++) {

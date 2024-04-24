@@ -437,7 +437,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                 calculateAddress.setCalculatedValue(calculatedValue);
                             }
                             // 暂时只适配String类型
-                            writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
+                            writableCell.setCellValue(cellAddress.replacePlaceholder(writeConfig.getDataInverter().convert(value).toString()));
                         }
                         isWritten = true;
                     }else if (designConditions.getNonWrittenAddress().containsKey(fieldMappingKey)){

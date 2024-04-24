@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import lombok.Data;
 
@@ -13,6 +14,9 @@ public class StockEntity {
     private String code;
 
     private String intro;
+
+    @AxolotlDictMapping(staticDict = {"1","是","0","否"})
+    private String st;
 
     private Double pts;
 

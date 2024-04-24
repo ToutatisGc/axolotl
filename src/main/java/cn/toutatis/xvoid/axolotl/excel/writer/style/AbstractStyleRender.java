@@ -1,13 +1,10 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
-import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
-import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMappingPolicy;
-import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
+import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriteIgnore;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBox;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
@@ -24,7 +21,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -44,7 +40,6 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.*;
 
-import static cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy.*;
 import static cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
@@ -664,7 +659,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         // 获取对象属性
         HashMap<String, Object> dataMap = new LinkedHashMap<>();
         if (data instanceof Map map) {
-            dataMap.putAll(map);
+            map.keySet().forEach(key -> {
+                if (!key.toString().startsWith(Meta.MODULE_NAME.toUpperCase())){
+                    dataMap.put(key.toString(), map.get(key));
+                }
+            });
         }else{
             Class<?> dataClass = data.getClass();
             if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD)){

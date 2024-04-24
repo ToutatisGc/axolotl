@@ -6,10 +6,11 @@ import java.lang.annotation.*;
  * TODO 字典映射功能
  * 字典映射
  * @author Toutatis_Gc
+ * @since 1.0.15
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
+@Target({ElementType.FIELD,ElementType.METHOD})
 public @interface AxolotlDictMapping {
 
     /**
@@ -35,6 +36,21 @@ public @interface AxolotlDictMapping {
      */
     String[] staticDict() default {};
 
+    /**
+     * <p>是否使用手动配置优先级</p>
+     * <p>手动配置优先级高于静态字典</p>
+     */
     boolean useManualConfigPriority() default true;
+
+    /**
+     * 字典未匹配到的默认值
+     * 只配置一个值即可，忽略其他值类型
+     */
+    String[] defaultValue() default {};
+
+    /**
+     * 字典映射策略
+     */
+    DictMappingPolicy mappingPolicy() default DictMappingPolicy.KEEP_ORIGIN;
 
 }
