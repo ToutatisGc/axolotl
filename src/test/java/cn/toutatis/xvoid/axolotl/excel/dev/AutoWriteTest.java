@@ -7,10 +7,10 @@ import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.StockEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlSelectBox;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBox;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AxolotlDefaultStyleConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.standard.AxolotlMidnightTheme;
@@ -20,7 +20,6 @@ import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
@@ -89,6 +88,7 @@ public class AutoWriteTest {
         List<Header> headers = new ArrayList<>();
         headers.add(new Header("代码","code"));
         headers.add(new Header("简称","intro"));
+        headers.add(new Header("是否特别处理",StockEntity::getSt));
         headers.add(new Header("最新日期","localDateTimeStr"));
         headers.add(new Header("最新收盘价（元）",StockEntity::getClosingPrice));
         headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
@@ -102,6 +102,7 @@ public class AutoWriteTest {
         ArrayList<StockEntity> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             StockEntity stockEntity = new StockEntity();
+            stockEntity.setSt(i % 2 == 0 ? "1":"0");
             stockEntity.setCode(RandomStringUtils.randomNumeric(8));
             StringBuilder sb = new StringBuilder();
             for (int i1 = 0; i1 < 10; i1++) {
@@ -157,7 +158,7 @@ public class AutoWriteTest {
     }
 
     @Test
-    public void testAnno() throws FileNotFoundException {
+    public void testAnno() throws IOException {
         List<AnnoEntity> list = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             AnnoEntity annoEntity = new AnnoEntity();
@@ -170,6 +171,7 @@ public class AutoWriteTest {
         autoWriteConfig.setOutputStream(new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx"));
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
         autoExcelWriter.write(list);
+        autoExcelWriter.close();
     }
 
     @Test
@@ -286,7 +288,7 @@ public class AutoWriteTest {
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
         commonWriteConfig.setThemeStyleRender(new AxolotlConfigurableTheme(new AxolotlDefaultStyleConfig()));
         //commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.$DEFAULT);
-        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS,true);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS,false);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
@@ -295,8 +297,19 @@ public class AutoWriteTest {
         commonWriteConfig.setBlankValue("-");
         commonWriteConfig.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
-        headers.add(new Header("杆塔及拉线","one"));
-        headers.add(new Header("导、地线","two"));
+
+        /*AxolotlCellStyle axolotlCellStyle = new AxolotlCellStyle();
+        axolotlCellStyle.setForegroundColor(new AxolotlColor(155,123,147));
+        Header header = new Header("杆塔及拉线", "one");
+        header.setAxolotlCellStyle(axolotlCellStyle);
+        headers.add(header);*/
+
+        headers.add(new Header("导、地线","two")
+                .axolotlCellStyle(
+                        new AxolotlCellStyle()
+                                .foregroundColor(new AxolotlColor(155,123,147))
+                )
+        );
         headers.add(new Header("绝缘子","three"));
         headers.add(new Header("金属附件及附属设备","four"));
         headers.add(new Header("基础及接地","five"));

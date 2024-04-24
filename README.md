@@ -623,7 +623,7 @@ try (AxolotlExcelWriter axolotlAutoExcelWriter = new AxolotlExcelWriter(file, co
 
 ​	🧭示例表格:
 
-![模板表格示例](./README.assets/下移写入表格示例图片.png)
+![模板表格示例](docs.assets/writer/下移写入表格示例图片.png)
 
 ##### 4.1.2.2 自动写入
 

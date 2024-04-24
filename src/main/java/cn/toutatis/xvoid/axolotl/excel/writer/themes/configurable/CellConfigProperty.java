@@ -1,8 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellBorder;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellFont;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellBorder;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellFont;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -63,5 +63,53 @@ public class CellConfigProperty {
      */
     private AxolotlCellFont font;
 
+    public CellConfigProperty rowHeight(Short rowHeight) {
+        this.rowHeight = rowHeight;
+        return this;
+    }
 
+    public CellConfigProperty columnWidth(Short columnWidth) {
+        this.columnWidth = columnWidth;
+        return this;
+    }
+
+    public CellConfigProperty horizontalAlignment(HorizontalAlignment horizontalAlignment) {
+        this.horizontalAlignment = horizontalAlignment;
+        return this;
+    }
+
+    public CellConfigProperty verticalAlignment(VerticalAlignment verticalAlignment) {
+        this.verticalAlignment = verticalAlignment;
+        return this;
+    }
+
+    public CellConfigProperty foregroundColor(AxolotlColor foregroundColor) {
+        this.foregroundColor = foregroundColor;
+        return this;
+    }
+
+    public CellConfigProperty fillPatternType(FillPatternType fillPatternType) {
+        this.fillPatternType = fillPatternType;
+        return this;
+    }
+
+    public CellConfigProperty border(AxolotlCellBorder border) {
+        this.border = border;
+        return this;
+    }
+
+    public AxolotlCellBorder border() {
+        this.border = new AxolotlCellBorder();
+        return border;
+    }
+
+    public CellConfigProperty font(AxolotlCellFont font) {
+        this.font = font;
+        return this;
+    }
+
+    public AxolotlCellFont font() {
+        this.font = new AxolotlCellFont();
+        return font;
+    }
 }

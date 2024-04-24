@@ -1,9 +1,9 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.components;
+package cn.toutatis.xvoid.axolotl.excel.writer.components.annotations;
 
 import java.lang.annotation.*;
 
 /**
- * TODO 忽略写入
+ * TODO 忽略写入功能
  * 写入器使用SIMPLE_USE_GETTER_METHOD特性时所忽略的getter方法或字段
  */
 @Documented

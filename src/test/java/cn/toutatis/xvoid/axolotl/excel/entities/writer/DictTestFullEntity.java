@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlDictKey;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlDictValue;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
 import lombok.Data;
 
 @Data

@@ -404,6 +404,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     if(designConditions.getWriteFieldNames().containsKey(fieldMappingKey)){
                         Object value;
                         if (designConditions.isSimplePOJO()){
+                            // TODO GET特性
+                            // TODO 转换字典
+                            // TODO 检查影响代码
                             Field field = data.getClass().getDeclaredField(fieldMappingKey);
                             field.setAccessible(true);
                             value = field.get(data);
@@ -434,7 +437,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                 calculateAddress.setCalculatedValue(calculatedValue);
                             }
                             // 暂时只适配String类型
-                            writableCell.setCellValue(cellAddress.replacePlaceholder(value.toString()));
+                            writableCell.setCellValue(cellAddress.replacePlaceholder(writeConfig.getDataInverter().convert(value).toString()));
                         }
                         isWritten = true;
                     }else if (designConditions.getNonWrittenAddress().containsKey(fieldMappingKey)){

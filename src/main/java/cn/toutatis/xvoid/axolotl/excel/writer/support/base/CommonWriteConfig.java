@@ -1,22 +1,25 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support.base;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlDictKey;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlDictValue;
+import cn.toutatis.xvoid.axolotl.Meta;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
+import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DefaultDataInverter;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
-import lombok.SneakyThrows;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,11 +74,23 @@ public class CommonWriteConfig {
      * 字典映射
      */
     private HashBasedTable<Integer,String,Map<String,String>> dictionaryMapping = HashBasedTable.create();
+
+    /**
+     * Map映射指定键名
+     */
+    public static final String DICT_MAP_TYPE_POLICY_PREFIX = Meta.MODULE_NAME.toUpperCase()+"_DICT_MAPPING_POLICY_%s";
+    public static final String DICT_MAP_TYPE_DEFAULT_PREFIX = Meta.MODULE_NAME.toUpperCase()+"_DICT_MAPPING_DEFAULT_%s";
+
     /**
      * 字典键值对名称指定
      */
     private String _dictKey = "key";
     private String _dictValue = "value";
+
+    /**
+     * 数据转换器
+     */
+    private DataInverter<?> dataInverter = new DefaultDataInverter();
 
     /**
      * 添加读取策略
@@ -204,8 +219,13 @@ public class CommonWriteConfig {
      * @return 字典映射
      */
     public Map<String, String> getDict(int sheetIndex, String field) {
-        return dictionaryMapping.get(sheetIndex,field);
+        Map<String, String> dict = dictionaryMapping.get(sheetIndex, field);
+        if(dict == null){
+            return new LinkedHashMap<>();
+        }
+        return dict;
     }
+
     /**
      * 关闭输出流
      */

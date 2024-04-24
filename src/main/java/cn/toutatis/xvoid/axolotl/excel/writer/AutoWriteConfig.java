@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.SheetTitle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.SheetTitle;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
@@ -60,10 +60,6 @@ public class AutoWriteConfig extends CommonWriteConfig {
      */
     private ExcelStyleRender styleRender = ExcelWriteThemes.$DEFAULT.getRender();
 
-    /**
-     * 数据转换器
-     */
-    private DataInverter<?> dataInverter = new DefaultDataInverter();
 
     /**
      * 空值填充字符

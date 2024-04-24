@@ -79,7 +79,13 @@ public enum ExcelReadPolicy {
     /**
      * 读取数据后校验数据
      */
-    VALIDATE_READ_ROW_DATA(Type.BOOLEAN, true,true);
+    VALIDATE_READ_ROW_DATA(Type.BOOLEAN, true,true),
+
+    /**
+     * 使用setter方法赋值代替反射直接操作字段
+     * TODO 读取赋值
+     */
+    READ_FIELD_USE_SETTER(Type.BOOLEAN, true,false);
 
 
     public enum Type{

@@ -1,16 +1,18 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
+import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellStyle;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlSelectBox;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriteIgnore;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
+import cn.toutatis.xvoid.axolotl.toolkit.FieldToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -32,6 +34,9 @@ import org.slf4j.Logger;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -73,6 +78,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      */
     @Getter @Setter
     private AxolotlColor themeColor;
+
+    /**
+     * 组件渲染器
+     */
+    @Getter @Setter
+    private ComponentRender componentRender = new ComponentRender() {};
 
     /**
      * 数据写入已进行错误提示
@@ -305,38 +316,101 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      */
     public CellStyle getCellStyle(Header header, CellStyle usedCellStyle) {
         if (header.getCustomCellStyle() != null){
-            usedCellStyle = header.getCustomCellStyle();
+            return header.getCustomCellStyle();
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
-                Font axolotlCustomFont = StyleHelper.createWorkBookFont(
-                        context.getWorkbook(),
-                        axolotlCellStyle.getFontName(),
-                        axolotlCellStyle.isFontBold(),
-                        axolotlCellStyle.getFontSize(),
-                        axolotlCellStyle.getFontColor(),
-                        axolotlCellStyle.isItalic(),
-                        axolotlCellStyle.isStrikeout()
-                );
-                usedCellStyle = StyleHelper.createStandardCellStyle(
-                        context.getWorkbook(),
-                        BorderStyle.NONE,
-                        IndexedColors.BLACK,
-                        axolotlCellStyle.getForegroundColor(),
-                        axolotlCustomFont
-                );
-                usedCellStyle.setBorderTop(axolotlCellStyle.getBorderTopStyle());
-                usedCellStyle.setBorderRight(axolotlCellStyle.getBorderRightStyle());
-                usedCellStyle.setBorderBottom(axolotlCellStyle.getBorderBottomStyle());
-                usedCellStyle.setBorderLeft(axolotlCellStyle.getBorderLeftStyle());
-                usedCellStyle.setTopBorderColor(axolotlCellStyle.getTopBorderColor().getIndex());
-                usedCellStyle.setRightBorderColor(axolotlCellStyle.getRightBorderColor().getIndex());
-                usedCellStyle.setBottomBorderColor(axolotlCellStyle.getBottomBorderColor().getIndex());
-                usedCellStyle.setLeftBorderColor(axolotlCellStyle.getLeftBorderColor().getIndex());
-                usedCellStyle.setFillPattern(axolotlCellStyle.getFillPatternType());
+                SXSSFWorkbook workbook = context.getWorkbook();
+                CellStyle cellStyle = workbook.createCellStyle();
+                //用默认样式给新样式赋值
+                cellStyle.setBorderTop(usedCellStyle.getBorderTop());
+                cellStyle.setBorderRight(usedCellStyle.getBorderRight());
+                cellStyle.setBorderBottom(usedCellStyle.getBorderBottom());
+                cellStyle.setBorderLeft(usedCellStyle.getBorderLeft());
+                cellStyle.setTopBorderColor(usedCellStyle.getTopBorderColor());
+                cellStyle.setRightBorderColor(usedCellStyle.getRightBorderColor());
+                cellStyle.setBottomBorderColor(usedCellStyle.getBottomBorderColor());
+                cellStyle.setLeftBorderColor(usedCellStyle.getLeftBorderColor());
+                cellStyle.setFillPattern(usedCellStyle.getFillPattern());
+                cellStyle.setDataFormat(usedCellStyle.getDataFormat());
+                cellStyle.setFillForegroundColor(usedCellStyle.getFillForegroundColorColor());
+                cellStyle.setAlignment(usedCellStyle.getAlignment());
+                cellStyle.setVerticalAlignment(usedCellStyle.getVerticalAlignment());
+                //根据配置修改新样式的值
+                if(axolotlCellStyle.getBorderLeftStyle() != null){
+                    cellStyle.setBorderLeft(axolotlCellStyle.getBorderLeftStyle());
+                }
+                if(axolotlCellStyle.getBorderRightStyle() != null){
+                    cellStyle.setBorderRight(axolotlCellStyle.getBorderRightStyle());
+                }
+                if(axolotlCellStyle.getBorderTopStyle() != null){
+                    cellStyle.setBorderTop(axolotlCellStyle.getBorderTopStyle());
+                }
+                if(axolotlCellStyle.getBorderBottomStyle() != null){
+                    cellStyle.setBorderBottom(axolotlCellStyle.getBorderBottomStyle());
+                }
+                if(axolotlCellStyle.getLeftBorderColor() != null){
+                    cellStyle.setLeftBorderColor(axolotlCellStyle.getLeftBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getRightBorderColor() != null){
+                    cellStyle.setRightBorderColor(axolotlCellStyle.getRightBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getTopBorderColor() != null){
+                    cellStyle.setTopBorderColor(axolotlCellStyle.getTopBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getBottomBorderColor() != null){
+                    cellStyle.setBottomBorderColor(axolotlCellStyle.getBottomBorderColor().getIndex());
+                }
+                if(axolotlCellStyle.getForegroundColor() != null){
+                    cellStyle.setFillForegroundColor(axolotlCellStyle.getForegroundColor());
+                }
+                if(axolotlCellStyle.getFillPatternType() != null){
+                    cellStyle.setFillPattern(axolotlCellStyle.getFillPatternType());
+                }
+                if(axolotlCellStyle.getHorizontalAlignment() != null){
+                    cellStyle.setAlignment(axolotlCellStyle.getHorizontalAlignment());
+                }
+                if(axolotlCellStyle.getVerticalAlignment() != null){
+                    cellStyle.setVerticalAlignment(axolotlCellStyle.getVerticalAlignment());
+                }
+
+                //获取默认字体
+                Font fontAt = workbook.getFontAt(usedCellStyle.getFontIndex());
+
+                //创建新字体 用默认字体赋值
+                Font font = workbook.createFont();
+                font.setFontName(fontAt.getFontName());
+                font.setBold(fontAt.getBold());
+                font.setFontHeightInPoints(fontAt.getFontHeightInPoints());
+                font.setItalic(fontAt.getItalic());
+                font.setStrikeout(fontAt.getStrikeout());
+                font.setColor(fontAt.getColor());
+
+                //根据配置修改新字体的值
+                if(axolotlCellStyle.getFontName() != null){
+                    font.setFontName(axolotlCellStyle.getFontName());
+                }
+                if(axolotlCellStyle.getFontSize() != null){
+                    font.setFontHeightInPoints(axolotlCellStyle.getFontSize());
+                }
+                if(axolotlCellStyle.getFontColor() != null){
+                    font.setColor(axolotlCellStyle.getFontColor().getIndex());
+                }
+                if(axolotlCellStyle.getFontBold() != null){
+                    font.setBold(axolotlCellStyle.getFontBold());
+                }
+                if(axolotlCellStyle.getItalic() != null){
+                    font.setItalic(axolotlCellStyle.getItalic());
+                }
+                if(axolotlCellStyle.getStrikeout() != null){
+                    font.setStrikeout(axolotlCellStyle.getStrikeout());
+                }
+                cellStyle.setFont(font);
+                return cellStyle;
+            }else{
+                return usedCellStyle;
             }
         }
-        return usedCellStyle;
     }
 
     /**
@@ -446,9 +520,15 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public static class FieldInfo{
 
         /**
-         * 属性所属的类
+         * 属性类型
          */
         private Class<?> clazz;
+
+        /**
+         * 数据实例
+         * TODO GETTER特性调用本身字段get方法
+         */
+        private final Object dataInstance;
 
         /**
          * 属性名称
@@ -470,7 +550,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          */
         private final int rowIndex;
 
-        public FieldInfo(String fieldName, Object value, int columnIndex,int rowIndex) {
+        public FieldInfo(Object dataInstance, String fieldName, Object value, int columnIndex,int rowIndex) {
+            this.dataInstance = dataInstance;
             if (value != null){
                 this.clazz = value.getClass();
             }
@@ -481,31 +562,15 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
     }
 
-    private Map<Integer, Integer> unmappedColumnCount;
+    protected Map<Integer, Integer> unmappedColumnCount;
 
     /**
      * 默认行为渲染数据
      * @param sheet 工作表
      */
-    @SuppressWarnings({"rawtypes","unchecked"})
     public void defaultRenderNextData(SXSSFSheet sheet,Object data,CellStyle rowStyle){
         // 获取对象属性
-        HashMap<String, Object> dataMap = new LinkedHashMap<>();
-        if (data instanceof Map) {
-            dataMap.putAll((Map)data);
-        }else{
-            List<Field> fields = ReflectToolkit.getAllFields(data.getClass(), true);
-            fields.forEach(field -> {
-                field.setAccessible(true);
-                String fieldName = field.getName();
-                try {
-                    dataMap.put(fieldName,field.get(data));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                    throw new AxolotlWriteException("获取对象字段错误");
-                }
-            });
-        }
+        HashMap<String, Object> dataMap = getDataMap(data);
         // 初始化内容
         HashMap<Integer, Integer> writtenColumnMap = new HashMap<>();
         int switchSheetIndex = getContext().getSwitchSheetIndex();
@@ -547,10 +612,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
             Object value = dataEntry.getValue();
             int columnNumber = columnMappingEmpty ? writtenColumn : columnMapping.get(fieldName);
-            FieldInfo fieldInfo = new FieldInfo(fieldName, value,columnNumber ,alreadyWriteRow);
+            FieldInfo fieldInfo = new FieldInfo(data, fieldName, value,columnNumber ,alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
-            this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
+            this.renderColumn(fieldInfo,cell);
+            unmappedColumnCount.remove(fieldInfo.getColumnIndex());
             if (columnMappingEmpty){
                 writtenColumnMap.put(writtenColumn++,1);
             }else{
@@ -583,66 +649,89 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     }
 
     /**
-     * 渲染列数据
-     * @param sheet 工作表
-     * @param fieldInfo 字段信息
-     * @param cell 单元格
-     * @param unmappedColumnCount 未使用的的单元格 列索引
+     * 获取对象属性
+     * @param data 数据对象
+     * @return 属性集合
      */
-    public void renderColumn(SXSSFSheet sheet,FieldInfo fieldInfo,Cell cell,Map<Integer, Integer> unmappedColumnCount){
-        Object value = fieldInfo.getValue();
-        if (value == null){
-            cell.setCellValue(writeConfig.getBlankValue());
+    @SuppressWarnings({"rawtypes","unchecked"})
+    public HashMap<String, Object> getDataMap(Object data){
+        if(data == null){return new LinkedHashMap<>();}
+        // 获取对象属性
+        HashMap<String, Object> dataMap = new LinkedHashMap<>();
+        if (data instanceof Map map) {
+            map.keySet().forEach(key -> {
+                if (!key.toString().startsWith(Meta.MODULE_NAME.toUpperCase())){
+                    dataMap.put(key.toString(), map.get(key));
+                }
+            });
         }else{
-            if(fieldInfo.getClazz() == AxolotlSelectBox.class){
-                AxolotlSelectBox<String> selectBox = ((AxolotlSelectBox<?>) value).convertPropertiesToString(writeConfig.getDataInverter());
-                List<String> options = selectBox.getOptions();
-                if(!options.isEmpty()){
-                    ExcelToolkit.createDropDownList(
-                            sheet,
-                            selectBox.getOptions().toArray(new String[options.size()]),
-                            fieldInfo.getRowIndex(),
-                            fieldInfo.getRowIndex(),
-                            fieldInfo.getColumnIndex(),
-                            fieldInfo.getColumnIndex());
+            Class<?> dataClass = data.getClass();
+            if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD)){
+                ArrayList<Method> getterMethods = ReflectToolkit.getGetterMethods(dataClass);
+                for (Method getterMethod : getterMethods) {
+                    // 仅获取公开的Getter方法
+                    if (Modifier.isPublic(getterMethod.getModifiers())){
+                        AxolotlWriteIgnore ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
+                        if (ignore != null){continue;}
+                        var methodName = getterMethod.getName();
+                        String fieldName = ReflectToolkit.convertGetterToFieldName(methodName);
+                        Field field = FieldToolkit.recursionGetField(dataClass, fieldName);
+                        if (field != null){
+                            ignore = field.getAnnotation(AxolotlWriteIgnore.class);
+                            if (ignore != null){continue;}
+                        }
+                        int parameterCount = getterMethod.getParameterCount();
+                        if (parameterCount == 0){
+                            Object invokeValue = null;
+                            try {
+                                invokeValue = getterMethod.invoke(data);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                                if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT)){
+                                    LoggerHelper.error(LOGGER,format("[%s]方法调用失败,将赋予null值",methodName));
+                                }else{
+                                    throw new AxolotlWriteException(e.getMessage());
+                                }
+                            }
+                            dataMap.put(fieldName,invokeValue);
+                        }else{
+                            LoggerHelper.debug(LOGGER,format("方法[%s]参数数量大于0将跳过",getterMethod.getName()));
+                        }
+                    }else{
+                        LoggerHelper.debug(LOGGER,format("方法[%s]为私有方法将跳过",getterMethod.getName()));
+                    }
                 }
-                String defaultVal = selectBox.getValue();
-                if(defaultVal == null){
-                    defaultVal = writeConfig.getBlankValue();
-                }
-                fieldInfo = new FieldInfo(fieldInfo.getFieldName(),defaultVal,fieldInfo.getColumnIndex(),fieldInfo.getRowIndex());
-                fieldInfo.setClazz(String.class);
-                calculateColumns(fieldInfo);
-                int columnIndex = fieldInfo.getColumnIndex();
-                cell.setCellValue(defaultVal);
-                unmappedColumnCount.remove(columnIndex);
-            }else{
-                calculateColumns(fieldInfo);
-                value = writeConfig.getDataInverter().convert(value);
-                int columnIndex = fieldInfo.getColumnIndex();
-                cell.setCellValue(value.toString());
-                unmappedColumnCount.remove(columnIndex);
+            }else {
+                List<Field> fields = ReflectToolkit.getAllFields(dataClass, true);
+                fields.forEach(field -> {
+                    field.setAccessible(true);
+                    String fieldName = field.getName();
+                    try {
+                        dataMap.put(fieldName, field.get(data));
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                        throw new AxolotlWriteException("获取对象字段错误");
+                    }
+                });
             }
         }
+        return dataMap;
     }
 
     /**
-     * 计算列合计
+     * 渲染列信息
      * @param fieldInfo 字段信息
+     * @param cell 单元格
      */
-    public void calculateColumns(FieldInfo fieldInfo){
-        int columnIndex = fieldInfo.getColumnIndex();
-        String value = fieldInfo.getValue().toString();
-        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
-            Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(context.getSwitchSheetIndex());
-            if (endingTotalMapping.containsKey(columnIndex)){
-                BigDecimal newValue = endingTotalMapping.get(columnIndex).add(BigDecimal.valueOf(Double.parseDouble(value)));
-                endingTotalMapping.put(columnIndex,newValue);
-            }else{
-                endingTotalMapping.put(columnIndex,BigDecimal.valueOf(Double.parseDouble(value)));
-            }
+    public void renderColumn(FieldInfo fieldInfo,Cell cell){
+        Object value = fieldInfo.getValue();
+        if (value == null){
+            componentRender.renderFieldColumnNullValue(fieldInfo,cell);
+        }else {
+            componentRender.defaultRenderColumn(fieldInfo,cell);
         }
     }
+
 
     @Override
     public AxolotlWriteResult finish(SXSSFSheet sheet) {

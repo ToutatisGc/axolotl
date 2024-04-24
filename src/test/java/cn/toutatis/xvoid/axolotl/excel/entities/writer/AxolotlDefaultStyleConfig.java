@@ -1,8 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellBorder;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlCellFont;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellBorder;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellFont;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.CellConfigProperty;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
@@ -21,13 +21,19 @@ import java.util.Map;
 public class AxolotlDefaultStyleConfig implements ConfigurableStyleConfig {
     @Override
     public void globalStyleConfig(CellConfigProperty cell) {
-        cell.setForegroundColor(new AxolotlColor(39,56,86));
+       /* cell.setForegroundColor(new AxolotlColor(39,56,86));
         cell.setRowHeight((short) 550);
         AxolotlCellFont axolotlCellFont = new AxolotlCellFont();
         axolotlCellFont.setFontSize((short) 10);
         axolotlCellFont.setFontColor(IndexedColors.WHITE);
         axolotlCellFont.setFontName("微软雅黑");
-        cell.setFont(axolotlCellFont);
+        cell.setFont(axolotlCellFont);*/
+        cell.foregroundColor(new AxolotlColor(39,56,86))
+            .rowHeight((short) 550)
+            .font()
+                .fontSize((short) 10)
+                .fontColor(IndexedColors.WHITE)
+                .fontName("微软雅黑");
     }
 
     @Override

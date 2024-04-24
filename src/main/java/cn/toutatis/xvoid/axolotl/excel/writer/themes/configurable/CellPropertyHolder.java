@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.*;

@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable;
 
-import cn.toutatis.xvoid.axolotl.excel.writer.components.*;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.*;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
@@ -22,7 +22,6 @@ import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
@@ -198,7 +197,6 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         return headerWriteResult;
     }
 
-    private Map<Integer, Integer> unmappedColumnCount;
     private boolean alreadyNotice = false;
     @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
@@ -207,22 +205,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      //   XSSFCellStyle commonCellStyle = (XSSFCellStyle) createCellStyle(commonCellPropHolder);
         for (Object datum : data) {
             // 获取对象属性
-            HashMap<String, Object> dataMap = new LinkedHashMap<>();
-            if (datum instanceof Map) {
-                dataMap.putAll((Map) datum);
-            }else{
-                List<Field> fields = ReflectToolkit.getAllFields(datum.getClass(), true);
-                fields.forEach(field -> {
-                    field.setAccessible(true);
-                    String fieldName = field.getName();
-                    try {
-                        dataMap.put(fieldName,field.get(datum));
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                        throw new AxolotlWriteException("获取对象字段错误");
-                    }
-                });
-            }
+            HashMap<String, Object> dataMap = this.getDataMap(datum);
             // 初始化内容
             HashMap<Integer, Integer> writtenColumnMap = new HashMap<>();
             int switchSheetIndex = getContext().getSwitchSheetIndex();
@@ -238,6 +221,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             columnMapping.forEach((key, value) -> unmappedColumnCount.put(value, 1));
             boolean columnMappingEmpty = columnMapping.isEmpty();
             // 写入序号
+            //序号列索引
             int serialNumberColumnNumber = -1;
             boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER);
             if (autoInsertSerialNumber){
@@ -273,7 +257,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
                 //读取内容样式配置
                 CellConfigProperty dataConfig = new CellConfigProperty();
-                configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(fieldName, value, columnNumber, alreadyWriteRow));
+                configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(datum, fieldName, value, columnNumber, alreadyWriteRow));
                 CellPropertyHolder dataCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(dataConfig, globalCellPropHolder);
                 if(dataCellPropHolder.getRowHeight() == null){
                     dataCellPropHolder.setRowHeight(DATA_ROW_HEIGHT);
@@ -292,9 +276,11 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
                 // 对单元格设置样式
                 cell.setCellStyle(createCellStyle(dataCellPropHolder));
-                FieldInfo fieldInfo = new FieldInfo(fieldName, value, columnNumber ,alreadyWriteRow);
+                FieldInfo fieldInfo = new FieldInfo(datum, fieldName, value, columnNumber ,alreadyWriteRow);
                 // 渲染数据到单元格
-                this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
+//                this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
+                this.renderColumn(fieldInfo,cell);
+                unmappedColumnCount.remove(fieldInfo.getColumnIndex());
                 if (columnMappingEmpty){
                     writtenColumnMap.put(writtenColumn++,1);
                 }else{
@@ -302,6 +288,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 }
             }
             if(serialNumberColumnNumber != -1){
+                //没有指定 程序写入单元格样式
                 if(!dataMap.isEmpty()){
                     //取编号后第一个单元格的样式
                     CellStyle cellStyle = dataRow.getCell(serialNumberColumnNumber+1).getCellStyle();
@@ -725,15 +712,27 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 if(axolotlCellStyle.getFontName() != null){
                     headerStyle.setFontName(axolotlCellStyle.getFontName());
                 }
-                if(axolotlCellStyle.getFontSize() != -1){
+                if(axolotlCellStyle.getFontSize() != null){
                     headerStyle.setFontSize(axolotlCellStyle.getFontSize());
                 }
                 if(axolotlCellStyle.getFontColor() != null){
                     headerStyle.setFontColor(axolotlCellStyle.getFontColor());
                 }
-                headerStyle.setBold(axolotlCellStyle.isFontBold());
-                headerStyle.setItalic(axolotlCellStyle.isItalic());
-                headerStyle.setStrikeout(axolotlCellStyle.isStrikeout());
+                if(axolotlCellStyle.getFontBold() != null){
+                    headerStyle.setBold(axolotlCellStyle.getFontBold());
+                }
+                if(axolotlCellStyle.getItalic() != null){
+                    headerStyle.setItalic(axolotlCellStyle.getItalic());
+                }
+                if(axolotlCellStyle.getStrikeout() != null){
+                    headerStyle.setStrikeout(axolotlCellStyle.getStrikeout());
+                }
+                if(axolotlCellStyle.getHorizontalAlignment() != null){
+                    headerStyle.setHorizontalAlignment(axolotlCellStyle.getHorizontalAlignment());
+                }
+                if(axolotlCellStyle.getVerticalAlignment() != null){
+                    headerStyle.setVerticalAlignment(axolotlCellStyle.getVerticalAlignment());
+                }
                 debug(LOGGER,"["+header.getName()+"] Header内部样式配置读取完毕,优先级:中");
                 return createCellStyle(headerStyle);
             }else{

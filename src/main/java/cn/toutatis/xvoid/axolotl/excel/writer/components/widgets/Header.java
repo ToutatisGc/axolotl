@@ -1,12 +1,14 @@
-package cn.toutatis.xvoid.axolotl.excel.writer.components;
+package cn.toutatis.xvoid.axolotl.excel.writer.components.widgets;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
 import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
 import cn.toutatis.xvoid.toolkit.clazz.XFunc;
-import com.google.common.collect.Lists;
+import lombok.Builder;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -74,7 +76,7 @@ public class Header {
 
     public Header(String name, Header... childs) {
         this.name = name;
-        
+
         this.childs = Lists.newArrayList(childs);
     }
 
@@ -96,6 +98,51 @@ public class Header {
         this.fieldName = fieldName;
         this.childs = Lists.newArrayList(childs);
         this.participateInCalculate = participateInCalculate;
+    }
+
+    public Header name(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public Header fieldName(String fieldName) {
+        this.fieldName = fieldName;
+        return this;
+    }
+
+    public Header columnPosition(int columnPosition) {
+        this.columnPosition = columnPosition;
+        return this;
+    }
+
+    public Header childs(Header... header) {
+        this.childs = List.of(header);
+        return this;
+    }
+
+    public Header childs(List<Header> childs) {
+        this.childs = childs;
+        return this;
+    }
+
+    public Header customCellStyle(CellStyle customCellStyle) {
+        this.customCellStyle = customCellStyle;
+        return this;
+    }
+
+    public Header axolotlCellStyle(AxolotlCellStyle axolotlCellStyle) {
+        this.axolotlCellStyle = axolotlCellStyle;
+        return this;
+    }
+
+    public Header columnWidth(int columnWidth) {
+        this.columnWidth = columnWidth;
+        return this;
+    }
+
+    public Header participateInCalculate(boolean participateInCalculate) {
+        this.participateInCalculate = participateInCalculate;
+        return this;
     }
 
     /**

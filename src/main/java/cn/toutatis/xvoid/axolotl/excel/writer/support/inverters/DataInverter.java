@@ -7,6 +7,11 @@ package cn.toutatis.xvoid.axolotl.excel.writer.support.inverters;
  */
 public interface DataInverter<T> {
 
+    /**
+     * 类型转换
+     * @param value 待转换值
+     * @return 转换后的值
+     */
     T convert(Object value);
 
 }
