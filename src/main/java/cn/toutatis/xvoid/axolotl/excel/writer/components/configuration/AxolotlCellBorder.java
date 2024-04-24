@@ -8,7 +8,7 @@ import org.apache.poi.ss.usermodel.IndexedColors;
  * 单元格边框 配置
  * @author 张智凯
  * @version 1.0
- * @data 2024/3/29 0:47
+ * 2024/3/29 0:47
  */
 @Data
 public class AxolotlCellBorder {
