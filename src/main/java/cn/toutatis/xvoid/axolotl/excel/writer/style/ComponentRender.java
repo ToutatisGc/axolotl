@@ -162,7 +162,8 @@ public class ComponentRender {
                     if(fieldName != null){
                         Map<String, Object> instanceMap = (Map<String, Object>) dataInstance;
                         //获取字典策略
-                        String policyKey = CommonWriteConfig.DICT_MAP_TYPE_POLICY_PREFIX.formatted(fieldName);
+                        String policyKey = String.format(CommonWriteConfig.DICT_MAP_TYPE_POLICY_PREFIX,fieldName);
+//                        String policyKey = CommonWriteConfig.DICT_MAP_TYPE_POLICY_PREFIX.formatted(fieldName);
                         if (instanceMap.containsKey(policyKey)){
                             Object fieldPolicy = instanceMap.get(policyKey);
                             if (fieldPolicy instanceof DictMappingPolicy){
@@ -180,7 +181,8 @@ public class ComponentRender {
                                 }
                             }
                         }
-                        String defaultValueKey = CommonWriteConfig.DICT_MAP_TYPE_DEFAULT_PREFIX.formatted(fieldName);
+//                        String defaultValueKey = CommonWriteConfig.DICT_MAP_TYPE_DEFAULT_PREFIX.formatted(fieldName);
+                        String defaultValueKey = String.format(CommonWriteConfig.DICT_MAP_TYPE_DEFAULT_PREFIX,fieldName);
                         if (instanceMap.containsKey(defaultValueKey)){
                             Object defaultValueObject =  instanceMap.get(defaultValueKey);
                             if (defaultValueObject != null){
@@ -238,11 +240,11 @@ public class ComponentRender {
             }else{
                 debug(LOGGER, "字段[%s]使用字典策略[%s]",fieldName, fieldDictMappingPolicy);
             }
-            dictAdaptiveValue = switch (fieldDictMappingPolicy) {
-                case KEEP_ORIGIN -> dictAdaptiveValue;
-                case USE_DEFAULT -> fieldDictMappingDefaultValue;
-                case NULL_VALUE -> null;
-            };
+//            dictAdaptiveValue = switch (fieldDictMappingPolicy) {
+//                case KEEP_ORIGIN -> dictAdaptiveValue;
+//                case USE_DEFAULT -> fieldDictMappingDefaultValue;
+//                case NULL_VALUE -> null;
+//            };
             return dictAdaptiveValue;
         }
     }

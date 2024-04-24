@@ -7,6 +7,7 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 下拉框支持

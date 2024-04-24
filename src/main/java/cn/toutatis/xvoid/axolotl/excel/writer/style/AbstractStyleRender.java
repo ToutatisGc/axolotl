@@ -658,7 +658,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         if(data == null){return new LinkedHashMap<>();}
         // 获取对象属性
         HashMap<String, Object> dataMap = new LinkedHashMap<>();
-        if (data instanceof Map map) {
+        if (data instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) data;
             map.keySet().forEach(key -> {
                 if (!key.toString().startsWith(Meta.MODULE_NAME.toUpperCase())){
                     dataMap.put(key.toString(), map.get(key));
@@ -673,7 +674,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     if (Modifier.isPublic(getterMethod.getModifiers())){
                         AxolotlWriteIgnore ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
                         if (ignore != null){continue;}
-                        var methodName = getterMethod.getName();
+                        String methodName = getterMethod.getName();
                         String fieldName = ReflectToolkit.convertGetterToFieldName(methodName);
                         Field field = FieldToolkit.recursionGetField(dataClass, fieldName);
                         if (field != null){
