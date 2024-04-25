@@ -70,7 +70,6 @@ public enum ExcelWritePolicy {
     /**
      * 是否使用getter方法
      * 取消则直接使用反射字段值
-     * TODO 使用ReflectToolkit
      */
     SIMPLE_USE_GETTER_METHOD(Type.BOOLEAN, true, false),
 

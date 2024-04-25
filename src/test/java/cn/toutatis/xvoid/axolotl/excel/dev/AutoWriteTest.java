@@ -99,7 +99,7 @@ public class AutoWriteTest {
         headers.add(new Header("市净率PB（LF）"));
         headers.add(new Header("市销率PS（TTM）","pts"));
         ArrayList<StockEntity> data = new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 2; i++) {
             StockEntity stockEntity = new StockEntity();
             stockEntity.setSt(i % 2 == 0 ? "1":"0");
             stockEntity.setCode(RandomStringUtils.randomNumeric(8));

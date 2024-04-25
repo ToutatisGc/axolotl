@@ -14,6 +14,7 @@ import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.poi.ss.usermodel.Cell;
@@ -128,9 +129,19 @@ public class ComponentRender {
         }
     }
 
-    private final HashMap<String,DictMappingPolicy> alreadyRecordDict = new HashMap<>();
+    @Data
+    private class DictMappingExecutor{
 
-//    private final HashBasedTable<Integer>
+        boolean isUsage = false;
+        String defaultValue;
+        boolean useManualConfigPriority = true;
+        DictMappingPolicy mappingPolicy;
+        private Map<String,String> convertMapping;
+
+    }
+
+    private final HashMap<String,DictMappingExecutor> alreadyRecordDict = new HashMap<>();
+
     /**
      * 字典值转换编码到名称
      * map类型只支持设置全局字典
@@ -140,25 +151,41 @@ public class ComponentRender {
      */
     @SuppressWarnings("unchecked")
     public String convertDictCodeToName(AbstractStyleRender.FieldInfo fieldInfo, String value){
+        // 最终返回值
+        String dictAdaptiveValue = value;
         int sheetIndex = context.getSwitchSheetIndex();
         String fieldName = fieldInfo.getFieldName();
         Object dataInstance = fieldInfo.getDataInstance();
         Class<?> instanceClass = dataInstance.getClass();
-        boolean isMap = dataInstance instanceof Map<?, ?>;
-        String alreadyKey = sheetIndex + StringPool.COLON + instanceClass + StringPool.COLON + fieldName;
-        Map<String, String> dict = writeConfig.getDict(sheetIndex, fieldName);
-        if (dict.containsKey(value)){
-            return dict.get(value);
+        //字段键名称
+        String alreadyKey = sheetIndex + StringPool.COLON + instanceClass.getSimpleName() + StringPool.COLON + fieldName;
+        if (alreadyRecordDict.containsKey(alreadyKey)){
+            DictMappingExecutor dictMappingExecutor = alreadyRecordDict.get(alreadyKey);
+            if (dictMappingExecutor.isUsage){
+                if (dictMappingExecutor.useManualConfigPriority){
+                    Map<String, String> dict = writeConfig.getDict(sheetIndex, fieldName);
+                    if (dict.containsKey(value)){
+                        return dict.get(value);
+                    }
+                }else{
+                    Map<String, String> convertMapping = dictMappingExecutor.getConvertMapping();
+                    if (convertMapping != null && convertMapping.containsKey(value)){
+                        return convertMapping.get(value);
+                    }
+                }
+            }else{
+                return value;
+            }
         }else{
-//            String alreadyKeyWithAlias =
             DictMappingPolicy fieldDictMappingPolicy = null;
-            String dictAdaptiveValue = value;
+
             String fieldDictMappingDefaultValue = null;
             if (alreadyRecordDict.containsKey(alreadyKey)){
-                fieldDictMappingPolicy = alreadyRecordDict.get(alreadyKey);
+//                fieldDictMappingPolicy = alreadyRecordDict.get(alreadyKey);
             }else{
                 // Map类型从key中取值
-                if (isMap){
+                DictMappingExecutor dictMappingExecutor = new DictMappingExecutor();
+                if (dataInstance instanceof Map<?, ?>){
                     if(fieldName != null){
                         Map<String, Object> instanceMap = (Map<String, Object>) dataInstance;
                         //获取字典策略
@@ -223,7 +250,8 @@ public class ComponentRender {
                                 for (int i = 0; i < staticDictArray.length; i += 2) {
                                     staticMap.put(staticDictArray[i], staticDictArray[i + 1]);
                                 }
-                                writeConfig.setDict(fieldName, staticMap);
+                                writeConfig.setDict(sheetIndex,fieldName, staticMap);
+                                dict = writeConfig.getDict(sheetIndex, fieldName);
                             }else{
                                 throw new IllegalArgumentException("静态字典数组长度必须为偶数");
                             }
@@ -237,6 +265,9 @@ public class ComponentRender {
                 fieldDictMappingPolicy = KEEP_ORIGIN;
             }else{
                 debug(LOGGER, "字段[%s]使用字典策略[%s]",fieldName, fieldDictMappingPolicy);
+            }
+            if (dict.containsKey(value)){
+                return dict.get(value);
             }
             dictAdaptiveValue = switch (fieldDictMappingPolicy) {
                 case KEEP_ORIGIN -> dictAdaptiveValue;
