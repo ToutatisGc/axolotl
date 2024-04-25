@@ -147,13 +147,14 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     continue;
                 }
                 // 写入单元格值
-                Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
+                Cell cell = ExcelToolkit.createOrCatchCell(sheet, cellAddress.getRowPosition(), cellAddress.getColumnPosition(), null);
                 String stringCellValue = cell.getStringCellValue();
                 Object info = dataMapping.get(singleKey);
                 if(info != null){
-                    debug(LOGGER, format("设置模板占位符[%s]值[%s]",placeholder,info));
+                    String humanReadablePosition = ExcelToolkit.getHumanReadablePosition(cellAddress.getRowPosition(), cellAddress.getColumnPosition());
                     String replaceString = stringCellValue.replace(placeholder, info.toString());
                     cell.setCellValue(replaceString);
+                    debug(LOGGER, format("设置[%s]模板占位符[%s]值[%s]",humanReadablePosition,placeholder,info));
                 }else{
                     String defaultValue = cellAddress.getDefaultValue();
                     String newCellValue = null;

@@ -11,6 +11,8 @@ import cn.toutatis.xvoid.axolotl.excel.writer.TemplateWriteConfig;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -146,7 +148,7 @@ public class WriteTest {
 // 创建写入器
         try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
             List list = new ArrayList();
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 10; i++) {
                 SunUser sunUser = new SunUser();
                 for (Field declaredField : SunUser.class.getDeclaredFields()) {
                     ReflectToolkit.setObjectField(sunUser, declaredField, "11"+i);
@@ -230,4 +232,5 @@ public class WriteTest {
         }
 
     }
+
 }
