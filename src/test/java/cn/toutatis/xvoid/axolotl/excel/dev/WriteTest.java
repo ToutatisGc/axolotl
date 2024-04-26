@@ -8,6 +8,7 @@ import cn.toutatis.xvoid.axolotl.excel.entities.reader.SunUser;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.MpOrgDataIssueNew;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.TemplateWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.file.FileToolkit;
@@ -96,17 +97,19 @@ public class WriteTest {
         TemplateWriteConfig commonWriteConfig = new TemplateWriteConfig();
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_PLACEHOLDER_FILL_DEFAULT,false);
+        //commonWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL,false);
         try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig)) {
             ArrayList<JSONObject> datas1 = new ArrayList<>();
             for (int i = 0; i < 2; i++) {
                 JSONObject sch = new JSONObject();
                 sch.put("workPlace","北京-"+RandomStringUtils.randomAlphabetic(16));
-                sch.put("workYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
-                sch.put("salary", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
+                sch.put("workYears1", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+                sch.put("salary1", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
                 datas1.add(sch);
             }
             axolotlAutoExcelWriter.write(null, datas1);
-            ArrayList<JSONObject> datas2 = new ArrayList<>();
+            /*ArrayList<JSONObject> datas2 = new ArrayList<>();
             for (int i = 0; i < 2; i++) {
                 JSONObject sch = new JSONObject();
                 sch.put("workPlace","北京-"+RandomStringUtils.randomAlphabetic(16));
@@ -114,8 +117,8 @@ public class WriteTest {
                 sch.put("salary", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
                 datas2.add(sch);
             }
-            axolotlAutoExcelWriter.write(null, datas2);
-            Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
+            axolotlAutoExcelWriter.write(null, datas2);*/
+            /*Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
             axolotlAutoExcelWriter.write(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
@@ -134,7 +137,7 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-            axolotlAutoExcelWriter.write(null, datas);
+            axolotlAutoExcelWriter.write(null, datas);*/
         }
     }
     @Test

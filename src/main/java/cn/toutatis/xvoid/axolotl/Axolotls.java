@@ -1,13 +1,25 @@
 package cn.toutatis.xvoid.axolotl;
 
+import cn.hutool.core.util.IdUtil;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlStreamExcelReader;
 import cn.toutatis.xvoid.axolotl.excel.writer.*;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBox;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
+import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.themes.configurable.AxolotlConfigurableTheme;
+import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -90,24 +102,6 @@ public class Axolotls {
     }
 
     /**
-     * [语法糖]
-     * 直接调取模板写入器写入数据
-     * @param template 模板文件
-     * @param outputStream 输出流
-     * @param fixMapping 引用字段
-     * @param datas 列表数据
-     * @return 写入结果
-     */
-    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas){
-        TemplateWriteConfig templateWriteConfig = new TemplateWriteConfig();
-        templateWriteConfig.setOutputStream(outputStream);
-        AxolotlTemplateExcelWriter templateExcelWriter = getTemplateExcelWriter(template, templateWriteConfig);
-        AxolotlWriteResult result = templateExcelWriter.write(fixMapping, datas);
-        templateExcelWriter.close();
-        return result;
-    }
-
-    /**
      * 获取Excel写入器
      * @param writeConfig 写入器配置
      * @return Excel写入器
@@ -115,4 +109,5 @@ public class Axolotls {
     public static AxolotlAutoExcelWriter getAutoExcelWriter(AutoWriteConfig writeConfig){
         return new AxolotlAutoExcelWriter(writeConfig);
     }
+
 }

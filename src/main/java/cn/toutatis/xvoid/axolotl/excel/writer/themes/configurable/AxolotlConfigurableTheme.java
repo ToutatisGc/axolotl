@@ -144,7 +144,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
             String sheetName = writeConfig.getSheetName();
             if(Validator.strNotBlank(sheetName)){
-                int sheetIndex = writeConfig.getSheetIndex();
+                int sheetIndex = context.getSwitchSheetIndex();
                 info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
                 context.getWorkbook().setSheetName(sheetIndex,sheetName);
             }else {
@@ -336,11 +336,12 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     @Override
     public AxolotlWriteResult finish(SXSSFSheet sheet) {
         debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
+        int sheetIndex = context.getWorkbook().getSheetIndex(sheet);
         CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING);
-        int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(context.getSwitchSheetIndex());
+        int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(sheetIndex);
         // 创建结尾合计行
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
-            Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(context.getSwitchSheetIndex());
+            Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(sheetIndex);
             debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
             SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
             if(cellProperty == null){
@@ -350,7 +351,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 row.setHeight(cellProperty.getRowHeight());
             }
             DataInverter<?> dataInverter = writeConfig.getDataInverter();
-            HashSet<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes();
+            Set<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes(sheetIndex);
             for (int i = 0; i < alreadyWrittenColumns; i++) {
                 SXSSFCell cell = row.createCell(i);
                 String cellValue = writeConfig.getBlankValue();
@@ -401,7 +402,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.35));
             }
         }
-        Map<Integer, Integer> specialRowHeightMapping = writeConfig.getSpecialRowHeightMapping();
+        Map<Integer, Integer> specialRowHeightMapping = writeConfig.getSpecialRowHeightMapping(sheetIndex);
         for (Map.Entry<Integer, Integer> heightEntry : specialRowHeightMapping.entrySet()) {
             debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
             sheet.getRow(heightEntry.getKey()).setHeightInPoints(heightEntry.getValue());
@@ -497,7 +498,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             context.getAlreadyWriteRow().put(switchSheetIndex,++alreadyWriteRow);
             headerMaxDepth = ExcelToolkit.getMaxDepth(headers, 0);
             debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
-            int sheetIndex = writeConfig.getSheetIndex();
+            int sheetIndex = context.getSwitchSheetIndex();
             Map<String, Integer> headerCache = context.getHeaderColumnIndexMapping().row(sheetIndex);
             //根节点渲染
             for (Header header : cacheHeaders) {
@@ -548,7 +549,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                     }
                     if (header.isParticipateInCalculate()){
                         debug(LOGGER,"列[%s]表头[%s]参与计算",headerColumnCount,header.getName());
-                        writeConfig.addCalculateColumnIndex(headerColumnCount);
+                        writeConfig.addCalculateColumnIndex(sheetIndex,headerColumnCount);
                     }
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,usedCellStyle);
@@ -611,7 +612,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             int startRow = headerRecursiveInfo.getAllRow() - maxDepth -1;
             Row row = ExcelToolkit.createOrCatchRow(sheet,startRow);
             row.setHeight(headerRecursiveInfo.getRowHeight());
-            int sheetIndex = writeConfig.getSheetIndex();
+            int sheetIndex = context.getSwitchSheetIndex();
             Map<String, Integer> headerCache = context.getHeaderColumnIndexMapping().row(sheetIndex);
             for (Header header : headers) {
                 CellStyle usedCellStyle = getCellStyle(header,headerRecursiveInfo.getCellProperty());
@@ -657,7 +658,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                     }
                     if (header.isParticipateInCalculate()){
                         debug(LOGGER,"列[%s]表头[%s]参与计算",alreadyWriteColumn,header.getName());
-                        writeConfig.addCalculateColumnIndex(alreadyWriteColumn);
+                        writeConfig.addCalculateColumnIndex(sheetIndex,alreadyWriteColumn);
                     }
                 }
             }
