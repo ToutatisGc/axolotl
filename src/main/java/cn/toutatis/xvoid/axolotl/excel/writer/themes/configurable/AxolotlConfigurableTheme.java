@@ -257,7 +257,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
                 //读取内容样式配置
                 CellConfigProperty dataConfig = new CellConfigProperty();
-                configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(datum, fieldName, value, columnNumber, alreadyWriteRow));
+                configurableStyleConfig.dataStyleConfig(dataConfig,new FieldInfo(datum, fieldName, value,switchSheetIndex, columnNumber, alreadyWriteRow));
                 CellPropertyHolder dataCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(dataConfig, globalCellPropHolder);
                 if(dataCellPropHolder.getRowHeight() == null){
                     dataCellPropHolder.setRowHeight(DATA_ROW_HEIGHT);
@@ -276,7 +276,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
                 // 对单元格设置样式
                 cell.setCellStyle(createCellStyle(dataCellPropHolder));
-                FieldInfo fieldInfo = new FieldInfo(datum, fieldName, value, columnNumber ,alreadyWriteRow);
+                FieldInfo fieldInfo = new FieldInfo(datum, fieldName, value,switchSheetIndex, columnNumber ,alreadyWriteRow);
                 // 渲染数据到单元格
 //                this.renderColumn(sheet,fieldInfo,cell,unmappedColumnCount);
                 this.renderColumn(fieldInfo,cell);

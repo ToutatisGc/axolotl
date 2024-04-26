@@ -27,6 +27,7 @@ import java.io.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AutoWriteTest {
 
@@ -113,6 +114,7 @@ public class AutoWriteTest {
             data.add(stockEntity);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
+        commonWriteConfig.setDict(0,"st", Map.of("0","手动否","1","手动是"));
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();
 

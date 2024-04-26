@@ -540,6 +540,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          */
         private final Object value;
 
+        private final int sheetIndex;
+
         /**
          * 列索引
          */
@@ -550,7 +552,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          */
         private final int rowIndex;
 
-        public FieldInfo(Object dataInstance, String fieldName, Object value, int columnIndex,int rowIndex) {
+        public FieldInfo(Object dataInstance, String fieldName, Object value,int sheetIndex, int columnIndex,int rowIndex) {
             this.dataInstance = dataInstance;
             if (value != null){
                 this.clazz = value.getClass();
@@ -559,6 +561,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             this.value = value;
             this.columnIndex = columnIndex;
             this.rowIndex = rowIndex;
+            this.sheetIndex = sheetIndex;
         }
     }
 
@@ -612,7 +615,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
             Object value = dataEntry.getValue();
             int columnNumber = columnMappingEmpty ? writtenColumn : columnMapping.get(fieldName);
-            FieldInfo fieldInfo = new FieldInfo(data, fieldName, value,columnNumber ,alreadyWriteRow);
+            FieldInfo fieldInfo = new FieldInfo(data, fieldName, value, switchSheetIndex, columnNumber, alreadyWriteRow);
             cell.setCellStyle(rowStyle);
             // 渲染数据到单元格
             this.renderColumn(fieldInfo,cell);
@@ -853,7 +856,6 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param color 颜色
      * @param italic 是否斜体
      * @param strikeout 是否删除线
-     * @return
      */
     public Font createFont(String fontName,short fontSize,boolean isBold,IndexedColors color,boolean italic,boolean strikeout){
         return StyleHelper.createWorkBookFont(context.getWorkbook(),fontName,isBold, fontSize,color,italic,strikeout);
@@ -867,7 +869,6 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param color 颜色
      * @param italic 是否斜体
      * @param strikeout 是否删除线
-     * @return
      */
     public Font createFont(String fontName,short fontSize,boolean isBold,AxolotlColor color,boolean italic,boolean strikeout){
         XSSFFont font = new XSSFFont();
