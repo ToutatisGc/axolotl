@@ -13,7 +13,7 @@ import java.lang.annotation.*;
 public @interface AxolotlReaderSetter {
 
     /**
-     * 未配置使用字段Setter
+     * 未配置使用字段同名Setter
      */
     String value();
 

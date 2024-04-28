@@ -8,12 +8,10 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.toutatis.xvoid.axolotl.toolkit.FieldToolkit;
 import cn.toutatis.xvoid.common.standard.StringPool;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
-import com.alibaba.fastjson.JSON;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -105,11 +103,13 @@ public class ComponentRender {
            this.renderSelectDropListBox(fieldInfo,cell);
         }else{
             calculateColumns(fieldInfo);
-            // TODO GET方法,用ReflectToolkit,同步你的可配置主题相同代码
-            // TODO 字典转换
             value = writeConfig.getDataInverter().convert(value);
             //设置单元格值
-            cell.setCellValue(convertDictCodeToName(fieldInfo, value.toString()));
+            if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER)){
+                cell.setCellValue(convertDictCodeToName(fieldInfo, value.toString()));
+            }else{
+                cell.setCellValue(value.toString());
+            }
         }
     }
 
@@ -145,6 +145,9 @@ public class ComponentRender {
 
     }
 
+    /**
+     * 字典映射记录
+     */
     private final HashMap<String,DictMappingExecutor> alreadyRecordDict = new HashMap<>();
 
     /**
@@ -160,7 +163,7 @@ public class ComponentRender {
         }
         // 最终返回值
         String dictAdaptiveValue;
-        int sheetIndex = context.getSwitchSheetIndex();
+        int sheetIndex = fieldInfo.getSheetIndex();
         String fieldName = fieldInfo.getFieldName();
         Object dataInstance = fieldInfo.getDataInstance();
         Class<?> instanceClass = dataInstance.getClass();
@@ -179,7 +182,7 @@ public class ComponentRender {
                         if (convertMapping != null && convertMapping.containsKey(value)){
                             return convertMapping.get(value);
                         }else{
-                            return adptive(value,dictMappingExecutor.getMappingPolicy(),dictMappingExecutor.getDefaultValue());
+                            return adaptive(value,dictMappingExecutor.getMappingPolicy(),dictMappingExecutor.getDefaultValue());
                         }
                     }
                 }else{
@@ -187,7 +190,7 @@ public class ComponentRender {
                     if (convertMapping != null && convertMapping.containsKey(value)){
                         return convertMapping.get(value);
                     }else{
-                        return adptive(value,dictMappingExecutor.getMappingPolicy(),dictMappingExecutor.getDefaultValue());
+                        return adaptive(value,dictMappingExecutor.getMappingPolicy(),dictMappingExecutor.getDefaultValue());
                     }
                 }
             }else{
@@ -232,7 +235,7 @@ public class ComponentRender {
                 }
                 // POJO类型
             }else{
-                Field field = FieldToolkit.recursionGetField(dataInstance.getClass(),fieldName);
+                Field field = ReflectToolkit.recursionGetField(dataInstance.getClass(),fieldName);
                 // 字段不存在查找getter方法
                 AxolotlDictMapping axolotlDictMapping = null;
                 if (field == null){
@@ -292,149 +295,12 @@ public class ComponentRender {
         return dictAdaptiveValue;
     }
 
-    private String adptive(String value, DictMappingPolicy fieldDictMappingPolicy, String fieldDictMappingDefaultValue){
+    private String adaptive(String value, DictMappingPolicy fieldDictMappingPolicy, String fieldDictMappingDefaultValue){
         return switch (fieldDictMappingPolicy) {
             case KEEP_ORIGIN -> value;
             case USE_DEFAULT -> fieldDictMappingDefaultValue;
             case NULL_VALUE -> null;
         };
     }
-
-//    private String adptive
-
-    // if(!(dataInstance instanceof Map<?,?>)){
-    //            Field field = FieldToolkit.recursionGetField(dataInstance.getClass(), fieldInfo.getFieldName());
-    //            if(field != null){
-    //                AxolotlDictMapping dictMappingInfo = field.getAnnotation(AxolotlDictMapping.class);
-    //                if (dictMappingInfo != null){
-    //                    //带有 AxolotlDictMapping 注解的处理
-    //                    //是否进行字典值处理
-    //                    if(dictMappingInfo.isUsage()){
-    //                        int[] sheetIndexs = dictMappingInfo.effectSheetIndex();
-    //                        boolean isUsage = false;
-    //                        if(sheetIndexs.length != 0){
-    //                            for (int index : sheetIndexs) {
-    //                                if(index == sheetIndex){
-    //                                    isUsage = true;
-    //                                    break;
-    //                                }
-    //                            }
-    //                        }else{
-    //                            isUsage = true;
-    //                        }
-    //                        if(isUsage){
-    //                            //映射字段名
-    //                            String mappingFieldName;
-    //                            if(StringUtils.isNotEmpty(dictMappingInfo.value())){
-    //                                mappingFieldName = dictMappingInfo.value();
-    //                            }else{
-    //                                mappingFieldName = fieldInfo.getFieldName();
-    //                            }
-    //                            Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, mappingFieldName);
-    //                            //静态字典
-    //                            if(dictMappingInfo.staticDict().length > 0 && dictMappingInfo.staticDict().length%2 == 0){
-    //                                //使用静态字典处理
-    //                                dictMapping = new LinkedHashMap<>();
-    //                                for (int i = 0; i < dictMappingInfo.staticDict().length; i++) {
-    //                                    if (i % 2 != 0) {
-    //                                        dictMapping.put(dictMappingInfo.staticDict()[i-1],dictMappingInfo.staticDict()[i]);
-    //                                    }
-    //                                }
-    //                            }
-    //                            if(!dictMapping.isEmpty()){
-    //                                String dictName = dictMapping.get(value);
-    //                                if(dictName == null){
-    //                                    AxolotlDictMappingPolicy dictMappingPolicyAnno = field.getAnnotation(AxolotlDictMappingPolicy.class);
-    //                                    if(dictMappingPolicyAnno != null){
-    //                                        if(dictMappingPolicyAnno.mappingPolicy().equals(KEEP_ORIGIN)){
-    //                                            //保留字段原值
-    //                                            //  value = value.toString();
-    //                                        }else if(dictMappingPolicyAnno.mappingPolicy().equals(USE_DEFAULT)){
-    //                                            //使用字段默认值
-    //                                            value = dictMappingPolicyAnno.defaultValue();
-    //                                        }else if(dictMappingPolicyAnno.mappingPolicy().equals(NULL_VALUE)){
-    //                                            //设置为空
-    //                                            value = null;
-    //                                        }
-    //                                    }else{
-    //                                        Map<DictMappingPolicy, String> dictMappingPolicy = writeConfig.getDictMappingPolicy(sheetIndex);
-    //                                        if(dictMappingPolicy.containsKey(KEEP_ORIGIN)){
-    //                                            //保留字段原值
-    //                                            //  value = value.toString();
-    //                                        }else if(dictMappingPolicy.containsKey(USE_DEFAULT)){
-    //                                            //使用字段默认值
-    //                                            value = dictMappingPolicy.get(USE_DEFAULT);
-    //                                        }else if(dictMappingPolicy.containsKey(NULL_VALUE)){
-    //                                            //设置为空
-    //                                            value = null;
-    //                                        }
-    //                                    }
-    //                                }else{
-    //                                    value = dictName;
-    //                                }
-    //                            }
-    //                        }
-    //                    }
-    //                }else{
-    //                    //没有 AxolotlDictMapping 注解的处理
-    //                    Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, fieldInfo.getFieldName());
-    //                    if(!dictMapping.isEmpty()){
-    //                        String dictName = dictMapping.get(value);
-    //                        if(dictName == null){
-    //                            AxolotlDictMappingPolicy dictMappingPolicyAnno = field.getAnnotation(AxolotlDictMappingPolicy.class);
-    //                            if(dictMappingPolicyAnno != null){
-    //                                if(dictMappingPolicyAnno.mappingPolicy().equals(KEEP_ORIGIN)){
-    //                                    //保留字段原值
-    //                                    //  value = value.toString();
-    //                                }else if(dictMappingPolicyAnno.mappingPolicy().equals(USE_DEFAULT)){
-    //                                    //使用字段默认值
-    //                                    value = dictMappingPolicyAnno.defaultValue();
-    //                                }else if(dictMappingPolicyAnno.mappingPolicy().equals(NULL_VALUE)){
-    //                                    //设置为空
-    //                                    value = null;
-    //                                }
-    //                            }else{
-    //                                Map<DictMappingPolicy, String> dictMappingPolicy = writeConfig.getDictMappingPolicy(sheetIndex);
-    //                                if(dictMappingPolicy.containsKey(KEEP_ORIGIN)){
-    //                                    //保留字段原值
-    //                                    //  value = value.toString();
-    //                                }else if(dictMappingPolicy.containsKey(USE_DEFAULT)){
-    //                                    //使用字段默认值
-    //                                    value = dictMappingPolicy.get(USE_DEFAULT);
-    //                                }else if(dictMappingPolicy.containsKey(NULL_VALUE)){
-    //                                    //设置为空
-    //                                    value = null;
-    //                                }
-    //                            }
-    //                        }else{
-    //                            value = dictName;
-    //                        }
-    //                    }
-    //                }
-    //            }else{
-    //                //getter方法 使用全局字典值映射策略
-    //                Map<String, String> dictMapping = writeConfig.getDict(sheetIndex, fieldInfo.getFieldName());
-    //                if(!dictMapping.isEmpty()){
-    //                    String dictName = dictMapping.get(value);
-    //                    if(dictName == null){
-    //                        Map<DictMappingPolicy, String> dictMappingPolicy = writeConfig.getDictMappingPolicy(sheetIndex);
-    //                        if(dictMappingPolicy.containsKey(KEEP_ORIGIN)){
-    //                            //保留字段原值
-    //                            //  value = value.toString();
-    //                        }else if(dictMappingPolicy.containsKey(USE_DEFAULT)){
-    //                            //使用字段默认值
-    //                            value = dictMappingPolicy.get(USE_DEFAULT);
-    //                        }else if(dictMappingPolicy.containsKey(NULL_VALUE)){
-    //                            //设置为空
-    //                            value = null;
-    //                        }
-    //                    }else{
-    //                        value = dictName;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        return dictAdaptiveValue;
-
 
 }

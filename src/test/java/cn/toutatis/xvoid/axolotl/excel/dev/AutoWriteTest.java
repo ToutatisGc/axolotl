@@ -4,7 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.AxolotlFaster;
 import cn.toutatis.xvoid.axolotl.Axolotls;
-import cn.toutatis.xvoid.axolotl.common.SheetInfo;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.SheetDataPackage;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.StockEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
@@ -21,7 +21,6 @@ import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
@@ -330,9 +329,9 @@ public class AutoWriteTest {
             data.add(stockEntity);
         }
 
-        SheetInfo sheetInfo1 = AxolotlFaster.buildWriteSheetInfo(0, headers, data, "股票测试表", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表1","微软雅黑",true);
-        SheetInfo sheetInfo2 = AxolotlFaster.buildWriteSheetInfo(1, headers, data, "股票测试表222", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表2","微软雅黑",true);
-        AxolotlFaster.autoWriteToExcelMultiSheet(fileOutputStream,sheetInfo1,sheetInfo2);
+        SheetDataPackage sheetDataPackage1 = AxolotlFaster.buildWriteSheetInfo(0, headers, data, "股票测试表", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表1","微软雅黑",true);
+        SheetDataPackage sheetDataPackage2 = AxolotlFaster.buildWriteSheetInfo(1, headers, data, "股票测试表222", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表2","微软雅黑",true);
+        AxolotlFaster.autoWriteToExcelMultiSheet(fileOutputStream, sheetDataPackage1, sheetDataPackage2);
 
        /* AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
         autoExcelWriter.write(headers,data);

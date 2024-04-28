@@ -1,6 +1,6 @@
 package cn.toutatis.xvoid.axolotl;
 
-import cn.toutatis.xvoid.axolotl.common.SheetInfo;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.SheetDataPackage;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
@@ -12,16 +12,14 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
+ * 快拆工具类
  * @author 张智凯
- * @version 1.0
- * @data 2024/4/23 17:10
+ * @version 1.0.15
  */
 public class AxolotlFaster {
 
@@ -214,15 +212,15 @@ public class AxolotlFaster {
     }
 
 
-    public static void autoWriteToExcelMultiSheet(OutputStream outputStream, SheetInfo... sheetInfo){
+    public static void autoWriteToExcelMultiSheet(OutputStream outputStream, SheetDataPackage... sheetDataPackage){
         try {
-            if(sheetInfo == null || sheetInfo.length == 0){
+            if(sheetDataPackage == null || sheetDataPackage.length == 0){
                 throw new AxolotlWriteException("写入配置不能为空");
             }
             AutoWriteConfig config = new AutoWriteConfig();
             config.setOutputStream(outputStream);
             AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(config);
-            for (SheetInfo sheet : sheetInfo) {
+            for (SheetDataPackage sheet : sheetDataPackage) {
                 AutoWriteConfig autoWriteConfig = sheet.getAutoWriteConfig();
                 List<Header> headers = sheet.getHeaders();
                 List<?> data = sheet.getData();
@@ -274,7 +272,7 @@ public class AxolotlFaster {
      * @param autoCatchColumnLength  自动列宽
      * @param autoInsertSerialNumber 第一行添加序号
      */
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber){
         AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
         autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,autoInsertSerialNumber);
         autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,autoInsertTotalInEnding);
@@ -292,88 +290,88 @@ public class AxolotlFaster {
             autoWriteConfig.setTitle(title);
         }
         autoWriteConfig.setSheetIndex(sheetIndex);
-        SheetInfo sheetInfo = new SheetInfo();
-        sheetInfo.setAutoWriteConfig(autoWriteConfig);
-        sheetInfo.setHeaders(headers != null ? new ArrayList<>(headers) : null);
-        sheetInfo.setData(data != null ? new ArrayList<>(data) : null);
-        return sheetInfo;
+        SheetDataPackage sheetDataPackage = new SheetDataPackage();
+        sheetDataPackage.setAutoWriteConfig(autoWriteConfig);
+        sheetDataPackage.setHeaders(headers != null ? new ArrayList<>(headers) : null);
+        sheetDataPackage.setData(data != null ? new ArrayList<>(data) : null);
+        return sheetDataPackage;
     }
 
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoCatchColumnLength){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoCatchColumnLength){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,autoCatchColumnLength,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String fontName){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String fontName){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,fontName,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoCatchColumnLength){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoCatchColumnLength){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,autoCatchColumnLength,false);
     }
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
     }
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoCatchColumnLength){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoCatchColumnLength){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,autoCatchColumnLength,false);
     }
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,null,fontName,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoCatchColumnLength){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoCatchColumnLength){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,autoCatchColumnLength,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title){
         return buildWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data){
         return buildWriteSheetInfo(sheetIndex,headers,data,null,null,null,null,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<?> data){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<?> data){
         return buildWriteSheetInfo(sheetIndex,null,data,null,null,null,null,false,false,false);
     }
 
-    public static SheetInfo buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, AutoWriteConfig autoWriteConfig){
+    public static SheetDataPackage buildWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, AutoWriteConfig autoWriteConfig){
         AutoWriteConfig config = new AutoWriteConfig();
         try {
             BeanUtils.copyProperties(config,autoWriteConfig);
@@ -381,11 +379,11 @@ public class AxolotlFaster {
             throw new RuntimeException(e);
         }
         config.setSheetIndex(sheetIndex);
-        SheetInfo sheetInfo = new SheetInfo();
-        sheetInfo.setAutoWriteConfig(config);
-        sheetInfo.setHeaders(headers != null ? new ArrayList<>(headers) : null);
-        sheetInfo.setData(data != null ? new ArrayList<>(data) : null);
-        return sheetInfo;
+        SheetDataPackage sheetDataPackage = new SheetDataPackage();
+        sheetDataPackage.setAutoWriteConfig(config);
+        sheetDataPackage.setHeaders(headers != null ? new ArrayList<>(headers) : null);
+        sheetDataPackage.setData(data != null ? new ArrayList<>(data) : null);
+        return sheetDataPackage;
     }
 
 }

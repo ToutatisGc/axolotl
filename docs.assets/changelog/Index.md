@@ -2,13 +2,27 @@
 
 ## 最新更新：
 
-​	最后更新时间：<font color='red'>2024-04-03</font>
+​	最后更新时间：<font color='red'>2024-04-30</font>
 
-​	Java17依赖版本**（LTS）**：<font color='red'>1.0.14</font>
+​	Java17依赖版本**（LTS）**：<font color='red'>1.0.15</font>
 
-​	Java8依赖版本：<font color='red'>0.0.13-ALPHA</font>
+​	Java8依赖版本：<font color='red'>1.0.15-8</font>
 
-### 🔝Java17 版本 <font color='red'>1.0.14</font> 更新说明
+### 🔝Java17 版本 <font color='red'>1.0.15</font> 更新说明
+
+发布时间：[2024-05-UNKNOW]
+
+- 增加读取特性READ_FIELD_USE_SETTER，读取字段使用字段的Setter方法，而并非使用反射赋值。
+- 增加字典映射支持，使用config.setDict()方法，可设置字典码与字面量的转换。
+- 增加写入特性SIMPLE_USE_GETTER_METHOD写入时，获取值使用Getter方法。
+- 为模板写入器增加了数据转换器的支持，同自动写入器保持一致。
+- 新增`AxolotlFaster`类添加语法糖，使导入导出时减少配置方法语法更精简。
+- 修复部分多表写入BUG。
+
+
+## 历史更新：
+
+### 🧩Java17 版本 1.0.14 更新说明
 
 发布时间：[2024-04-03]
 
@@ -21,9 +35,6 @@
 - 增加自动写入器API。
 
 - 完善文档。
-
-
-## 历史更新：
 
 ### 🧩 Java17 版本 <font color='red'>1.0.13</font> 更新说明
 

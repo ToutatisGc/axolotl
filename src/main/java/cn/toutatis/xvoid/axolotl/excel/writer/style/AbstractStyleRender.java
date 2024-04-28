@@ -3,6 +3,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.style;
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriteIgnore;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriterGetter;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlColor;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
@@ -12,7 +13,6 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.toutatis.xvoid.axolotl.toolkit.FieldToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -526,7 +526,6 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
 
         /**
          * 数据实例
-         * TODO GETTER特性调用本身字段get方法
          */
         private final Object dataInstance;
 
@@ -671,23 +670,41 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             Class<?> dataClass = data.getClass();
             if(writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD)){
                 ArrayList<Method> getterMethods = ReflectToolkit.getGetterMethods(dataClass);
+                Method tmpMethod;
                 for (Method getterMethod : getterMethods) {
                     // 仅获取公开的Getter方法
                     if (Modifier.isPublic(getterMethod.getModifiers())){
+                        tmpMethod = getterMethod;
+                        AxolotlWriterGetter axolotlWriterGetter = tmpMethod.getAnnotation(AxolotlWriterGetter.class);
+                        if (axolotlWriterGetter != null && axolotlWriterGetter.value() != null){
+                            try {
+                                debug(LOGGER,"Getter方法[%s]将被重定向到[%s]",tmpMethod.getName(),axolotlWriterGetter.value());
+                                tmpMethod = dataClass.getMethod(axolotlWriterGetter.value());
+                                if (!Modifier.isPublic(getterMethod.getModifiers())){
+                                    String message = format("重定向Getter方法[%s]失败,方法[%s]为私有方法", tmpMethod.getName(), axolotlWriterGetter.value());
+                                    error(LOGGER,message);
+                                    throw new AxolotlWriteException(message);
+                                }
+                            } catch (NoSuchMethodException e) {
+                                String message = format("Getter方法[%s]重定向失败,方法不存在", tmpMethod.getName());
+                                error(LOGGER,message);
+                                throw new AxolotlWriteException(message);
+                            }
+                        }
                         AxolotlWriteIgnore ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
                         if (ignore != null){continue;}
                         var methodName = getterMethod.getName();
                         String fieldName = ReflectToolkit.convertGetterToFieldName(methodName);
-                        Field field = FieldToolkit.recursionGetField(dataClass, fieldName);
+                        Field field = ReflectToolkit.recursionGetField(dataClass, fieldName);
                         if (field != null){
                             ignore = field.getAnnotation(AxolotlWriteIgnore.class);
                             if (ignore != null){continue;}
                         }
-                        int parameterCount = getterMethod.getParameterCount();
+                        int parameterCount = tmpMethod.getParameterCount();
                         if (parameterCount == 0){
                             Object invokeValue = null;
                             try {
-                                invokeValue = getterMethod.invoke(data);
+                                invokeValue = tmpMethod.invoke(data);
                             } catch (IllegalAccessException | InvocationTargetException e) {
                                 e.printStackTrace();
                                 if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT)){
