@@ -69,6 +69,10 @@ public class StyleHelper {
      * 默认文本格式化索引
      */
     public static final short DATA_FORMAT_PLAIN_TEXT_INDEX = 49;
+    /**
+     * 常规格式索引
+     */
+    public static final short DATA_FORMAT_GENERAL_INDEX = 0;
 
     /**
      * 身份证号长度
