@@ -7,12 +7,14 @@ import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CastContext;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.CellGetInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 
+import java.text.DecimalFormat;
 import java.util.Map;
 
 /**
@@ -48,6 +50,7 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 }
                 return cellValueString;
             case NUMERIC:
+                // 判断是否为文本格式
                 if (!excludePolicies.containsKey(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
                     if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.CAST_NUMBER_TO_DATE)) {
                         if (DateUtil.isCellDateFormatted(cellGetInfo.get_cell())) {
@@ -55,6 +58,12 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                             return String.format("%s", cellValue);
                         }
                     }
+                }
+                short dataFormat = cellGetInfo.get_cell().getCellStyle().getDataFormat();
+                boolean isText = (dataFormat == StyleHelper.DATA_FORMAT_GENERAL_INDEX || dataFormat == StyleHelper.DATA_FORMAT_PLAIN_TEXT_INDEX);
+                if (isText){
+                    DecimalFormat df = new DecimalFormat("#");
+                    return df.format(cellValue);
                 }
                 if ((Double) cellValue % 1 == 0) {
                     return Integer.toString(((Double) cellValue).intValue());
