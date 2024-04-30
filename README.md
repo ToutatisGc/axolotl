@@ -69,7 +69,7 @@
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>1.0.14</version>
+    <version>1.0.15</version>
 </dependency>
 ```
 
@@ -79,7 +79,7 @@
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>0.0.14-BETA</version>
+    <version>1.0.15-8</version>
 </dependency>
 ```
 
@@ -824,7 +824,7 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 <dependency>
 	<groupId>cn.toutatis</groupId>
 	<artifactId>axolotl</artifactId>
-	<version>1.0.14</version>
+	<version>1.0.15</version>
 		<exclusions>
             <exclusion>
             	<groupId>org.slf4j</groupId>

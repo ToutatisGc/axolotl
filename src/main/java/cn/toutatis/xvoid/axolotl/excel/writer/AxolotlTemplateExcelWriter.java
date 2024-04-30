@@ -1,6 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriteIgnore;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriterGetter;
 import cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPattern;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
@@ -9,6 +11,7 @@ import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.common.standard.StringPool;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
@@ -26,6 +29,8 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -244,6 +249,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         return unusedMap;
     }
 
+
+
     @SuppressWarnings("unchecked")
     private DesignConditions calculateConditions(List<?> circleDataList){
         DesignConditions designConditions = new DesignConditions();
@@ -252,7 +259,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         designConditions.setSheetIndex(sheetIndex);
         // 判断是否是Map还是实体类并采集字段名
         Map<String, CellAddress> circleReferenceData = writeContext.getCircleReferenceData().row(sheetIndex);
-        Map<String,Integer> writeFieldNames = new HashMap<>();
+        Map<String, DesignConditions.FieldInfo> writeFieldNames = new HashMap<>();
         Object rowObjInstance = circleDataList.get(0);
         if (rowObjInstance instanceof Map){
             designConditions.setSimplePOJO(false);
@@ -260,15 +267,102 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             if (!rowObjInstanceMap.isEmpty()){
                 writeFieldNames = rowObjInstanceMap.keySet()
                         .stream()
-                        .collect(Collectors.toMap(key -> key, key -> 1));
+                        .collect(Collectors.toMap(key -> key, DesignConditions.FieldInfo::new));
             }
         }else {
             designConditions.setSimplePOJO(true);
             Class<?> instanceClass = rowObjInstance.getClass();
+            boolean useGetter = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD);
             for (String key : circleReferenceData.keySet()) {
-                Field field;
-                try {field = instanceClass.getDeclaredField(key);}catch(NoSuchFieldException noSuchFieldException){field = null;}
-                if (field != null){writeFieldNames.put(key, 1);}
+                AxolotlWriteIgnore ignore;
+                Method getterMethod = null;
+                Field field = ReflectToolkit.recursionGetField(instanceClass, key);
+                DesignConditions.FieldInfo fieldInfo;
+                if (useGetter){
+                    String getterMethodName = ReflectToolkit.getFieldGetterMethodName(key);
+                    fieldInfo = new DesignConditions.FieldInfo(getterMethodName);
+                    fieldInfo.setGetter(true);
+                    boolean isDirect = false;
+                    try {
+                        getterMethod = instanceClass.getMethod(getterMethodName);
+                        AxolotlWriterGetter writerGetter = getterMethod.getAnnotation(AxolotlWriterGetter.class);
+                        if (writerGetter == null){
+                            if (field != null){
+                                writerGetter = field.getAnnotation(AxolotlWriterGetter.class);
+                            }
+                        }
+                        if (writerGetter != null){
+                            debug(LOGGER, "[%s]模板重定向自定义Getter方法[%s]",key , writerGetter.value());
+                            getterMethod = instanceClass.getMethod(writerGetter.value());
+                            isDirect = true;
+                        }
+                    } catch (NoSuchMethodException ignored) {}
+                    if (getterMethod != null){
+                        if (Modifier.isPublic(getterMethod.getModifiers())){
+                            fieldInfo.setName(getterMethod.getName());
+                            ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
+                            if (ignore != null){
+                                fieldInfo.setIgnore(true);
+                            }else{
+                                // 同名Getter可以忽略，非同名无法查找
+                                if (!isDirect){
+                                    if (field != null && field.getAnnotation(AxolotlWriteIgnore.class) != null){
+                                        fieldInfo.setIgnore(true);
+                                    }
+                                }
+                            }
+                        }
+                    }else{
+                        debug(LOGGER, "未找到字段[%s]的Getter方法", key);
+                        fieldInfo.setIgnore(true);
+                    }
+                    writeFieldNames.put(key,fieldInfo);
+                }else{
+                    fieldInfo = new DesignConditions.FieldInfo(key);
+                    // 如果模板名称为Getter名称起始，优先寻找实体的Getter方法
+                    if (key.startsWith(ReflectToolkit.GET_FIELD_LAMBDA) || key.startsWith(ReflectToolkit.IS_FIELD_LAMBDA)){
+                        String tempName = key;
+                        // 不为空说明有同名的字段,转为Getter方法名
+                        if (field != null){
+                            tempName = ReflectToolkit.getFieldGetterMethodName(tempName);
+                        }
+                        try {
+                            getterMethod = instanceClass.getMethod(tempName);
+                            if (Modifier.isPublic(getterMethod.getModifiers())){
+                                fieldInfo.setName(tempName);
+                                ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
+                                if (ignore != null){
+                                    debug(LOGGER, "Getter方法[%s]被忽略", tempName);
+                                    fieldInfo.setIgnore(true);
+                                }else{
+                                    if (field != null){
+                                        if (field.getAnnotation(AxolotlWriteIgnore.class) != null){
+                                            debug(LOGGER, "字段[%s]被忽略", tempName);
+                                            fieldInfo.setIgnore(true);
+                                        }
+                                    }else{
+                                        fieldInfo.setGetter(true);
+                                    }
+                                }
+                            }else{
+                                debug(LOGGER, "Getter方法[%s]为私有,跳过使用", tempName);
+                            }
+                        } catch (NoSuchMethodException ignored) {}
+                        if (getterMethod == null && field != null){
+                            if (field.getAnnotation(AxolotlWriteIgnore.class) != null){
+                                debug(LOGGER, "字段[%s]被忽略,跳过使用", tempName);
+                                fieldInfo.setIgnore(true);
+                            }
+                        }
+                        writeFieldNames.put(key,fieldInfo);
+                    }else{
+                        if (field != null){
+                            ignore = field.getAnnotation(AxolotlWriteIgnore.class);
+                            if (ignore != null){continue;}
+                            writeFieldNames.put(key, fieldInfo);
+                        }
+                    }
+                }
             }
         }
         designConditions.setWriteFieldNames(writeFieldNames);
@@ -515,7 +609,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private int calculateStartShiftRow(Map<String, CellAddress> circleReferenceData, DesignConditions designConditions, boolean initialWriting) {
         int maxRowPosition = Integer.MIN_VALUE;
-        Map<String, Integer> writeFieldNames = designConditions.getWriteFieldNames();
+        Map<String, DesignConditions.FieldInfo> writeFieldNames = designConditions.getWriteFieldNames();
         for (Map.Entry<String, CellAddress> addressEntry : circleReferenceData.entrySet()) {
             if (writeFieldNames.containsKey(addressEntry.getKey())){
                 maxRowPosition = Math.max(maxRowPosition, addressEntry.getValue().getRowPosition());

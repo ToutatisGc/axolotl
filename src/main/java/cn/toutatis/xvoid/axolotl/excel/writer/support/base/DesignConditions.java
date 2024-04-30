@@ -37,7 +37,7 @@ public class DesignConditions {
     /**
      * 本次写入字段Map
      */
-    private Map<String,Integer> writeFieldNames = new HashMap<>();
+    private Map<String,FieldInfo> writeFieldNames = new HashMap<>();
 
     /**
      * 写入字段列表
@@ -53,5 +53,20 @@ public class DesignConditions {
      * 非模板单元格
      */
     private List<CellAddress> notTemplateCells;
+
+    @Data
+    public static class FieldInfo{
+
+        private String name;
+
+        private boolean getter = false;
+
+        private boolean ignore = false;
+
+        public FieldInfo() {}
+        public FieldInfo(String name) {
+            this.name = name;
+        }
+    }
 
 }

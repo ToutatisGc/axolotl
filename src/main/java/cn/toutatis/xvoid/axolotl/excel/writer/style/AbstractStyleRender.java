@@ -539,6 +539,9 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
          */
         private final Object value;
 
+        /**
+         * 表索引
+         */
         private final int sheetIndex;
 
         /**
