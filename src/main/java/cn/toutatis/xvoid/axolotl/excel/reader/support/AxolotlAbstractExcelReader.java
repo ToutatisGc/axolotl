@@ -761,7 +761,9 @@ public abstract class AxolotlAbstractExcelReader<T> {
             Set<ConstraintViolation<RT>> validate = validator.validate(instance);
             if (!validate.isEmpty()){
                 for (ConstraintViolation<RT> constraintViolation : validate) {
-                    throw new AxolotlExcelReadException(workBookContext, constraintViolation.getMessage());
+                    AxolotlExcelReadException axolotlExcelReadException = new AxolotlExcelReadException(workBookContext, constraintViolation.getMessage());
+                    axolotlExcelReadException.setExceptionType(AxolotlExcelReadException.ExceptionType.VALIDATION_ERROR);
+                    throw axolotlExcelReadException;
                 }
             }
         }
