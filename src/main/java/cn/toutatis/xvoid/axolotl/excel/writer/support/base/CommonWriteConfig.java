@@ -34,6 +34,7 @@ public class CommonWriteConfig {
 
     private Logger LOGGER = LoggerToolkit.getLogger(this.getClass());
 
+
     /**
      * 构造使用默认配置
      */
@@ -59,6 +60,12 @@ public class CommonWriteConfig {
      * sheet索引
      */
     private int sheetIndex = 0;
+
+    /**
+     * 空值填充字符
+     * null值将被填充为空字符串，常用的字符串有"-","未填写","无"
+     */
+    private String blankValue = "";
 
     /**
      * 写入策略

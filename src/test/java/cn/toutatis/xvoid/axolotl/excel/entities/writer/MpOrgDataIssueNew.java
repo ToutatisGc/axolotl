@@ -20,7 +20,7 @@ public class MpOrgDataIssueNew implements Serializable {
 
     private String shouldCnt = "1";
 
-    @AxolotlWriterGetter("getInfoTTTTTTTTT")
+    @AxolotlWriterGetter("getNotCnt")
     private String overCnt = "2";
 
     @AxolotlWriteIgnore
@@ -37,6 +37,9 @@ public class MpOrgDataIssueNew implements Serializable {
     private String dataCnt = "5";
 
     private String vlgCnt = "6";
+
+    private String regionStatus = "ST_001";
+
 
     public String getOrgNo() {
         return orgNo;

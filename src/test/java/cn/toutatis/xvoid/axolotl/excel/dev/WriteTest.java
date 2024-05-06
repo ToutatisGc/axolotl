@@ -217,6 +217,8 @@ public class WriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD,true);
+        commonWriteConfig.setWritePolicy(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER,true);
+        commonWriteConfig.setDict("regionStatus",Map.of("ST_001","正常"));
 // 创建写入器
         try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
             List list = new ArrayList();

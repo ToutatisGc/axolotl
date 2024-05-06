@@ -7,6 +7,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBo
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.WriteContext;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.common.standard.StringPool;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
@@ -16,6 +17,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
@@ -37,13 +39,13 @@ public class ComponentRender {
      * 写入配置
      */
     @Setter
-    protected AutoWriteConfig writeConfig;
+    protected CommonWriteConfig writeConfig;
 
     /**
      * 写入上下文
      */
     @Setter
-    protected AutoWriteContext context;
+    protected WriteContext context;
 
     private final Logger LOGGER = LoggerToolkit.getLogger(this.getClass());
 
@@ -69,9 +71,15 @@ public class ComponentRender {
         AxolotlSelectBox<String> selectBox = ((AxolotlSelectBox<?>) value).convertPropertiesToString(writeConfig.getDataInverter());
         List<String> options = selectBox.getOptions();
         int switchSheetIndex = context.getSwitchSheetIndex();
+        Sheet sheet;
+        if(context instanceof AutoWriteContext autoWriteContext){
+            sheet = autoWriteContext.getWorkbook().getSheetAt(switchSheetIndex);
+        }else{
+            throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
+        }
         if(!options.isEmpty()){
             ExcelToolkit.createDropDownList(
-                    context.getWorkbook().getSheetAt(switchSheetIndex),
+                    sheet,
                     selectBox.getOptions().toArray(new String[options.size()]),
                     fieldInfo.getRowIndex(),
                     fieldInfo.getRowIndex(),
@@ -121,7 +129,12 @@ public class ComponentRender {
         int columnIndex = fieldInfo.getColumnIndex();
         String value = fieldInfo.getValue().toString();
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
-            Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(context.getSwitchSheetIndex());
+            Map<Integer, BigDecimal> endingTotalMapping;
+            if (context instanceof AutoWriteContext autoWriteContext){
+                endingTotalMapping = autoWriteContext.getEndingTotalMapping().row(context.getSwitchSheetIndex());
+            }else {
+                throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
+            }
             if (endingTotalMapping.containsKey(columnIndex)){
                 BigDecimal newValue = endingTotalMapping.get(columnIndex).add(BigDecimal.valueOf(Double.parseDouble(value)));
                 endingTotalMapping.put(columnIndex,newValue);
@@ -156,16 +169,26 @@ public class ComponentRender {
      * @param value 单元格值
      * @return 字典值
      */
-    @SuppressWarnings("unchecked")
     public String convertDictCodeToName(AbstractStyleRender.FieldInfo fieldInfo, String value){
-        if (fieldInfo.getClazz() != String.class && fieldInfo.getClazz() != Integer.class){
+        return convertDictCodeToName(fieldInfo.getSheetIndex(),fieldInfo.getClazz(),fieldInfo.getFieldName(),fieldInfo.getDataInstance(),value);
+    }
+
+    /**
+     * 字典值转换编码到名称
+     * @param sheetIndex sheet索引
+     * @param fieldClass 字段类型
+     * @param fieldName 字段名称
+     * @param dataInstance 数据实例
+     * @param value 单元格值
+     * @return 字典值
+     */
+    @SuppressWarnings("unchecked")
+    public String convertDictCodeToName(int sheetIndex,Class<?> fieldClass,String fieldName,Object dataInstance, String value){
+        if (fieldClass != String.class && fieldClass != Integer.class){
             return value;
         }
         // 最终返回值
         String dictAdaptiveValue;
-        int sheetIndex = fieldInfo.getSheetIndex();
-        String fieldName = fieldInfo.getFieldName();
-        Object dataInstance = fieldInfo.getDataInstance();
         Class<?> instanceClass = dataInstance.getClass();
         //字段键名称
         String alreadyKey = sheetIndex + StringPool.COLON + instanceClass.getSimpleName() + StringPool.COLON + fieldName;
@@ -241,7 +264,7 @@ public class ComponentRender {
                 if (field == null){
                     String fieldGetterMethodName = ReflectToolkit.getFieldGetterMethodName(fieldName);
                     try {
-                        Method getterMethod = fieldInfo.getDataInstance().getClass().getDeclaredMethod(fieldGetterMethodName);
+                        Method getterMethod = dataInstance.getClass().getDeclaredMethod(fieldGetterMethodName);
                         axolotlDictMapping = getterMethod.getAnnotation(AxolotlDictMapping.class);
                     } catch (NoSuchMethodException e) {
                         throw new RuntimeException(e);
@@ -290,7 +313,7 @@ public class ComponentRender {
             }
             dictMappingExecutor.setMappingPolicy(fieldDictMappingPolicy);
             alreadyRecordDict.put(alreadyKey, dictMappingExecutor);
-            return convertDictCodeToName(fieldInfo,value);
+            return convertDictCodeToName(sheetIndex,fieldClass,fieldName,dataInstance,value);
         }
         return dictAdaptiveValue;
     }
