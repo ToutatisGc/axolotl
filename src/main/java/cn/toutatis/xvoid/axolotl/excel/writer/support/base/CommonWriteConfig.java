@@ -215,6 +215,11 @@ public class CommonWriteConfig {
         }
         if (dict!= null && !dict.isEmpty()){
             dictionaryMapping.put(sheetIndex,field,dict);
+            boolean useDictCode = getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER);
+            if (!useDictCode){
+                LoggerHelper.info(LOGGER,"字典映射策略未开启，已自动开启.");
+                this.setWritePolicy(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER,true);
+            }
         }
     }
 
