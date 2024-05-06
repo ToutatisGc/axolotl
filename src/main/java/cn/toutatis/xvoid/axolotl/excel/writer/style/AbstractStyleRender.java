@@ -362,7 +362,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     cellStyle.setBottomBorderColor(axolotlCellStyle.getBottomBorderColor().getIndex());
                 }
                 if(axolotlCellStyle.getForegroundColor() != null){
-                    cellStyle.setFillForegroundColor(axolotlCellStyle.getForegroundColor());
+                    cellStyle.setFillForegroundColor(axolotlCellStyle.getForegroundColor().toXSSFColor());
                 }
                 if(axolotlCellStyle.getFillPatternType() != null){
                     cellStyle.setFillPattern(axolotlCellStyle.getFillPatternType());
