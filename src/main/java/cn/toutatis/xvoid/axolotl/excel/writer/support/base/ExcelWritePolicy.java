@@ -66,7 +66,7 @@ public enum ExcelWritePolicy {
 
     /**
      * 是否抛出异常
-     * true:返回写入结果
+     * true:尽最大可能写入结果，忽略异常，将以日志形式记录异常
      * false:抛出异常
      */
     SIMPLE_EXCEPTION_RETURN_RESULT(Type.BOOLEAN, true, true),

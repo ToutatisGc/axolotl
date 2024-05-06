@@ -7,6 +7,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.constant.TemplatePlaceholderPatter
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.*;
+import cn.toutatis.xvoid.axolotl.exceptions.AxolotlException;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -15,6 +16,7 @@ import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -38,8 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.debug;
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.format;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 /**
  * 模板文档文件写入器
@@ -261,6 +262,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         Map<String, CellAddress> circleReferenceData = writeContext.getCircleReferenceData().row(sheetIndex);
         Map<String, DesignConditions.FieldInfo> writeFieldNames = new HashMap<>();
         Object rowObjInstance = circleDataList.get(0);
+        boolean ignoreException = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT);
         if (rowObjInstance instanceof Map){
             designConditions.setSimplePOJO(false);
             Map<String, Object> rowObjInstanceMap = (Map<String, Object>) rowObjInstance;
@@ -296,7 +298,15 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             getterMethod = instanceClass.getMethod(writerGetter.value());
                             isDirect = true;
                         }
-                    } catch (NoSuchMethodException ignored) {}
+                    } catch (NoSuchMethodException noSuchMethodException) {
+                        String[] methodNameSplit = noSuchMethodException.getMessage().split("\\.");
+                        String methodName = methodNameSplit[methodNameSplit.length - 1];
+                        methodName = methodName.substring(0, methodName.length() - 2);
+                        error(LOGGER, "[%s]模板获取Getter方法[%s]失败",key , methodName);
+                        getterMethod = null;
+                        fieldInfo.setExist(false);
+                        fieldInfo.setName(methodName);
+                    }
                     if (getterMethod != null){
                         if (Modifier.isPublic(getterMethod.getModifiers())){
                             fieldInfo.setName(getterMethod.getName());
@@ -313,8 +323,13 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }
                         }
                     }else{
-                        debug(LOGGER, "未找到字段[%s]的Getter方法", key);
-                        fieldInfo.setIgnore(true);
+                        if (ignoreException){
+                            error(LOGGER, "未找到字段[%s]的Getter方法,写入将跳过该字段", key);
+                            fieldInfo.setIgnore(true);
+                            fieldInfo.setExist(false);
+                        }else{
+                            throw new AxolotlWriteException(format("未找到字段[%s]的Getter方法", key));
+                        }
                     }
                     writeFieldNames.put(key,fieldInfo);
                 }else{
@@ -347,7 +362,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }else{
                                 debug(LOGGER, "Getter方法[%s]为私有,跳过使用", tempName);
                             }
-                        } catch (NoSuchMethodException ignored) {}
+                        } catch (NoSuchMethodException ignored) {
+                            fieldInfo.setExist(false);
+                        }
                         if (getterMethod == null && field != null){
                             if (field.getAnnotation(AxolotlWriteIgnore.class) != null){
                                 debug(LOGGER, "字段[%s]被忽略,跳过使用", tempName);
@@ -358,13 +375,17 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     }else{
                         if (field != null){
                             ignore = field.getAnnotation(AxolotlWriteIgnore.class);
-                            if (ignore != null){continue;}
+                            if (ignore != null){
+                                debug(LOGGER, "字段[%s]被忽略,跳过使用", key);
+                                continue;
+                            }
                             writeFieldNames.put(key, fieldInfo);
                         }
                     }
                 }
             }
         }
+        System.err.println(JSON.toJSONString(writeFieldNames));
         designConditions.setWriteFieldNames(writeFieldNames);
         ArrayList<String> writeFieldNamesList = new ArrayList<>(writeFieldNames.keySet());
         designConditions.setWriteFieldNamesList(writeFieldNamesList);
@@ -477,6 +498,8 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             HashBasedTable<Integer, String, Boolean> alreadyUsedReferenceData = writeContext.getAlreadyUsedReferenceData();
             Map<String, Boolean> alreadyUsedDataMapping = alreadyUsedReferenceData.row(writeContext.getSwitchSheetIndex());
             Map<String, CellAddress> calculateReferenceData = this.writeContext.getCalculateReferenceData().row(writeContext.getSwitchSheetIndex());
+            Map<String, DesignConditions.FieldInfo> writeFieldNames = designConditions.getWriteFieldNames();
+            boolean ignoreException = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT);
             for (Object data : circleDataList) {
                 HashSet<Integer> alreadyWrittenMergeRegionColumns = new HashSet<>();
 //                debug(LOGGER,"[写入数据]"+data);
@@ -495,21 +518,37 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         alreadySetLineHeight = true;
                     }
                     boolean isWritten = false;
-                    if(designConditions.getWriteFieldNames().containsKey(fieldMappingKey)){
+                    if(writeFieldNames.containsKey(fieldMappingKey)){
                         Object value;
-                        if (designConditions.isSimplePOJO()){
-                            // TODO GET特性
-                            // TODO 转换字典
-                            // TODO 检查影响代码
-                            Field field = data.getClass().getDeclaredField(fieldMappingKey);
-                            field.setAccessible(true);
-                            value = field.get(data);
+                        DesignConditions.FieldInfo fieldInfo = writeFieldNames.get(fieldMappingKey);
+                        if (fieldInfo.isIgnore() || !fieldInfo.isExist()){
+                            value = null;
                         }else{
-                            Map<String, Object> map = (Map<String, Object>) data;
-                            value = map.get(fieldMappingKey);
+                            if (designConditions.isSimplePOJO()){
+                                Class<?> dataClass = data.getClass();
+                                if (fieldInfo.isGetter()){
+                                    Method method = dataClass.getMethod(fieldInfo.getName());
+                                    try {
+                                        value = method.invoke(data);
+                                    }catch (Exception exception){
+                                        if (ignoreException){
+                                            value = null;
+                                        }else{
+                                            throw exception;
+                                        }
+                                    }
+                                }else{
+                                    Field field = dataClass.getDeclaredField(fieldMappingKey);
+                                    field.setAccessible(true);
+                                    value = field.get(data);
+                                }
+                            }else{
+                                Map<String, Object> map = (Map<String, Object>) data;
+                                value = map.get(fieldMappingKey);
+                            }
                         }
-                        Cell writableCell = ExcelToolkit.createOrCatchCell(sheet, rowPosition,
-                                cellAddress.getColumnPosition(), cellAddress.getCellStyle());
+                        // TODO 转换字典
+                        Cell writableCell = ExcelToolkit.createOrCatchCell(sheet, rowPosition, cellAddress.getColumnPosition(), cellAddress.getCellStyle());
                         // 空值时使用默认值填充
                         if (Validator.strIsBlank(value)){
                             String defaultValue = cellAddress.getDefaultValue();

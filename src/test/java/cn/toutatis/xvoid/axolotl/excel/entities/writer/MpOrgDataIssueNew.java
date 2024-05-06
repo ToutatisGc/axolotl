@@ -38,4 +38,32 @@ public class MpOrgDataIssueNew implements Serializable {
 
     private String vlgCnt = "6";
 
+    public String getOrgNo() {
+        return orgNo;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public String getDataIssue() {
+        return dataIssue;
+    }
+
+    public String getShouldCnt() {
+        System.err.println("使用GetterShouldCnt");
+        return shouldCnt;
+    }
+
+    public String getOverCnt() {
+        return overCnt;
+    }
+
+    public String getNotCnt() {
+        return notCnt;
+    }
+
+    public String getScheduleRate() {
+        return scheduleRate;
+    }
 }

@@ -54,14 +54,31 @@ public class DesignConditions {
      */
     private List<CellAddress> notTemplateCells;
 
+    /**
+     * 字段信息
+     */
     @Data
     public static class FieldInfo{
 
+        /**
+         * 字段名称/Getter方法名称
+         */
         private String name;
 
+        /**
+         * 是否为Getter方法
+         */
         private boolean getter = false;
 
+        /**
+         * 是否忽略
+         */
         private boolean ignore = false;
+
+        /**
+         * 是否存在
+         */
+        private boolean exist = true;
 
         public FieldInfo() {}
         public FieldInfo(String name) {
