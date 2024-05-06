@@ -398,7 +398,6 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 }
             }
         }
-        System.err.println(JSON.toJSONString(writeFieldNames));
         designConditions.setWriteFieldNames(writeFieldNames);
         ArrayList<String> writeFieldNamesList = new ArrayList<>(writeFieldNames.keySet());
         designConditions.setWriteFieldNamesList(writeFieldNamesList);
