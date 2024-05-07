@@ -1,11 +1,11 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
-import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import com.google.common.collect.Lists;
@@ -14,10 +14,9 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
-import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
+import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.info;
 
 /**
  * 文档文件写入器
@@ -31,13 +30,18 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      */
     private final Logger LOGGER = LoggerToolkit.getLogger(AxolotlAutoExcelWriter.class);
 
+    /**
+     * 写入配置
+     */
     private final AutoWriteConfig writeConfig;
 
+    /**
+     * 写入上下文
+     */
     private final AutoWriteContext writeContext;
 
     /**
      * 主构造函数
-     *
      * @param autoWriteConfig 写入配置
      */
     public AxolotlAutoExcelWriter(AutoWriteConfig autoWriteConfig) {

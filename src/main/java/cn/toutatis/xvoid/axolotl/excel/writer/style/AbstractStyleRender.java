@@ -102,8 +102,6 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         this.globalFontName = globalFontName;
     }
 
-    public static final String TOTAL_HEADER_COUNT_KEY = "";
-
     /**
      * 是否是第一批次数据
      * @return true/false
@@ -417,7 +415,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * 表头递归信息
      */
     @Data
-    public class HeaderRecursiveInfo implements Serializable,Cloneable{
+    public static class HeaderRecursiveInfo implements Serializable{
 
         /**
          * 渲染的总行数

@@ -859,7 +859,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             this.flush(true);
             workbook.write(config.getOutputStream());
             workbook.close();
-            config.getOutputStream().close();
+            config.close();
         }else{
             String message = "输出流为空,请指定输出流";
             debug(LOGGER,message);
