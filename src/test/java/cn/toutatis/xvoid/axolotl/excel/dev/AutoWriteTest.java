@@ -117,7 +117,7 @@ public class AutoWriteTest {
             data.add(stockEntity);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
-        commonWriteConfig.setDict(0,"st", Map.of("0","手动否","1","手动是"));
+       // commonWriteConfig.setDict(0,"st", Map.of("0","手动否","1","手动是"));
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();
 
@@ -311,7 +311,7 @@ public class AutoWriteTest {
         headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));
         headers.add(new Header("总市值（亿元）",StockEntity::getTotalValue));
         headers.add(new Header("流通市值（亿元）",StockEntity::getCirculationMarketValue));
-        List<Header> subHeader1 = List.of(new Header("TTM"), new Header("15E"),new Header("16E"));
+        List<Header> subHeader1 = new ArrayList<>();
         headers.add(new Header("每股收益", subHeader1));
         headers.add(new Header("市盈率PE", subHeader1));
         headers.add(new Header("市净率PB（LF）"));
