@@ -1,5 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriteIgnore;
+import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.AxolotlWriterGetter;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -18,8 +20,10 @@ public class MpOrgDataIssueNew implements Serializable {
 
     private String shouldCnt = "1";
 
+    @AxolotlWriterGetter("getNotCnt")
     private String overCnt = "2";
 
+    @AxolotlWriteIgnore
     private String notCnt = "3";
 
     private String scheduleRate = "4";
@@ -34,4 +38,35 @@ public class MpOrgDataIssueNew implements Serializable {
 
     private String vlgCnt = "6";
 
+    private String regionStatus = "ST_001";
+
+
+    public String getOrgNo() {
+        return orgNo;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public String getDataIssue() {
+        return dataIssue;
+    }
+
+    public String getShouldCnt() {
+        System.err.println("使用GetterShouldCnt");
+        return shouldCnt;
+    }
+
+    public String getOverCnt() {
+        return overCnt;
+    }
+
+    public String getNotCnt() {
+        return notCnt;
+    }
+
+    public String getScheduleRate() {
+        return scheduleRate;
+    }
 }

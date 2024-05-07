@@ -21,6 +21,9 @@ import java.io.OutputStream;
 
 import static cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper.*;
 
+/**
+ * 抽象工作簿写入器
+ */
 public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
 
     /**

@@ -8,6 +8,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DefaultDataInverter;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
+import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
@@ -25,7 +26,6 @@ public class AutoWriteConfig extends CommonWriteConfig {
 
     public AutoWriteConfig() {
         super(true);
-        this.calculateColumnIndexes.add(-1);
     }
 
     public AutoWriteConfig(Class<?> metaClass,boolean withDefaultConfig) {
@@ -66,22 +66,16 @@ public class AutoWriteConfig extends CommonWriteConfig {
     private DataInverter<?> dataInverter = new DefaultDataInverter();
 
     /**
-     * 空值填充字符
-     * null值将被填充为空字符串，常用的字符串有"-","未填写","无"
-     */
-    private String blankValue = "";
-
-    /**
      * 特殊行高映射
      */
-    private Map<Integer,Integer> specialRowHeightMapping = new HashMap<>();
+    private HashBasedTable<Integer,Integer,Integer> specialRowHeightMapping = HashBasedTable.create();
 
     /**
      * 需要计算的列索引
      * -1:为计算所有数字列
      * 0:空为不计算,填充为默认值
      */
-    private HashSet<Integer> calculateColumnIndexes = new HashSet<>();
+    private Map<Integer,Set<Integer>> calculateColumnIndexes = new HashMap<>();
 
     /**
      * 设置样式渲染器
@@ -163,18 +157,51 @@ public class AutoWriteConfig extends CommonWriteConfig {
 
     /**
      * 添加需要计算的列索引
+     * @param sheetIndex sheet索引
      * @param index 列索引
      */
-    public void addCalculateColumnIndex(int... index){
-        Arrays.stream(index).filter(i -> i >= 0).forEach(i -> this.calculateColumnIndexes.add(i));
+    public void addCalculateColumnIndex(int sheetIndex,int... index){
+        if(index != null){
+            Set<Integer> columnIndexes = getCalculateColumnIndexes(sheetIndex);
+            for (int i : index) {
+                columnIndexes.add(i);
+            }
+            calculateColumnIndexes.put(sheetIndex,columnIndexes);
+        }
+
+    }
+
+    /**
+     * 获取需要计算的列索引
+     * @param sheetIndex sheet索引
+     * @return
+     */
+    public Set<Integer> getCalculateColumnIndexes(int sheetIndex){
+        //默认配置
+        Set<Integer> columnIndexes = calculateColumnIndexes.get(sheetIndex);
+        if(columnIndexes == null){
+            HashSet<Integer> defaultColumnIndexes = new HashSet<>();
+            defaultColumnIndexes.add(-1);
+            calculateColumnIndexes.put(sheetIndex,defaultColumnIndexes);
+        }
+        return calculateColumnIndexes.get(sheetIndex);
     }
 
     /**
      * 添加特殊行高
+     * @param sheetIndex sheet索引
      * @param row 行
      * @param height 高度
      */
-    public void addSpecialRowHeight(int row,int height){
-        this.specialRowHeightMapping.put(row,height);
+    public void addSpecialRowHeight(int sheetIndex,int row,int height){
+        this.specialRowHeightMapping.put(sheetIndex,row,height);
+    }
+
+    /**
+     * 添加特殊行高
+     * @param sheetIndex sheet索引
+     */
+    public Map<Integer, Integer> getSpecialRowHeightMapping(int sheetIndex){
+        return specialRowHeightMapping.row(sheetIndex);
     }
 }

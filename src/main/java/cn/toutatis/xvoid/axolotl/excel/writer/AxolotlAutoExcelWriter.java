@@ -85,8 +85,6 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         }
         if(datas != null){
             styleRender.renderData(sheet, datas);
-        }else{
-            styleRender.renderData(sheet, new ArrayList<>());
         }
         return null;
     }

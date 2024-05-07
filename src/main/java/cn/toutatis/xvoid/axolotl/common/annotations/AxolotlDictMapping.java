@@ -3,7 +3,6 @@ package cn.toutatis.xvoid.axolotl.common.annotations;
 import java.lang.annotation.*;
 
 /**
- * TODO 字典映射功能
  * 字典映射
  * @author Toutatis_Gc
  * @since 1.0.15

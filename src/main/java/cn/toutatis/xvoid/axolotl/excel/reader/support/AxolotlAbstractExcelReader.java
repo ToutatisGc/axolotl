@@ -12,10 +12,10 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastA
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.toutatis.xvoid.axolotl.toolkit.FieldToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
@@ -532,7 +532,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
      */
     @SneakyThrows
     protected void assignValueToField(Object instance,Object adaptiveValue, EntityCellMappingInfo<?> mappingInfo,ReaderConfig<?> readerConfig){
-        Field field = FieldToolkit.recursionGetField(instance.getClass(),mappingInfo.getFieldName());
+        Field field = ReflectToolkit.recursionGetField(instance.getClass(),mappingInfo.getFieldName());
         assert field != null;
         field.setAccessible(true);
         // TODO 赋值调用SETTER特性
@@ -762,7 +762,9 @@ public abstract class AxolotlAbstractExcelReader<T> {
             Set<ConstraintViolation<RT>> validate = validator.validate(instance);
             if (!validate.isEmpty()){
                 for (ConstraintViolation<RT> constraintViolation : validate) {
-                    throw new AxolotlExcelReadException(workBookContext, constraintViolation.getMessage());
+                    AxolotlExcelReadException axolotlExcelReadException = new AxolotlExcelReadException(workBookContext, constraintViolation.getMessage());
+                    axolotlExcelReadException.setExceptionType(AxolotlExcelReadException.ExceptionType.VALIDATION_ERROR);
+                    throw axolotlExcelReadException;
                 }
             }
         }
