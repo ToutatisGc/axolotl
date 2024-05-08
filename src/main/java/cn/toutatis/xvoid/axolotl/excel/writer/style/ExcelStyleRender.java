@@ -40,7 +40,7 @@ public interface ExcelStyleRender {
     /**
      * 渲染 Excel 数据的样式。
      *
-     * @param sheet        {@link SXSSFSheet} 表示工作表对象，用于设置数据样式。
+     * @param sheet       {@link SXSSFSheet} 表示工作表对象，用于设置数据样式。
      * @param data {@link CommonWriteConfig} 表示 Excel 写入器的配置，用于根据需要进行更多的样式定制。
      */
     AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data);
