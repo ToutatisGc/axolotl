@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -572,6 +573,11 @@ public abstract class AxolotlAbstractExcelReader<T> {
                 ReflectToolkit.invokeFieldSetter(field, instance, adaptiveValue);
             }
         }else{
+            int modifiers = field.getModifiers();
+            if(Modifier.isStatic(modifiers)){
+                LoggerHelper.error(LOGGER,"静态字段[%s]不可赋值",field.getName());
+                return;
+            }
             field.set(instance, adaptiveValue);
         }
     }
