@@ -4,6 +4,7 @@ import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReadConfigBuilder;
 import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.WorkBookContext;
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.AxolotlReaderSetter;
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.ColumnBind;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
@@ -15,6 +16,7 @@ import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
+import cn.toutatis.xvoid.toolkit.clazz.ClassToolkit;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
@@ -535,14 +537,41 @@ public abstract class AxolotlAbstractExcelReader<T> {
         Field field = ReflectToolkit.recursionGetField(instance.getClass(),mappingInfo.getFieldName());
         assert field != null;
         field.setAccessible(true);
-        // TODO 赋值调用SETTER特性
-        // TODO 字典转换
         Object o = field.get(instance);
+        boolean useSetter = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.READ_FIELD_USE_SETTER);
         if (o!= null){
             if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.FIELD_EXIST_OVERRIDE)){
-                field.set(instance, adaptiveValue);
+                this.assignOrInvokeSetter(instance, adaptiveValue, useSetter, field);
             }
         }else {
+            this.assignOrInvokeSetter(instance, adaptiveValue, useSetter, field);
+        }
+    }
+
+    /**
+     * 根据设定，将给定的值分配给对象的字段或者通过setter方法设置。
+     * 如果useSetter为true，并且字段上有AxolotlReaderSetter注解，则尝试通过注解指定的方法名调用相应的方法。
+     * 如果没有指定方法名或者useSetter为false，则直接通过反射设置字段值。
+     *
+     * @param instance 需要设置字段值的对象实例
+     * @param adaptiveValue 要分配或设置的值
+     * @param useSetter 指定是否使用setter方法进行设置
+     * @param field 目标字段
+     * @throws IllegalAccessException 当访问字段或调用方法时发生访问权限问题时抛出
+     */
+    private void assignOrInvokeSetter(Object instance, Object adaptiveValue, boolean useSetter, Field field) throws IllegalAccessException {
+        if (useSetter){
+            AxolotlReaderSetter readerSetter = field.getAnnotation(AxolotlReaderSetter.class);
+            String methodName = null;
+            if (readerSetter != null){
+                methodName =  readerSetter.value();
+            }
+            if (methodName != null){
+                ReflectToolkit.invokeMethod(methodName, instance, ClassToolkit.castObjectArray2ClassArray(List.of(adaptiveValue)), adaptiveValue);
+            }else{
+                ReflectToolkit.invokeFieldSetter(field, instance, adaptiveValue);
+            }
+        }else{
             field.set(instance, adaptiveValue);
         }
     }
