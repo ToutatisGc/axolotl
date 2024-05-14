@@ -2,6 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.dev;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.toutatis.xvoid.axolotl.AxolotlFaster;
 import cn.toutatis.xvoid.axolotl.Axolotls;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.DmsRegReceivables;
 import cn.toutatis.xvoid.axolotl.excel.entities.reader.SunUser;
@@ -24,10 +25,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -235,5 +233,27 @@ public class WriteTest {
             axolotlAutoExcelWriter.write(map,list);
         }
 
+    }
+
+    @Test
+    public void test11() throws FileNotFoundException {
+        File tem = FileToolkit.getResourceFileAsFile("workbook/write/dataScheduleOther.xlsx");
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        List list = new ArrayList();
+
+        for (int i = 0; i < 20; i++) {
+            MpOrgDataIssueNew mpOrgDataIssueNew = new MpOrgDataIssueNew();
+            list.add(mpOrgDataIssueNew);
+        }
+        Map<String, String> map = new HashMap<>();
+        map.put("fileName","测试文件名");
+        map.put("bankName","山西省");
+//            map.put("dataIssue","2024-02");
+        map.put("operationTime", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+       // AxolotlFaster.writeToTemplate(tem,fileOutputStream,map,list);
+        AxolotlFaster.templateWriteToExcelMultiSheet(tem, fileOutputStream,
+                AxolotlFaster.buildTemplateWriteSheetInfo(0,map,list,true,true),
+                AxolotlFaster.buildTemplateWriteSheetInfo(1,map,list,true,true)
+                );
     }
 }

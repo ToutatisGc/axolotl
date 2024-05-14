@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.entities.reader;
 
+import cn.toutatis.xvoid.axolotl.excel.reader.annotations.AxolotlReaderSetter;
 import lombok.Data;
 
 /**
@@ -10,6 +11,7 @@ import lombok.Data;
 @Data
 public class SunUser {
 
+    @AxolotlReaderSetter("")
     private String username;
 
     private String personName;
