@@ -167,7 +167,8 @@ public class AxolotlFaster {
 
     private static void copyTemplateWriteConfig(TemplateWriteConfig source,TemplateWriteConfig target){
         source.setOutputStream(target.getOutputStream());
-        source.getDictionaryMapping().putAll(target.getDictionaryMapping());
+        target.getDictionaryMapping().putAll(source.getDictionaryMapping());
+        source.setDictionaryMapping(target.getDictionaryMapping());
         try {
             BeanUtils.copyProperties(target,source);
         } catch (Exception e) {
@@ -557,8 +558,10 @@ public class AxolotlFaster {
                 source.getCalculateColumnIndexes().put(sheetIndex,old);
             }
         }
-        source.getSpecialRowHeightMapping().putAll(target.getSpecialRowHeightMapping());
-        source.getDictionaryMapping().putAll(target.getDictionaryMapping());
+        target.getSpecialRowHeightMapping().putAll(source.getSpecialRowHeightMapping());
+        target.getDictionaryMapping().putAll(source.getDictionaryMapping());
+        source.setSpecialRowHeightMapping(target.getSpecialRowHeightMapping());
+        source.setDictionaryMapping(target.getDictionaryMapping());
         try {
             BeanUtils.copyProperties(target,source);
         } catch (Exception e) {

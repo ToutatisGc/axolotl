@@ -251,9 +251,14 @@ public class WriteTest {
 //            map.put("dataIssue","2024-02");
         map.put("operationTime", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
        // AxolotlFaster.writeToTemplate(tem,fileOutputStream,map,list);
+        Map<String, Object> dict = new HashMap<>();
+        dict.put("regionStatus",Map.of("ST_001","正常"));
+        HashMap<String, Object> dict1 = new HashMap<>();
+        dict1.put("regionStatus",Map.of("ST_001","正常1"));
         AxolotlFaster.templateWriteToExcelMultiSheet(tem, fileOutputStream,
-                AxolotlFaster.buildTemplateWriteSheetInfo(0,map,list,true,true),
-                AxolotlFaster.buildTemplateWriteSheetInfo(1,map,list,true,true)
+                AxolotlFaster.buildTemplateWriteSheetInfo(0,map,list,true,true,dict),
+                AxolotlFaster.buildTemplateWriteSheetInfo(0,map,list,true,true,dict1),
+                AxolotlFaster.buildTemplateWriteSheetInfo(1,map,list,true,true,dict)
                 );
     }
 }
