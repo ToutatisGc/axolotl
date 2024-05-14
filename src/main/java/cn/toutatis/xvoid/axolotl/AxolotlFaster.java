@@ -35,43 +35,87 @@ public class AxolotlFaster {
      * @param templateNullValueWithTemplateFill  特性 ExcelWritePolicy.TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL  当占位符值为空时是否将整个单元格赋值为空
      * @param templateShiftWriteRow  特性 ExcelWritePolicy.TEMPLATE_SHIFT_WRITE_ROW  处理#{}占位符时，新增行是否创建，反之则直接使用现有行
      * @param templateNonTemplateCellFill  特性  ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL  处理#{}占位符时，与占位符同行的其他单元格数据是否也渲染到新增行上
+     * @param dict 字典值
      * @return 写入结果
      */
-    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill, Map<String,Object> dict){
         TemplateWriteConfig templateWriteConfig = new TemplateWriteConfig();
         templateWriteConfig.setOutputStream(outputStream);
         templateWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_SHIFT_WRITE_ROW,templateShiftWriteRow);
         templateWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL,templateNullValueWithTemplateFill);
         templateWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL,templateNonTemplateCellFill);
+        if(dict != null){
+            for (String fieldName : dict.keySet()) {
+                if(fieldName != null){
+                    Object dictParam = dict.get(fieldName);
+                    if(dictParam != null){
+                        if(dictParam instanceof List<?>){
+                            templateWriteConfig.setDict(templateWriteConfig.getSheetIndex(),fieldName, new ArrayList<>((List<?>) dictParam));
+                        }else if(dictParam instanceof Map<?,?>){
+                            templateWriteConfig.setDict(templateWriteConfig.getSheetIndex(),fieldName, new HashMap<>((Map<String, String>) dictParam));
+                        }
+                    }
+                }
+            }
+        }
         AxolotlTemplateExcelWriter templateExcelWriter = Axolotls.getTemplateExcelWriter(template, templateWriteConfig);
         AxolotlWriteResult result = templateExcelWriter.write(fixMapping, datas);
         templateExcelWriter.close();
         return result;
     }
 
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
+        return writeToTemplate(template,outputStream,fixMapping,datas,templateNullValueWithTemplateFill,templateShiftWriteRow,templateNonTemplateCellFill,null);
+    }
+
     public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
-       return writeToTemplate(template,outputStream,fixMapping,datas,true,templateShiftWriteRow,templateNonTemplateCellFill);
+       return writeToTemplate(template,outputStream,fixMapping,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,null);
     }
 
     public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill){
-        return writeToTemplate(template,outputStream,fixMapping,datas,templateNullValueWithTemplateFill,true,true);
+        return writeToTemplate(template,outputStream,fixMapping,datas,templateNullValueWithTemplateFill,true,true,null);
     }
 
     public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas){
-        return writeToTemplate(template,outputStream,fixMapping,datas,true,true,true);
+        return writeToTemplate(template,outputStream,fixMapping,datas,true,true,true,null);
     }
 
 
     public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
-        return writeToTemplate(template,outputStream,null,datas,true,templateShiftWriteRow,templateNonTemplateCellFill);
+        return writeToTemplate(template,outputStream,null,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,null);
     }
 
     public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, List<?> datas, boolean templateNullValueWithTemplateFill){
-        return writeToTemplate(template,outputStream,null,datas,templateNullValueWithTemplateFill,true,true);
+        return writeToTemplate(template,outputStream,null,datas,templateNullValueWithTemplateFill,true,true,null);
     }
 
     public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, List<?> datas){
-        return writeToTemplate(template,outputStream,null,datas,true,true,true);
+        return writeToTemplate(template,outputStream,null,datas,true,true,true,null);
+    }
+
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill, Map<String,Object> dict){
+        return writeToTemplate(template,outputStream,fixMapping,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,dict);
+    }
+
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, Map<String,Object> dict){
+        return writeToTemplate(template,outputStream,fixMapping,datas,templateNullValueWithTemplateFill,true,true,dict);
+    }
+
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, Map<String,?> fixMapping, List<?> datas, Map<String,Object> dict){
+        return writeToTemplate(template,outputStream,fixMapping,datas,true,true,true,dict);
+    }
+
+
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill, Map<String,Object> dict){
+        return writeToTemplate(template,outputStream,null,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,dict);
+    }
+
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, List<?> datas, boolean templateNullValueWithTemplateFill, Map<String,Object> dict){
+        return writeToTemplate(template,outputStream,null,datas,templateNullValueWithTemplateFill,true,true,dict);
+    }
+
+    public static AxolotlWriteResult writeToTemplate(File template, OutputStream outputStream, List<?> datas, Map<String,Object> dict){
+        return writeToTemplate(template,outputStream,null,datas,true,true,true,dict);
     }
 
     /**
@@ -138,14 +182,29 @@ public class AxolotlFaster {
      * @param templateNullValueWithTemplateFill  特性 ExcelWritePolicy.TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL  当占位符值为空时是否将整个单元格赋值为空
      * @param templateShiftWriteRow  特性 ExcelWritePolicy.TEMPLATE_SHIFT_WRITE_ROW  处理#{}占位符时，新增行是否创建，反之则直接使用现有行
      * @param templateNonTemplateCellFill  特性  ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL  处理#{}占位符时，与占位符同行的其他单元格数据是否也渲染到新增行上
+     * @param dict 字典值列表 <属性名,字典值参数>
      * @return 写入结果
      */
-    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill, Map<String,Object> dict){
         TemplateWriteConfig templateWriteConfig = new TemplateWriteConfig();
         templateWriteConfig.setSheetIndex(sheetIndex);
         templateWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_SHIFT_WRITE_ROW,templateShiftWriteRow);
         templateWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL,templateNullValueWithTemplateFill);
         templateWriteConfig.setWritePolicy(ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL,templateNonTemplateCellFill);
+        if(dict != null){
+            for (String fieldName : dict.keySet()) {
+                if(fieldName != null){
+                    Object dictParam = dict.get(fieldName);
+                    if(dictParam != null){
+                        if(dictParam instanceof List<?>){
+                            templateWriteConfig.setDict(sheetIndex,fieldName, new ArrayList<>((List<?>) dictParam));
+                        }else if(dictParam instanceof Map<?,?>){
+                            templateWriteConfig.setDict(sheetIndex,fieldName, new HashMap<>((Map<String, String>) dictParam));
+                        }
+                    }
+                }
+            }
+        }
         TemplateSheetDataPackage sheetInfo = new TemplateSheetDataPackage();
         sheetInfo.setTemplateWriteConfig(templateWriteConfig);
         sheetInfo.setFixMapping(fixMapping != null ? new HashMap<>(fixMapping) : null);
@@ -153,29 +212,57 @@ public class AxolotlFaster {
         return sheetInfo;
     }
 
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
+        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,templateNullValueWithTemplateFill,templateShiftWriteRow,templateNonTemplateCellFill,null);
+    }
+
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
-        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,true,templateShiftWriteRow,templateNonTemplateCellFill);
+        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,null);
     }
 
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill){
-        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,templateNullValueWithTemplateFill,true,true);
+        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,templateNullValueWithTemplateFill,true,true,null);
     }
 
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas){
-        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,true,true,true);
+        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,true,true,true,null);
     }
 
-
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill){
-        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,true,templateShiftWriteRow,templateNonTemplateCellFill);
+        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,null);
     }
 
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, List<?> datas, boolean templateNullValueWithTemplateFill){
-        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,templateNullValueWithTemplateFill,true,true);
+        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,templateNullValueWithTemplateFill,true,true,null);
     }
 
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, List<?> datas){
-        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,true,true,true);
+        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,true,true,true,null);
+    }
+
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill, Map<String,Object> dict){
+        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,dict);
+    }
+
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, Map<String,Object> dict){
+        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,templateNullValueWithTemplateFill,true,true,dict);
+    }
+
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, Map<String,Object> dict){
+        return buildTemplateWriteSheetInfo(sheetIndex,fixMapping,datas,true,true,true,dict);
+    }
+
+
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, List<?> datas, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill, Map<String,Object> dict){
+        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,true,templateShiftWriteRow,templateNonTemplateCellFill,dict);
+    }
+
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, List<?> datas, boolean templateNullValueWithTemplateFill, Map<String,Object> dict){
+        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,templateNullValueWithTemplateFill,true,true,dict);
+    }
+
+    public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, List<?> datas, Map<String,Object> dict){
+        return buildTemplateWriteSheetInfo(sheetIndex,null,datas,true,true,true,dict);
     }
 
 
@@ -215,8 +302,9 @@ public class AxolotlFaster {
      * @param autoInsertTotalInEnding 结尾添加合计
      * @param autoCatchColumnLength  自动列宽
      * @param autoInsertSerialNumber 第一行添加序号
+     * @param dict 字典值
      */
-    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber){
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber, Map<String,Object> dict){
         try {
             AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
             autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,autoInsertSerialNumber);
@@ -234,6 +322,20 @@ public class AxolotlFaster {
             if(StringUtils.isNotEmpty(title)){
                 autoWriteConfig.setTitle(title);
             }
+            if(dict != null){
+                for (String fieldName : dict.keySet()) {
+                    if(fieldName != null){
+                        Object dictParam = dict.get(fieldName);
+                        if(dictParam != null){
+                            if(dictParam instanceof List<?>){
+                                autoWriteConfig.setDict(autoWriteConfig.getSheetIndex(),fieldName, new ArrayList<>((List<?>) dictParam));
+                            }else if(dictParam instanceof Map<?,?>){
+                                autoWriteConfig.setDict(autoWriteConfig.getSheetIndex(),fieldName, new HashMap<>((Map<String, String>) dictParam));
+                            }
+                        }
+                    }
+                }
+            }
             autoWriteConfig.setOutputStream(outputStream);
             AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
             autoExcelWriter.write(headers,data);
@@ -243,78 +345,154 @@ public class AxolotlFaster {
         }
     }
 
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
+    }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoCatchColumnLength){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,false,autoCatchColumnLength,false);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,false,autoCatchColumnLength,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,false,false,false);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,false,false,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String fontName){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,fontName,false,false,false);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,fontName,false,false,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, boolean autoCatchColumnLength){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,false,autoCatchColumnLength,false);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,false,autoCatchColumnLength,false,null);
     }
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender){
-        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,false,false,false);
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,false,false,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
-        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
     }
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName, boolean autoCatchColumnLength){
-        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,false,autoCatchColumnLength,false);
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,false,autoCatchColumnLength,false,null);
     }
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName){
-        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,false,false,false);
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,false,false,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName){
-        autoWriteToExcel(headers,data,title,outputStream,null,null,fontName,false,false,false);
+        autoWriteToExcel(headers,data,title,outputStream,null,null,fontName,false,false,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
-        autoWriteToExcel(headers,data,title,outputStream,null,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        autoWriteToExcel(headers,data,title,outputStream,null,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, boolean autoCatchColumnLength){
-        autoWriteToExcel(headers,data,title,outputStream,null,null,null,false,autoCatchColumnLength,false);
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,false,autoCatchColumnLength,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream){
-        autoWriteToExcel(headers,data,title,outputStream,null,null,null,false,false,false);
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,false,false,false,null);
     }
 
     public static void autoWriteToExcel(List<Header> headers, List<?> data, OutputStream outputStream){
-        autoWriteToExcel(headers,data,null,outputStream,null,null,null,false,false,false);
+        autoWriteToExcel(headers,data,null,outputStream,null,null,null,false,false,false,null);
     }
 
     public static void autoWriteToExcel(List<?> data, OutputStream outputStream){
-        autoWriteToExcel(null,data,null,outputStream,null,null,null,false,false,false);
+        autoWriteToExcel(null,data,null,outputStream,null,null,null,false,false,false,null);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoCatchColumnLength, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,false,autoCatchColumnLength,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String sheetName, String fontName, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,sheetName,fontName,false,false,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, String fontName, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,fontName,false,false,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, boolean autoCatchColumnLength, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,false,autoCatchColumnLength,false,dict);
+    }
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, ExcelStyleRender styleRender, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,styleRender,null,null,false,false,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,dict);
+    }
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName, boolean autoCatchColumnLength, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,false,autoCatchColumnLength,false,dict);
+    }
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, String sheetName, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,sheetName,fontName,false,false,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, String fontName, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,null,fontName,false,false,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, boolean autoCatchColumnLength, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,false,autoCatchColumnLength,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, String title, OutputStream outputStream, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,title,outputStream,null,null,null,false,false,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<Header> headers, List<?> data, OutputStream outputStream, Map<String,Object> dict){
+        autoWriteToExcel(headers,data,null,outputStream,null,null,null,false,false,false,dict);
+    }
+
+    public static void autoWriteToExcel(List<?> data, OutputStream outputStream, Map<String,Object> dict){
+        autoWriteToExcel(null,data,null,outputStream,null,null,null,false,false,false,dict);
     }
 
 
@@ -400,8 +578,9 @@ public class AxolotlFaster {
      * @param autoInsertTotalInEnding 结尾添加合计
      * @param autoCatchColumnLength  自动列宽
      * @param autoInsertSerialNumber 第一行添加序号
+     * @param dict 字典值列表 <属性名,字典值参数>
      */
-    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber){
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber, Map<String,Object> dict){
         AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
         autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,autoInsertSerialNumber);
         autoWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,autoInsertTotalInEnding);
@@ -418,6 +597,20 @@ public class AxolotlFaster {
         if(StringUtils.isNotEmpty(title)){
             autoWriteConfig.setTitle(title);
         }
+        if(dict != null){
+            for (String fieldName : dict.keySet()) {
+                if(fieldName != null){
+                    Object dictParam = dict.get(fieldName);
+                    if(dictParam != null){
+                        if(dictParam instanceof List<?>){
+                            autoWriteConfig.setDict(sheetIndex,fieldName, new ArrayList<>((List<?>) dictParam));
+                        }else if(dictParam instanceof Map<?,?>){
+                            autoWriteConfig.setDict(sheetIndex,fieldName, new HashMap<>((Map<String, String>) dictParam));
+                        }
+                    }
+                }
+            }
+        }
         autoWriteConfig.setSheetIndex(sheetIndex);
         AutoSheetDataPackage sheetDataPackage = new AutoSheetDataPackage();
         sheetDataPackage.setAutoWriteConfig(autoWriteConfig);
@@ -426,78 +619,154 @@ public class AxolotlFaster {
         return sheetDataPackage;
     }
 
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
+    }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoCatchColumnLength){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,autoCatchColumnLength,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,autoCatchColumnLength,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,false,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String fontName){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,fontName,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,fontName,false,false,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoCatchColumnLength){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,autoCatchColumnLength,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,autoCatchColumnLength,false,null);
     }
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,false,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
     }
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoCatchColumnLength){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,autoCatchColumnLength,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,autoCatchColumnLength,false,null);
     }
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,false,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,fontName,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,fontName,false,false,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoCatchColumnLength){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,autoCatchColumnLength,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,autoCatchColumnLength,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,false,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data){
-        return buildAutoWriteSheetInfo(sheetIndex,headers,data,null,null,null,null,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,null,null,null,null,false,false,false,null);
     }
 
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<?> data){
-        return buildAutoWriteSheetInfo(sheetIndex,null,data,null,null,null,null,false,false,false);
+        return buildAutoWriteSheetInfo(sheetIndex,null,data,null,null,null,null,false,false,false,null);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoCatchColumnLength, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,autoCatchColumnLength,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,sheetName,fontName,false,false,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String fontName, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,fontName,false,false,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, boolean autoCatchColumnLength, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,autoCatchColumnLength,false,dict);
+    }
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,styleRender,null,null,false,false,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,dict);
+    }
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, boolean autoCatchColumnLength, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,autoCatchColumnLength,false,dict);
+    }
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, String sheetName, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,sheetName,fontName,false,false,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, String fontName, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,fontName,false,false,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, boolean autoCatchColumnLength, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,autoCatchColumnLength,autoInsertSerialNumber,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoInsertTotalInEnding, boolean autoInsertSerialNumber, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,autoInsertTotalInEnding,false,autoInsertSerialNumber,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, boolean autoCatchColumnLength, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,autoCatchColumnLength,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,title,null,null,null,false,false,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,headers,data,null,null,null,null,false,false,false,dict);
+    }
+
+    public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<?> data, Map<String,Object> dict){
+        return buildAutoWriteSheetInfo(sheetIndex,null,data,null,null,null,null,false,false,false,dict);
     }
 
     /**
