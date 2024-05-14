@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictOverTurn;
 import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBox;
@@ -47,7 +48,13 @@ public class ComponentRender {
     @Setter
     protected WriteContext context;
 
+    /**
+     * 日志
+     */
     private final Logger LOGGER = LoggerToolkit.getLogger(this.getClass());
+
+    @Setter
+    private boolean isReader = false;
 
     /**
      * 渲染空值
@@ -184,7 +191,10 @@ public class ComponentRender {
      */
     @SuppressWarnings("unchecked")
     public String convertDictCodeToName(int sheetIndex,Class<?> fieldClass,String fieldName,Object dataInstance, String value){
-        if (fieldClass != String.class && fieldClass != Integer.class){
+        if (fieldClass != String.class
+                && fieldClass != Integer.class && fieldClass != int.class
+                && fieldClass != Boolean.class && fieldClass != boolean.class
+        ){
             return value;
         }
         // 最终返回值
@@ -261,11 +271,13 @@ public class ComponentRender {
                 Field field = ReflectToolkit.recursionGetField(dataInstance.getClass(),fieldName);
                 // 字段不存在查找getter方法
                 AxolotlDictMapping axolotlDictMapping = null;
+                AxolotlDictOverTurn axolotlDictOverTurn = null;
                 if (field == null){
                     String fieldGetterMethodName = ReflectToolkit.getFieldGetterMethodName(fieldName);
                     try {
                         Method getterMethod = dataInstance.getClass().getDeclaredMethod(fieldGetterMethodName);
                         axolotlDictMapping = getterMethod.getAnnotation(AxolotlDictMapping.class);
+                        axolotlDictOverTurn = getterMethod.getAnnotation(AxolotlDictOverTurn.class);
                     } catch (NoSuchMethodException e) {
                         throw new RuntimeException(e);
                     }
@@ -273,6 +285,7 @@ public class ComponentRender {
                 if (axolotlDictMapping == null){
                     if (field != null){
                         axolotlDictMapping = field.getAnnotation(AxolotlDictMapping.class);
+                        axolotlDictOverTurn = field.getAnnotation(AxolotlDictOverTurn.class);
                     }
                 }
                 if (axolotlDictMapping != null){
@@ -286,7 +299,12 @@ public class ComponentRender {
                     String[] staticDictArray = axolotlDictMapping.staticDict();
                     if (staticDictArray.length > 0){
                         if (staticDictArray.length % 2 == 0){
+                            boolean overTurn = false;
+                            if (axolotlDictMapping.autoOverTurn()){
+                                overTurn = true;
+                            }
                             HashMap<String, String> staticMap = new HashMap<>(staticDictArray.length / 2);
+
                             for (int i = 0; i < staticDictArray.length; i += 2) {
                                 staticMap.put(staticDictArray[i], staticDictArray[i + 1]);
                             }

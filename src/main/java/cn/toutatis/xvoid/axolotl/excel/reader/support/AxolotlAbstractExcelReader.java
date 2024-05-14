@@ -12,6 +12,7 @@ import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
+import cn.toutatis.xvoid.axolotl.excel.writer.style.ComponentRender;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
@@ -74,6 +75,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
      */
     @Setter
     protected ReaderConfig<T> _sheetLevelReaderConfig;
+
+    private ComponentRender componentRender = new ComponentRender();
 
     /**
      * 构造文件读取器
@@ -153,6 +156,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
         this.loadFileDataToWorkBook();
         this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,withDefaultConfig);
         this.createAdditionalExtensions();
+        this.componentRender.setReader(true);
+//        this.componentRender.setWriteConfig(this._sheetLevelReaderConfig);
     }
 
     /**

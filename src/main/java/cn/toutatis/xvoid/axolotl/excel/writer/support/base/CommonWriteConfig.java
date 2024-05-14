@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support.base;
 
 import cn.toutatis.xvoid.axolotl.Meta;
+import cn.toutatis.xvoid.axolotl.common.AxolotlCommonConfig;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
 import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
@@ -13,6 +14,7 @@ import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -30,10 +32,10 @@ import static java.lang.String.format;
  * @author Toutatis_Gc
  */
 @Data
-public class CommonWriteConfig {
+@EqualsAndHashCode(callSuper = true)
+public class CommonWriteConfig extends AxolotlCommonConfig {
 
     private Logger LOGGER = LoggerToolkit.getLogger(this.getClass());
-
 
     /**
      * 构造使用默认配置
@@ -55,12 +57,6 @@ public class CommonWriteConfig {
     }
 
 
-
-    /**
-     * sheet索引
-     */
-    private int sheetIndex = 0;
-
     /**
      * 空值填充字符
      * null值将被填充为空字符串，常用的字符串有"-","未填写","无"
@@ -77,10 +73,7 @@ public class CommonWriteConfig {
      */
     private OutputStream outputStream;
 
-    /**
-     * 字典映射
-     */
-    private HashBasedTable<Integer,String,Map<String,String>> dictionaryMapping = HashBasedTable.create();
+
 
     /**
      * Map映射指定键名
@@ -204,12 +197,16 @@ public class CommonWriteConfig {
     }
 
     /**
-     * 设置字典映射
-     * @param sheetIndex sheet索引
-     * @param field 字段
-     * @param dict 字典
+     * 关闭输出流
      */
-    public void setDict(int sheetIndex,String field,Map<String,String> dict) {
+    public void close() throws IOException {
+        if (outputStream != null) {
+            outputStream.close();
+        }
+    }
+
+    @Override
+    public void setDict(int sheetIndex, String field, Map<String, String> dict) {
         if (Validator.strIsBlank(field)){
             throw new IllegalArgumentException("字段不能为空");
         }
@@ -222,28 +219,4 @@ public class CommonWriteConfig {
             }
         }
     }
-
-    /**
-     * 获取字典映射
-     * @param sheetIndex sheet索引
-     * @param field 字段
-     * @return 字典映射
-     */
-    public Map<String, String> getDict(int sheetIndex, String field) {
-        Map<String, String> dict = dictionaryMapping.get(sheetIndex, field);
-        if(dict == null){
-            return new LinkedHashMap<>();
-        }
-        return dict;
-    }
-
-    /**
-     * 关闭输出流
-     */
-    public void close() throws IOException {
-        if (outputStream != null) {
-            outputStream.close();
-        }
-    }
-
 }
