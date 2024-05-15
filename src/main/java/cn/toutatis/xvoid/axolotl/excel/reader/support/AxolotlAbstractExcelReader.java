@@ -76,7 +76,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
     @Setter
     protected ReaderConfig<T> _sheetLevelReaderConfig;
 
-    private ComponentRender componentRender = new ComponentRender();
+    private final ComponentRender componentRender = new ComponentRender();
 
     /**
      * 构造文件读取器
@@ -157,7 +157,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,withDefaultConfig);
         this.createAdditionalExtensions();
         this.componentRender.setReader(true);
-//        this.componentRender.setWriteConfig(this._sheetLevelReaderConfig);
+        this.componentRender.setConfig(this._sheetLevelReaderConfig);
     }
 
     /**
@@ -773,21 +773,23 @@ public abstract class AxolotlAbstractExcelReader<T> {
         short endColumnRange = sheetColumnEffectiveRange[1] < 0 ? row.getLastCellNum() : (short) sheetColumnEffectiveRange[1];
         for (int i = sheetColumnEffectiveRange[0]; i < endColumnRange; i++) {
             Cell cell = row.getCell(i);
-            workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
-            int idx = cell.getColumnIndex() + 1;
-            String key = "CELL_" + idx;
-            instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null,readerConfig).getCellValue());
-            if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
-                instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                if (cell.getCellType() == CellType.NUMERIC){
-                    if (DateUtil.isCellDateFormatted(cell)){
-                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                        instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
-                    }else{
+            if (cell != null){
+                workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
+                int idx = cell.getColumnIndex() + 1;
+                String key = "CELL_" + idx;
+                instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null,readerConfig).getCellValue());
+                if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
+                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                    if (cell.getCellType() == CellType.NUMERIC){
+                        if (DateUtil.isCellDateFormatted(cell)){
+                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                            instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
+                        }else{
+                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                        }
+                    }else {
                         instance.put("CELL_TYPE_"+idx,cell.getCellType());
                     }
-                }else {
-                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 }
             }
         }
