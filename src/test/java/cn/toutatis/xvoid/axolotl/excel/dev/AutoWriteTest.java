@@ -4,7 +4,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.AxolotlFaster;
 import cn.toutatis.xvoid.axolotl.Axolotls;
-import cn.toutatis.xvoid.axolotl.excel.entities.BaseEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoSheetDataPackage;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.StockEntity;
@@ -380,13 +379,13 @@ public class AutoWriteTest {
             jsonObject.put("Single",RandomUtil.randomDouble(0,20));
             jsonObject.put("Dual",RandomUtil.randomDouble(0,20));
             data.add(jsonObject);*/
-            BaseEntity baseEntity = new BaseEntity();
-            BaseEntity.setA1("a1");
-            BaseEntity.setInch("a1");
-            BaseEntity.setDualSpeed("a1");
-            BaseEntity.setMm("a1");
-
-            data.add(baseEntity);
+//            BaseEntity baseEntity = new BaseEntity();
+//            BaseEntity.setA1("a1");
+//            BaseEntity.setInch("a1");
+//            BaseEntity.setDualSpeed("a1");
+//            BaseEntity.setMm("a1");
+//
+//            data.add(baseEntity);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(config);
         autoExcelWriter.write(headers,data);

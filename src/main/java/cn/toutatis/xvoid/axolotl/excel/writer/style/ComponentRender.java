@@ -1,9 +1,9 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.style;
 
+import cn.toutatis.xvoid.axolotl.common.AxolotlCommonConfig;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictOverTurn;
 import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
-import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.AxolotlSelectBox;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
@@ -40,7 +40,7 @@ public class ComponentRender {
      * 写入配置
      */
     @Setter
-    protected CommonWriteConfig writeConfig;
+    protected AxolotlCommonConfig config;
 
     /**
      * 写入上下文
@@ -64,7 +64,7 @@ public class ComponentRender {
     public void renderFieldColumnNullValue(AbstractStyleRender.FieldInfo fieldInfo, Cell cell){
         Object value = fieldInfo.getValue();
         if (value == null){
-            cell.setCellValue(writeConfig.getBlankValue());
+            cell.setCellValue(getCommonWriteConfig().getBlankValue());
         }
     }
 
@@ -75,7 +75,7 @@ public class ComponentRender {
      */
     public void renderSelectDropListBox(AbstractStyleRender.FieldInfo fieldInfo, Cell cell){
         Object value = fieldInfo.getValue();
-        AxolotlSelectBox<String> selectBox = ((AxolotlSelectBox<?>) value).convertPropertiesToString(writeConfig.getDataInverter());
+        AxolotlSelectBox<String> selectBox = ((AxolotlSelectBox<?>) value).convertPropertiesToString(getCommonWriteConfig().getDataInverter());
         List<String> options = selectBox.getOptions();
         int switchSheetIndex = context.getSwitchSheetIndex();
         Sheet sheet;
@@ -95,7 +95,7 @@ public class ComponentRender {
         }
         String selectBoxValue = selectBox.getValue();
         if(selectBoxValue == null){
-            selectBoxValue = writeConfig.getBlankValue();
+            selectBoxValue = getCommonWriteConfig().getBlankValue();
         }
         fieldInfo = new AbstractStyleRender.FieldInfo(
                 fieldInfo.getDataInstance(),
@@ -118,9 +118,9 @@ public class ComponentRender {
            this.renderSelectDropListBox(fieldInfo,cell);
         }else{
             calculateColumns(fieldInfo);
-            value = writeConfig.getDataInverter().convert(value);
+            value = getCommonWriteConfig().getDataInverter().convert(value);
             //设置单元格值
-            if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER)){
+            if (getCommonWriteConfig().getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER)){
                 cell.setCellValue(convertDictCodeToName(fieldInfo, value.toString()));
             }else{
                 cell.setCellValue(value.toString());
@@ -135,7 +135,7 @@ public class ComponentRender {
     public void calculateColumns(AbstractStyleRender.FieldInfo fieldInfo){
         int columnIndex = fieldInfo.getColumnIndex();
         String value = fieldInfo.getValue().toString();
-        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
+        if (getCommonWriteConfig().getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
             Map<Integer, BigDecimal> endingTotalMapping;
             if (context instanceof AutoWriteContext autoWriteContext){
                 endingTotalMapping = autoWriteContext.getEndingTotalMapping().row(context.getSwitchSheetIndex());
@@ -207,7 +207,7 @@ public class ComponentRender {
             DictMappingExecutor dictMappingExecutor = alreadyRecordDict.get(alreadyKey);
             if (dictMappingExecutor.isUsage){
                 if (dictMappingExecutor.useManualConfigPriority){
-                    Map<String, String> dict = writeConfig.getDict(sheetIndex, fieldName);
+                    Map<String, String> dict = getCommonWriteConfig().getDict(sheetIndex, fieldName);
                     if (dict.containsKey(value)){
                         dictAdaptiveValue = dict.get(value);
                     }else{
@@ -248,7 +248,7 @@ public class ComponentRender {
                                 fieldDictMappingPolicy = DictMappingPolicy.valueOf(fieldPolicy.toString());
                             }catch (Exception ex){
                                 ex.printStackTrace();
-                                if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT)){
+                                if (getCommonWriteConfig().getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT)){
                                     error(LOGGER, format("枚举转换异常，未知的枚举[%s]", fieldPolicy.toString()));
                                 }else{
                                     throw ex;
@@ -324,8 +324,8 @@ public class ComponentRender {
                 debug(LOGGER, "字段[%s]使用字典策略[%s]",fieldName, fieldDictMappingPolicy);
             }
             if (fieldDictMappingDefaultValue == null){
-                debug(LOGGER, "未获取到字典默认值，字段[%s]使用配置默认值[%s]",fieldName, writeConfig.getBlankValue());
-                dictMappingExecutor.setDefaultValue(writeConfig.getBlankValue());
+                debug(LOGGER, "未获取到字典默认值，字段[%s]使用配置默认值[%s]",fieldName, getCommonWriteConfig().getBlankValue());
+                dictMappingExecutor.setDefaultValue(getCommonWriteConfig().getBlankValue());
             }else{
                 dictMappingExecutor.setDefaultValue(fieldDictMappingDefaultValue);
             }
@@ -342,6 +342,14 @@ public class ComponentRender {
             case USE_DEFAULT -> fieldDictMappingDefaultValue;
             case NULL_VALUE -> null;
         };
+    }
+    
+    private CommonWriteConfig getCommonWriteConfig(){
+        return (CommonWriteConfig) config;
+    }
+
+    private boolean isWriteConfig(){
+        return config instanceof CommonWriteConfig;
     }
 
 }

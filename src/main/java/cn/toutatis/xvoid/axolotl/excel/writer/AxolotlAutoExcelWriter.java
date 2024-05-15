@@ -75,7 +75,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         if (styleRender instanceof AbstractStyleRender innerStyleRender){
             innerStyleRender.setWriteConfig(writeConfig);
             innerStyleRender.setContext(writeContext);
-            innerStyleRender.getComponentRender().setWriteConfig(writeConfig);
+            innerStyleRender.getComponentRender().setConfig(writeConfig);
             innerStyleRender.getComponentRender().setContext(writeContext);
         }
         if(writeContext.isFirstBatch(switchSheetIndex)){
