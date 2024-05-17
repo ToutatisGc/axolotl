@@ -92,7 +92,7 @@ public enum ExcelReadPolicy {
     /**
      * 是否使用字典转换
      */
-    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, true, false)
+    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, false, false)
     ;
 
 

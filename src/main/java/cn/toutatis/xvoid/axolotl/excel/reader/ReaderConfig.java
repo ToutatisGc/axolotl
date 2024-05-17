@@ -1,6 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.reader;
 
 import cn.toutatis.xvoid.axolotl.common.AxolotlCommonConfig;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
@@ -194,6 +195,17 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
             this.setInitialRowPositionOffset(indexWorkSheet.readRowOffset());
             this.setReadClassAnnotation(true);
             this.setSheetColumnEffectiveRange(indexWorkSheet.sheetColumnEffectiveRange());
+        }
+        List<Field> allFields = ReflectToolkit.getAllFields(castClass, true);
+        Map<ExcelReadPolicy, Object> policyMap = getRowReadPolicyMap();
+        if (!policyMap.containsKey(SIMPLE_USE_DICT_CODE_TRANSFER)){
+            for (Field field : allFields) {
+                if (field.getAnnotation(AxolotlDictMapping.class) != null){
+                    LoggerHelper.info(LOGGER,"实体发现字典属性，字典映射策略未开启，已自动开启.");
+                    this.setBooleanReadPolicy(SIMPLE_USE_DICT_CODE_TRANSFER,true);
+                    break;
+                }
+            }
         }
     }
 

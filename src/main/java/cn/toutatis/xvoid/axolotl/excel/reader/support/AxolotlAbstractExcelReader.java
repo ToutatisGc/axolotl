@@ -818,7 +818,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
      *
      * @param readerConfig 读取配置
      */
-    protected void preCheckAndFixReadConfig(ReaderConfig<?> readerConfig) {
+    public void preCheckAndFixReadConfig(ReaderConfig<?> readerConfig) {
         //检查部分
         if (readerConfig == null){
             String msg = "读取配置不能为空";

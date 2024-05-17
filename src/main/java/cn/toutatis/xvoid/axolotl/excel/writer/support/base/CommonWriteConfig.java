@@ -3,6 +3,7 @@ package cn.toutatis.xvoid.axolotl.excel.writer.support.base;
 import cn.toutatis.xvoid.axolotl.Meta;
 import cn.toutatis.xvoid.axolotl.common.AxolotlCommonConfig;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictKey;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
 import cn.toutatis.xvoid.axolotl.common.annotations.DictMappingPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
@@ -25,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER;
 import static java.lang.String.format;
 
 /**
@@ -34,6 +36,10 @@ import static java.lang.String.format;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class CommonWriteConfig extends AxolotlCommonConfig {
+    /**
+     * 元数据类
+     */
+    protected Class<?> metaClass;
 
     private Logger LOGGER = LoggerToolkit.getLogger(this.getClass());
 
@@ -74,19 +80,6 @@ public class CommonWriteConfig extends AxolotlCommonConfig {
     private OutputStream outputStream;
 
 
-
-    /**
-     * Map映射指定键名
-     */
-    public static final String DICT_MAP_TYPE_POLICY_PREFIX = Meta.MODULE_NAME.toUpperCase()+"_DICT_MAPPING_POLICY_%s";
-    public static final String DICT_MAP_TYPE_DEFAULT_PREFIX = Meta.MODULE_NAME.toUpperCase()+"_DICT_MAPPING_DEFAULT_%s";
-
-    /**
-     * 字典键值对名称指定
-     */
-    private String _dictKey = "key";
-    private String _dictValue = "value";
-
     /**
      * 数据转换器
      */
@@ -110,81 +103,6 @@ public class CommonWriteConfig extends AxolotlCommonConfig {
             throw new IllegalArgumentException("读取特性不是一个布尔类型");
         }
         return writePolicies.containsKey(policy) && (boolean) writePolicies.get(policy);
-    }
-
-    /**
-     * 设置字典映射
-     * @param field 字段
-     * @param dict 字典
-     */
-    public void setDict(String field, List<?> dict) {
-        this.setDict(getSheetIndex(), field, dict);
-    }
-
-    /**
-     * 设置字典映射
-     * @param field 字段
-     * @param dict 字典
-     */
-    public void setDict(int sheetIndex,String field, List<?> dict) {
-        if (Validator.strIsBlank(field)){
-            throw new IllegalArgumentException("字段不能为空");
-        }
-        Map<String,Field> cache = new HashMap<>();
-        if (dict != null && !dict.isEmpty()){
-            Map<String,String> dictMap = new HashMap<>();
-            Field keyField = null;
-            Field valueField = null;
-            for (Object item : dict) {
-                if (item instanceof Map<?, ?> itemMap) {
-                    if (itemMap.containsKey(_dictKey) && itemMap.containsKey(_dictValue)) {
-                        dictMap.put(itemMap.get(_dictKey).toString(), itemMap.get(_dictValue).toString());
-                    } else {
-                        throw new AxolotlWriteException(LoggerHelper.format("请检查映射是否包含键值对名称[%s]:[%s]", _dictKey, _dictValue));
-                    }
-                } else {
-                    if (cache.isEmpty()) {
-                        List<Field> fields = ReflectToolkit.getAllFields(item.getClass(), true);
-                        for (Field clazzField : fields) {
-                            AxolotlDictKey keyAnno = clazzField.getAnnotation(AxolotlDictKey.class);
-                            if (keyAnno != null) {
-                                keyField = clazzField;
-                                cache.put(get_dictKey(), clazzField);
-                            }
-                            AxolotlDictValue valueAnno = clazzField.getAnnotation(AxolotlDictValue.class);
-                            if (valueAnno != null) {
-                                valueField = clazzField;
-                                cache.put(get_dictValue(), clazzField);
-                            }
-                        }
-                        if (cache.size() != 2) {
-                            throw new AxolotlWriteException("请检查实体字典映射是否包含注解@AxolotlDictKey和@AxolotlDictValue");
-                        }
-                    } else {
-                        keyField = cache.get(get_dictKey());
-                        valueField = cache.get(get_dictValue());
-                    }
-                    if (keyField == null || valueField == null) {
-                        throw new AxolotlWriteException("请检查实体字典映射是否包含注解");
-                    }
-                    keyField.setAccessible(true);
-                    valueField.setAccessible(true);
-                    try {
-                        Object code = keyField.get(item);
-                        Object trans = valueField.get(item);
-                        if (code != null && trans != null) {
-                            dictMap.put(code.toString(), trans.toString());
-                        } else {
-                            throw new AxolotlWriteException("获取的字典为null，请检查实体值");
-                        }
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-            LoggerHelper.debug(LOGGER,format("字段[%s]字典映射数量[%s]", field,dictMap.size()));
-            dictionaryMapping.put(sheetIndex,field,dictMap);
-        }
     }
 
     /**
@@ -216,6 +134,23 @@ public class CommonWriteConfig extends AxolotlCommonConfig {
             if (!useDictCode){
                 LoggerHelper.info(LOGGER,"字典映射策略未开启，已自动开启.");
                 this.setWritePolicy(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER,true);
+            }
+        }
+    }
+
+    /**
+     * 检查实体类是否有字典注解，并自动开启字典策略
+     */
+    public void autoProcessEntity2OpenDictPolicy(){
+        List<Field> allFields = ReflectToolkit.getAllFields(metaClass, true);
+        Map<ExcelWritePolicy, Object> policyMap = getWritePolicies();
+        if (!policyMap.containsKey(SIMPLE_USE_DICT_CODE_TRANSFER)){
+            for (Field field : allFields) {
+                if (field.getAnnotation(AxolotlDictMapping.class) != null){
+                    LoggerHelper.info(LOGGER,"实体发现字典属性，字典映射策略未开启，已自动开启.");
+                    this.setWritePolicy(SIMPLE_USE_DICT_CODE_TRANSFER,true);
+                    break;
+                }
             }
         }
     }

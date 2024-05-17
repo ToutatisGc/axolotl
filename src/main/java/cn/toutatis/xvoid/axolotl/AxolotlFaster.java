@@ -1,5 +1,8 @@
 package cn.toutatis.xvoid.axolotl;
 
+import cn.toutatis.xvoid.axolotl.excel.reader.AxolotlExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.reader.ReaderConfig;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoSheetDataPackage;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
@@ -794,5 +797,369 @@ public class AxolotlFaster {
         sheetDataPackage.setData(data != null ? new ArrayList<>(data) : null);
         return sheetDataPackage;
     }
+
+
+
+    public static AxolotlExcelReader<?> getExcelReader(File excelFile){
+        return Axolotls.getExcelReader(excelFile);
+    }
+
+    public static AxolotlExcelReader<?> getExcelReader(InputStream inputStream){
+        return Axolotls.getExcelReader(inputStream);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        if(reader == null){
+            throw new AxolotlWriteException("读取器不能为空");
+        }
+        ReaderConfig<T> config = new ReaderConfig<>();
+        if(sheetIndex != null){
+            config.setSheetIndex(sheetIndex);
+        }
+        if(initialRowPositionOffset != null){
+            config.setInitialRowPositionOffset(initialRowPositionOffset);
+        }
+        if(startRowIndex != null){
+            config.setStartIndex(startRowIndex);
+        }
+        if(endRowIndex != null){
+            config.setEndIndex(endRowIndex);
+        }
+        if(startColumnIndex != null){
+            config.setSheetColumnEffectiveRangeStart(startColumnIndex);
+        }
+        if(endColumnIndex != null){
+            config.setSheetColumnEffectiveRangeEnd(endColumnIndex);
+        }
+        if(searchHeaderMaxRows != null){
+            config.setSearchHeaderMaxRows(searchHeaderMaxRows);
+        }
+        if(dict != null){
+            for (String fieldName : dict.keySet()) {
+                if(fieldName != null){
+                    Object dictParam = dict.get(fieldName);
+                    if(dictParam != null){
+                        if(dictParam instanceof List<?>){
+                            config.setDict(config.getSheetIndex(),fieldName, new ArrayList<>((List<?>) dictParam));
+                        }else if(dictParam instanceof Map<?,?>){
+                            config.setDict(config.getSheetIndex(),fieldName, new HashMap<>((Map<String, String>) dictParam));
+                        }
+                    }
+                }
+            }
+        }
+        if(validateReadRowData != null){
+            config.setBooleanReadPolicy(ExcelReadPolicy.VALIDATE_READ_ROW_DATA,validateReadRowData);
+        }
+        if(trimCellValue != null){
+            config.setBooleanReadPolicy(ExcelReadPolicy.TRIM_CELL_VALUE,trimCellValue);
+        }
+        config.setCastClass(clazz);
+        return reader.readSheetData(config);
+    }
+
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,null,null,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,null,null,null,dict,null,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,null,null,null,null,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,null,null,null,null,null,null);
+    }
+
+
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,null,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,null,null);
+    }
+
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,dict,null,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,null,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,null,null,null);
+    }
+
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,dict,null,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,null,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex){
+        return readSheetAsList(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,null,null,null);
+    }
+
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,dict,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Map<String,Object> dict){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,dict,null,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Boolean validateReadRowData){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,null,validateReadRowData,null);
+    }
+
+    public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows){
+        return readSheetAsList(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,null,null,null);
+    }
+
+
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        if(reader == null){
+            throw new AxolotlWriteException("读取器不能为空");
+        }
+        ReaderConfig<T> config = new ReaderConfig<>();
+        if(sheetIndex != null){
+            config.setSheetIndex(sheetIndex);
+        }
+        if(initialRowPositionOffset != null){
+            config.setInitialRowPositionOffset(initialRowPositionOffset);
+        }
+        if(startRowIndex != null){
+            config.setStartIndex(startRowIndex);
+        }
+        if(endRowIndex != null){
+            config.setEndIndex(endRowIndex);
+        }
+        if(startColumnIndex != null){
+            config.setSheetColumnEffectiveRangeStart(startColumnIndex);
+        }
+        if(endColumnIndex != null){
+            config.setSheetColumnEffectiveRangeEnd(endColumnIndex);
+        }
+        if(searchHeaderMaxRows != null){
+            config.setSearchHeaderMaxRows(searchHeaderMaxRows);
+        }
+        if(dict != null){
+            for (String fieldName : dict.keySet()) {
+                if(fieldName != null){
+                    Object dictParam = dict.get(fieldName);
+                    if(dictParam != null){
+                        if(dictParam instanceof List<?>){
+                            config.setDict(config.getSheetIndex(),fieldName, new ArrayList<>((List<?>) dictParam));
+                        }else if(dictParam instanceof Map<?,?>){
+                            config.setDict(config.getSheetIndex(),fieldName, new HashMap<>((Map<String, String>) dictParam));
+                        }
+                    }
+                }
+            }
+        }
+        if(validateReadRowData != null){
+            config.setBooleanReadPolicy(ExcelReadPolicy.VALIDATE_READ_ROW_DATA,validateReadRowData);
+        }
+        if(trimCellValue != null){
+            config.setBooleanReadPolicy(ExcelReadPolicy.TRIM_CELL_VALUE,trimCellValue);
+        }
+        config.setCastClass(clazz);
+        return reader.readSheetDataAsObject(config);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,null,null,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,null,null,null,dict,null,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,null,null,null,null,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,null,null,null,null,null,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,null,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,null,null);
+    }
+
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,dict,null,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,null,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,null,null,null,null);
+    }
+
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,dict,null,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,null,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startColumnIndex, Integer endColumnIndex){
+        return readSheetAsObject(reader,clazz,sheetIndex,null,null,null,startColumnIndex,endColumnIndex,null,null,null,null);
+    }
+
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,dict,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,dict,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Map<String,Object> dict){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,dict,null,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Boolean validateReadRowData, Boolean trimCellValue){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,null,validateReadRowData,trimCellValue);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows, Boolean validateReadRowData){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,null,validateReadRowData,null);
+    }
+
+    public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer searchHeaderMaxRows){
+        return readSheetAsObject(reader,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,null,null,searchHeaderMaxRows,null,null,null);
+    }
+
+
+
 
 }

@@ -124,6 +124,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
 //            // 写入Map映射
             this.writeSingleData(sheet, fixMapping, context.getSingleReferenceData(),false);
 //            // 写入循环数据
+            if (Validator.objNotNull(dataList)){
+                config.setMetaClass(dataList.get(0).getClass());
+                config.autoProcessEntity2OpenDictPolicy();
+            }
             this.writeCircleData(sheet, dataList);
             axolotlWriteResult.setWrite(true);
             axolotlWriteResult.setMessage("写入完成");
