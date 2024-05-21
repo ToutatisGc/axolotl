@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public class StreamTest {
 
@@ -42,8 +43,9 @@ public class StreamTest {
                 0,
                 0,
                 -1,
-                3,
-                -1
+                0,
+                -1,
+                false
                 );
         stream.readDataBatch(2, new ReadBatchTask<OneFieldString3Entity>() {
             @Override
@@ -63,7 +65,8 @@ public class StreamTest {
                 0,
                 -1,
                 0,
-                -1
+                -1,
+                false
         );
         /*stream.readDataBatch(1, new ReadBatchTask<OneFieldString3Entity>() {
             @Override

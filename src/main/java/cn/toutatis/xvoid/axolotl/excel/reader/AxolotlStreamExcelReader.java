@@ -2,11 +2,13 @@ package cn.toutatis.xvoid.axolotl.excel.reader;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.AxolotlAbstractExcelReader;
+import cn.toutatis.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.stream.AxolotlExcelStream;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import com.github.pjfanning.xlsx.StreamingReader;
 import org.apache.poi.ss.usermodel.Row;
@@ -19,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 
 /**
  * Excel流形式读取器
@@ -117,6 +120,20 @@ public class AxolotlStreamExcelReader<T> extends AxolotlAbstractExcelReader<T> {
             }
         }
         this.convertCellToInstance(row,instance,readerConfig);
+        String needRecordInfo = readerConfig.getNeedRecordInfo();
+        if (instance != null && needRecordInfo != null ){
+            Sheet sheet = workBookContext.getIndexSheet(readerConfig.getSheetIndex());
+            try {
+                Field field = readerConfig.getCastClass().getDeclaredField(needRecordInfo);
+                AxolotlReadInfo axolotlReadInfo = new AxolotlReadInfo();
+                axolotlReadInfo.setSheetIndex(readerConfig.getSheetIndex());
+                axolotlReadInfo.setSheetName(sheet.getSheetName());
+                axolotlReadInfo.setRowNumber(row.getRowNum());
+                ReflectToolkit.setObjectField(instance,field,axolotlReadInfo);
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return instance;
     }
 
