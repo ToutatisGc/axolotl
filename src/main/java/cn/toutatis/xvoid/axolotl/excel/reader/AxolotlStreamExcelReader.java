@@ -10,6 +10,7 @@ import cn.toutatis.xvoid.axolotl.toolkit.tika.TikaShell;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import com.github.pjfanning.xlsx.StreamingReader;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.RecordFormatException;
 import org.slf4j.Logger;
@@ -126,6 +127,8 @@ public class AxolotlStreamExcelReader<T> extends AxolotlAbstractExcelReader<T> {
      * @return 数据迭代器
      */
     public <RT> AxolotlExcelStream<RT> dataIterator(ReaderConfig<RT> readerConfig){
+        this.searchSheet(readerConfig);
+        this.preCheckAndFixReadConfig(readerConfig);
         return new AxolotlExcelStream<>(this, readerConfig);
     }
 
