@@ -316,11 +316,12 @@ public abstract class AxolotlAbstractExcelReader<T> {
                 LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, String.format("处理合并单元格[%s]",mergedRegion.formatAsString()));
                 for (int rowIndex = firstRow; rowIndex <= lastRow; rowIndex++) {
                     for (int columnIndex = firstColumn; columnIndex <= lastColumn; columnIndex++) {
-                        Row row = sheet.getRow(rowIndex);
-                        Cell cell =row.getCell(columnIndex);
-                        if (cell == null){
-                            cell = row.createCell(columnIndex, leftTopCell.getCellType());
-                        }
+//                        Row row = sheet.getRow(rowIndex);
+//                        Cell cell =row.getCell(columnIndex);
+//                        if (cell == null){
+//                            cell = row.createCell(columnIndex, leftTopCell.getCellType());
+//                        }
+                        Cell cell = ExcelToolkit.createOrCatchCell(sheet, rowIndex, columnIndex, null);
                         switch (leftTopCell.getCellType()){
                             case STRING:
                                 cell.setCellValue(leftTopCell.getStringCellValue());
