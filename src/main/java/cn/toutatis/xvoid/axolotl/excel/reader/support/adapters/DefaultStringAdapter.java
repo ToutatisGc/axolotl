@@ -63,13 +63,19 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 short dataFormat = cellGetInfo.get_cell().getCellStyle().getDataFormat();
                 boolean isText = (dataFormat == StyleHelper.DATA_FORMAT_GENERAL_INDEX || dataFormat == StyleHelper.DATA_FORMAT_PLAIN_TEXT_INDEX);
                 if (isText){
-                    DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
-                    return decimalFormat.format(cellValue);
-                }
-                if ((Double) cellValue % 1 == 0) {
-                    return Integer.toString(((Double) cellValue).intValue());
-                } else {
-                    return String.format("%." + AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE + "f", (Double) cellValue);
+                    if ((Double) cellValue % 1 == 0) {
+                        return Integer.toString(((Double) cellValue).intValue());
+                    }else {
+//                        DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
+//                        return decimalFormat.format(cellValue);
+                        return cellValue.toString();
+                    }
+                }else {
+                    if ((Double) cellValue % 1 == 0) {
+                        return Integer.toString(((Double) cellValue).intValue());
+                    } else {
+                        return String.format("%." + AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE + "f", (Double) cellValue);
+                    }
                 }
             case BOOLEAN:
             case FORMULA:
