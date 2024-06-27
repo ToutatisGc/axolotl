@@ -47,6 +47,9 @@ public class DefaultNumericAdapter<NT> extends AbstractDataCastAdapter<NT> imple
                     Double cellDoubleValue = Double.valueOf((String) cellValue);
                     return this.castDoubleToOtherTypeNumber(cellDoubleValue,context);
                 }else {
+                    if("".equals(cellValue)){
+                        if (!context.getCastType().isPrimitive()){return null;}
+                    }
                     throw new AxolotlExcelReadException(context,"字符串不是数字格式无法转换");
                 }
             case BOOLEAN:
