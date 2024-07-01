@@ -405,6 +405,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
                             Cell cell = cellIterator.next();
                             // 应该没有人会用数字当表头吧...
                             if (cell != null && cell.getCellType() == CellType.STRING){
+                                // FIX 20240701 移除两边空格
                                 String cellValue = cell.getStringCellValue();
                                 if (headerKeys.containsKey(cellValue) && notAlreadyRecordKeys.containsKey(cellValue)){
                                     LoggerHelper.debug(LOGGER,LoggerHelper.format("查找到表头[%s]", cellValue));
