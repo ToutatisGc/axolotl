@@ -265,14 +265,14 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
             if (columnBind != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
                 entityCellMappingInfo.setColumnPosition(columnBind.columnIndex());
-                String headerName = columnBind.headerName();
-                if (Validator.strNotBlank(headerName)){
-                    entityCellMappingInfo.setHeaderName(headerName);
-                    entityCellMappingInfo.setHeaderNameIndex(columnBind.sameHeaderIdx());
-                }
                 entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
                 entityCellMappingInfo.setFormat(columnBind.format());
-                indexPositionMappingInfos.add(entityCellMappingInfo);
+                String[] headers = columnBind.headerName();
+                if (headers.length > 0){
+                    indexPositionMappingInfos.addAll(cloneMultipleHeaderMappingInfo(entityCellMappingInfo,headers, columnBind));
+                }else {
+                    indexPositionMappingInfos.add(entityCellMappingInfo);
+                }
                 continue;
             }
             if (declaredField.getType() == AxolotlReadInfo.class && this.needRecordInfo == null){
@@ -293,6 +293,42 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
         this.positionMappingInfos = positionMappingInfos;
         this.indexMappingInfos = indexPositionMappingInfos;
     }
+
+    /**
+     * 克隆多个头部映射信息。
+     * 通过此方法，可以基于一个原始映射信息对象，创建出多个具有相同字段类型但头部名称不同的映射信息对象。
+     * 这在处理Excel表格中存在多个相同字段类型但标题名称不同的情况时非常有用。
+     *
+     * @param original 原始的实体单元格映射信息，用于提供字段类型和基础设置。
+     * @param headers 一个字符串数组，包含需要克隆的头部名称。
+     * @param columnBind 列绑定信息，用于提供额外的映射配置，如数据转换适配器和格式化信息。
+     * @return 返回一个包含克隆的实体单元格映射信息的列表。
+     */
+    private List<EntityCellMappingInfo<?>> cloneMultipleHeaderMappingInfo(EntityCellMappingInfo<?> original,String[] headers, ColumnBind columnBind){
+        List<EntityCellMappingInfo<?>> multipleInfos = new ArrayList<>();
+        for (String header : headers) {
+            // 创建一个新的实体单元格映射信息对象，使用原始对象的字段类型。
+            EntityCellMappingInfo<?> entityCellMappingInfo = new EntityCellMappingInfo<>(original.getFieldType());
+            if (Validator.strNotBlank(header)) {
+                // 设置克隆对象的头部名称。
+                entityCellMappingInfo.setHeaderName(header);
+                entityCellMappingInfo.setHeaderNameIndex(columnBind.sameHeaderIdx());
+                entityCellMappingInfo.setMappingType(original.getMappingType());
+                entityCellMappingInfo.setFieldIndex(original.getFieldIndex());
+                entityCellMappingInfo.setFieldName(original.getFieldName());
+                entityCellMappingInfo.setColumnPosition(original.getColumnPosition());
+                entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
+                entityCellMappingInfo.setFormat(columnBind.format());
+                // 将配置完成的克隆对象添加到列表中。
+                multipleInfos.add(entityCellMappingInfo);
+            } else {
+                throw new IllegalArgumentException("类字段 " + original.getFieldName() + " 头部名称不能为空");
+            }
+        }
+        // 返回包含所有克隆对象的列表。
+        return multipleInfos;
+    }
+
 
     /**
      * 获取一个布尔值类型的读取策略
