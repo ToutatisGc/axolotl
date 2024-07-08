@@ -20,7 +20,7 @@ public @interface ColumnBind {
      * 表头名称
      * @return 表头名称
      */
-    String headerName() default "";
+    String[] headerName() default {};
     /**
      * 单元格序号
      */
