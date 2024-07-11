@@ -1,8 +1,8 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.components.widgets;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
-import cn.toutatis.xvoid.toolkit.clazz.LambdaToolkit;
-import cn.toutatis.xvoid.toolkit.clazz.XFunc;
+import cn.xvoid.toolkit.clazz.LambdaToolkit;
+import cn.xvoid.toolkit.clazz.XFunc;
 import com.google.common.collect.Lists;
 import lombok.Builder;
 import lombok.Data;

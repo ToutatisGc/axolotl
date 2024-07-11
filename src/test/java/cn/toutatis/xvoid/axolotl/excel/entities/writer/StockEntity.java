@@ -2,7 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.entities.writer;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
-import cn.toutatis.xvoid.toolkit.constant.Time;
+import cn.xvoid.toolkit.constant.Time;
 import lombok.Data;
 
 import java.math.BigDecimal;

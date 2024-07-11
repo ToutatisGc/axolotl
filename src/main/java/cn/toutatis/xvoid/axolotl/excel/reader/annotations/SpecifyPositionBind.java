@@ -2,7 +2,7 @@ package cn.toutatis.xvoid.axolotl.excel.reader.annotations;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.support.DataCastAdapter;
 import cn.toutatis.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
-import cn.toutatis.xvoid.toolkit.constant.Time;
+import cn.xvoid.toolkit.constant.Time;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

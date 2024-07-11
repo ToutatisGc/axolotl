@@ -6,9 +6,9 @@ import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictValue;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
-import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
-import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
-import cn.toutatis.xvoid.toolkit.validator.Validator;
+import cn.xvoid.toolkit.clazz.ReflectToolkit;
+import cn.xvoid.toolkit.log.LoggerToolkit;
+import cn.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import org.slf4j.Logger;
@@ -72,7 +72,8 @@ public abstract class AxolotlCommonConfig {
             Field keyField = null;
             Field valueField = null;
             for (Object item : dict) {
-                if (item instanceof Map<?, ?> itemMap) {
+                if (item instanceof Map) {
+                    Map<?, ?> itemMap = (Map<?, ?>)item;
                     if (itemMap.containsKey(_dictKey) && itemMap.containsKey(_dictValue)) {
                         dictMap.put(itemMap.get(_dictKey).toString(), itemMap.get(_dictValue).toString());
                     } else {

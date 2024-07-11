@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.toolkit;
 
 import cn.toutatis.xvoid.axolotl.Meta;
-import cn.toutatis.xvoid.toolkit.log.LoggerToolkitKt;
+import cn.xvoid.toolkit.log.LoggerToolkitKt;
 import org.slf4j.Logger;
 
 /**

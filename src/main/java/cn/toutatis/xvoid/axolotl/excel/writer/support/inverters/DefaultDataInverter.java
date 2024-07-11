@@ -1,7 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support.inverters;
 
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
-import cn.toutatis.xvoid.toolkit.constant.Time;
+import cn.xvoid.toolkit.constant.Time;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

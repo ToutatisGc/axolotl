@@ -7,8 +7,8 @@ import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
-import cn.toutatis.xvoid.toolkit.validator.Validator;
+import cn.xvoid.toolkit.log.LoggerToolkit;
+import cn.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.Lists;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.slf4j.Logger;
@@ -73,7 +73,8 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         }
         writeContext.getHeaders().put(switchSheetIndex,headers);
         writeContext.setDatas(datas);
-        if (styleRender instanceof AbstractStyleRender innerStyleRender){
+        if (styleRender instanceof AbstractStyleRender){
+            AbstractStyleRender innerStyleRender = (AbstractStyleRender)styleRender;
             innerStyleRender.setWriteConfig(writeConfig);
             innerStyleRender.setContext(writeContext);
             innerStyleRender.getComponentRender().setConfig(writeConfig);
