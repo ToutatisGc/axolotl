@@ -45,7 +45,7 @@ public class DesignConditions {
     private List<String> writeFieldNamesList;
 
     /**
-     * 模板行未使用字段
+     * 模板存在，但数据未使用字段
      */
     private Map<String, CellAddress> nonWrittenAddress;
 

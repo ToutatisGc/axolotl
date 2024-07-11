@@ -675,7 +675,8 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 Method tmpMethod;
                 for (Method getterMethod : getterMethods) {
                     // 仅获取公开的Getter方法
-                    if (Modifier.isPublic(getterMethod.getModifiers())){
+                    int modifiers = getterMethod.getModifiers();
+                    if (Modifier.isPublic(modifiers) && !(Modifier.isStatic(modifiers))){
                         tmpMethod = getterMethod;
                         AxolotlWriterGetter axolotlWriterGetter = tmpMethod.getAnnotation(AxolotlWriterGetter.class);
                         if (axolotlWriterGetter != null && axolotlWriterGetter.value() != null){
@@ -725,7 +726,9 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }
             }else {
                 List<Field> fields = ReflectToolkit.getAllFields(dataClass, true);
-                fields.forEach(field -> {
+                for (Field field : fields) {
+                    int modifiers = field.getModifiers();
+                    if (Modifier.isStatic(modifiers)) {continue;}
                     field.setAccessible(true);
                     String fieldName = field.getName();
                     try {
@@ -734,7 +737,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                         e.printStackTrace();
                         throw new AxolotlWriteException("获取对象字段错误");
                     }
-                });
+                }
             }
         }
         return dataMap;

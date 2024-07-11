@@ -4,7 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.toutatis.xvoid.axolotl.AxolotlFaster;
 import cn.toutatis.xvoid.axolotl.Axolotls;
-import cn.toutatis.xvoid.axolotl.excel.writer.support.SheetDataPackage;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.AutoSheetDataPackage;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.AnnoEntity;
 import cn.toutatis.xvoid.axolotl.excel.entities.writer.StockEntity;
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
@@ -330,8 +330,8 @@ public class AutoWriteTest {
             data.add(stockEntity);
         }
 
-        SheetDataPackage sheetDataPackage1 = AxolotlFaster.buildWriteSheetInfo(0, headers, data, "股票测试表", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表1","微软雅黑",true);
-        SheetDataPackage sheetDataPackage2 = AxolotlFaster.buildWriteSheetInfo(1, headers, data, "股票测试表222", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表2","微软雅黑",true);
+        AutoSheetDataPackage sheetDataPackage1 = AxolotlFaster.buildAutoWriteSheetInfo(0, headers, data, "股票测试表", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表1","微软雅黑",true);
+        AutoSheetDataPackage sheetDataPackage2 = AxolotlFaster.buildAutoWriteSheetInfo(1, headers, data, "股票测试表222", new AxolotlConfigurableTheme(AxolotlDefaultStyleConfig.class), "股票测试表2","微软雅黑",true);
         AxolotlFaster.autoWriteToExcelMultiSheet(fileOutputStream, sheetDataPackage1, sheetDataPackage2);
 
        /* AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
@@ -345,6 +345,7 @@ public class AutoWriteTest {
      * @throws IOException
      */
 
+    @Test
     public void autoTest7() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig config = new AutoWriteConfig();
@@ -354,6 +355,7 @@ public class AutoWriteTest {
         config.setFontName("微软雅黑");
         config.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);
         config.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,true);
+        config.setWritePolicy(ExcelWritePolicy.SIMPLE_USE_GETTER_METHOD,true);
         config.setBlankValue("-");
         config.setOutputStream(fileOutputStream);
         List<Header> headers = new ArrayList<>();
@@ -365,9 +367,9 @@ public class AutoWriteTest {
         config.addSpecialRowHeight(0,1,600);
         config.addSpecialRowHeight(0,2,600);
         config.addCalculateColumnIndex(0,1,6);
-        ArrayList<JSONObject> data = new ArrayList<>();
+        ArrayList<Object> data = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            JSONObject jsonObject = new JSONObject(true);
+            /*JSONObject jsonObject = new JSONObject(true);
             jsonObject.put("order",i);
             jsonObject.put("model","CHM-00"+i);
             jsonObject.put("dual speed","CD-00"+i);
@@ -377,7 +379,14 @@ public class AutoWriteTest {
             jsonObject.put("60HZ",RandomUtil.randomDouble(0,20));
             jsonObject.put("Single",RandomUtil.randomDouble(0,20));
             jsonObject.put("Dual",RandomUtil.randomDouble(0,20));
-            data.add(jsonObject);
+            data.add(jsonObject);*/
+//            BaseEntity baseEntity = new BaseEntity();
+//            BaseEntity.setA1("a1");
+//            BaseEntity.setInch("a1");
+//            BaseEntity.setDualSpeed("a1");
+//            BaseEntity.setMm("a1");
+//
+//            data.add(baseEntity);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(config);
         autoExcelWriter.write(headers,data);
@@ -443,6 +452,7 @@ public class AutoWriteTest {
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
         SXSSFWorkbook workbook = autoExcelWriter.getWorkbook();
+        autoExcelWriter.write(headers,data);
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();
 

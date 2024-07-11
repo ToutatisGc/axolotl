@@ -52,4 +52,12 @@ public @interface AxolotlDictMapping {
      */
     DictMappingPolicy mappingPolicy() default DictMappingPolicy.KEEP_ORIGIN;
 
+    /**
+     * 是否自动翻转字典
+     * 字典在读取时往往是字面值，读取后需要转为字典
+     * 设置为true时，当类为读取器时，自动将字典键值对翻转
+     * 设置为false时，手动指定{@link AxolotlDictOverTurn}注解
+     */
+    boolean autoOverTurn() default true;
+
 }

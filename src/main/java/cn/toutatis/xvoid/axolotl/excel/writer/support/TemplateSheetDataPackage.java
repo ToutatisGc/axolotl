@@ -1,10 +1,13 @@
 package cn.toutatis.xvoid.axolotl.excel.writer.support;
 
 import cn.toutatis.xvoid.axolotl.excel.writer.AutoWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.TemplateWriteConfig;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.widgets.Header;
 import lombok.Data;
 
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 工作表写入封装数据
@@ -13,20 +16,21 @@ import java.util.List;
  * @version 1.0.15
  */
 @Data
-public class SheetDataPackage {
+public class TemplateSheetDataPackage {
 
     /**
-     * 表头
+     * 引用字段 ${}占位符
      */
-    private List<Header> headers;
+    private Map<String,?> fixMapping;
 
     /**
-     * 数据
+     * 数据 #{}占位符
      */
-    private List<?> data;
+    private List<?> datas;
 
     /**
-     * 自动写入配置
+     * 模板写入配置
      */
-    private AutoWriteConfig autoWriteConfig;
+    private TemplateWriteConfig templateWriteConfig;
+
 }

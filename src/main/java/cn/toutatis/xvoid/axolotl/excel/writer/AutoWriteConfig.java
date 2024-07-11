@@ -1,20 +1,30 @@
 package cn.toutatis.xvoid.axolotl.excel.writer;
 
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
+import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.components.annotations.SheetTitle;
 import cn.toutatis.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.inverters.DefaultDataInverter;
 import cn.toutatis.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
+import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
+import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
+import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+
+import static cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER;
 
 /**
  * 自动写入的写入配置
@@ -23,6 +33,8 @@ import java.util.*;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AutoWriteConfig extends CommonWriteConfig {
+
+    private Logger LOGGER = LoggerToolkit.getLogger(this.getClass());
 
     public AutoWriteConfig() {
         super(true);
@@ -39,10 +51,6 @@ public class AutoWriteConfig extends CommonWriteConfig {
      */
     private String title;
 
-    /**
-     * 元数据类
-     */
-    private Class<?> metaClass;
 
     /**
      * 工作表名称
@@ -140,6 +148,7 @@ public class AutoWriteConfig extends CommonWriteConfig {
                     this.sheetName = sheetName;
                 }
             }
+            this.autoProcessEntity2OpenDictPolicy();
         }else {
             throw new AxolotlWriteException("元信息Class为空");
         }

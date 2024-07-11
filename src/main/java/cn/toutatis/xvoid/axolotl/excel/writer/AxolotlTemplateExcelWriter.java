@@ -16,7 +16,6 @@ import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Time;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -86,7 +85,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         this.context = templateWriteContext;
         this.context.setSwitchSheetIndex(config.getSheetIndex());
         componentRender.setContext(context);
-        componentRender.setWriteConfig(config);
+        componentRender.setConfig(config);
     }
 
     /**
@@ -125,6 +124,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
 //            // 写入Map映射
             this.writeSingleData(sheet, fixMapping, context.getSingleReferenceData(),false);
 //            // 写入循环数据
+            if (Validator.objNotNull(dataList)){
+                config.setMetaClass(dataList.get(0).getClass());
+                config.autoProcessEntity2OpenDictPolicy();
+            }
             this.writeCircleData(sheet, dataList);
             axolotlWriteResult.setWrite(true);
             axolotlWriteResult.setMessage("写入完成");
@@ -206,13 +209,17 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * 未使用的单次占位符填充默认值
      */
     private void gatherUnusedSingleReferenceDataAndFillDefault() {
-        if(config.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_PLACEHOLDER_FILL_DEFAULT)){
-            int sheetIndex = context.getSwitchSheetIndex();
-            Sheet sheet = this.getWorkbookSheet(context.getSwitchSheetIndex());
-            Map<String, CellAddress> singleReferenceMapping =  context.getSingleReferenceData().row(sheetIndex);
-            HashMap<String, Object> unusedMap = gatherUnusedField(sheetIndex, singleReferenceMapping);
-            this.writeSingleData(sheet,unusedMap, context.getSingleReferenceData(),true);
-        }
+        int sheetIndex = context.getSwitchSheetIndex();
+        Sheet sheet = this.getWorkbookSheet(context.getSwitchSheetIndex());
+        Map<String, CellAddress> singleReferenceMapping =  context.getSingleReferenceData().row(sheetIndex);
+        HashMap<String, CellAddress> tmp = singleReferenceMapping.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getValue().getPlaceholder(), Map.Entry::getValue,
+                        (a, b) -> b, () -> new HashMap<>(singleReferenceMapping.size()))
+                );
+        HashMap<String, Object> unusedMap = gatherUnusedField(sheetIndex, tmp);
+        this.writeSingleData(sheet,unusedMap, context.getSingleReferenceData(),true);
     }
 
     /**
@@ -254,13 +261,28 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         MapDifference<String, Object> difference = Maps.difference(referenceMapping, alreadyUsedDataMapping);
         Map<String, Object> onlyOnLeft = difference.entriesOnlyOnLeft();
         HashMap<String, Object> unusedMap = new HashMap<>();
-        for (String singleKey : onlyOnLeft.keySet()) {
-            if(referenceMapping.containsKey(singleKey)){
-                unusedMap.put(singleKey,referenceMapping.get(singleKey).getDefaultValue());
-            }else{
-                unusedMap.put(singleKey,null);
+        for (Map.Entry<String, Object> entry : onlyOnLeft.entrySet()) {
+            CellAddress cellAddress = (CellAddress) entry.getValue();
+            Object nonAddressValue;
+            if (config.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_PLACEHOLDER_FILL_DEFAULT)){
+                if(cellAddress.getDefaultValue() != null){
+                    nonAddressValue = cellAddress.getDefaultValue();
+                }else{
+                    nonAddressValue = config.getBlankValue();
+                }
+            }else {
+                nonAddressValue = cellAddress.getPlaceholder();
             }
+            unusedMap.put(cellAddress.getName(),nonAddressValue);
         }
+//        for (String singleKey : onlyOnLeft.keySet()) {
+//            if(referenceMapping.containsKey(singleKey)){
+//                CellAddress cellAddress = referenceMapping.get(singleKey);
+//                unusedMap.put(cellAddress.getName(),cellAddress.getDefaultValue());
+//            }else{
+//                unusedMap.put(singleKey,null);
+//            }
+//        }
         return unusedMap;
     }
 
@@ -530,6 +552,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         }
                         alreadySetLineHeight = true;
                     }
+                    // 判断是否已经写入
                     boolean isWritten = false;
                     if(writeFieldNames.containsKey(fieldMappingKey)){
                         Object value;
@@ -569,6 +592,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }else{
                                 if (config.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL)){
                                     writableCell.setCellValue(cellAddress.replacePlaceholder(config.getBlankValue()));
+                                    isWritten = true;
                                 }else{
                                     writableCell.setBlank();
                                 }
@@ -587,12 +611,23 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                 valueString = componentRender.convertDictCodeToName(sheetIndex,String.class,fieldMappingKey,data,valueString);
                             }
                             writableCell.setCellValue(cellAddress.replacePlaceholder(valueString));
+                            isWritten = true;
                         }
-                        isWritten = true;
                     }else if (designConditions.getNonWrittenAddress().containsKey(fieldMappingKey)){
+                        cellAddress = designConditions.getNonWrittenAddress().get(fieldMappingKey);
+                        Object nonAddressValue;
+                        if (config.getWritePolicyAsBoolean(ExcelWritePolicy.TEMPLATE_PLACEHOLDER_FILL_DEFAULT)){
+                            if(cellAddress.getDefaultValue() != null){
+                                nonAddressValue = cellAddress.getDefaultValue();
+                            }else{
+                                nonAddressValue = config.getBlankValue();
+                            }
+                        }else {
+                            nonAddressValue = cellAddress.getCellValue();
+                        }
                         ExcelToolkit.cellAssignment(
                                 sheet, rowPosition, cellAddress.getColumnPosition(),
-                                cellAddress.getCellStyle(), cellAddress.getDefaultValue()
+                                cellAddress.getCellStyle(), nonAddressValue
                         );
                         isWritten = true;
                     }
@@ -832,9 +867,10 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
     public void flush(boolean isFinal) {
         if (isFinal){
             for (Integer i : context.getResolvedSheetRecord().keySet()) {
+                this.context.setSwitchSheetIndex(i);
                 this.resolveTemplate(getWorkbookSheet(i), true);
                 this.gatherUnusedSingleReferenceDataAndFillDefault();
-                this.gatherUnusedCircleReferenceDataAndFillDefault();
+//                this.gatherUnusedCircleReferenceDataAndFillDefault();
                 this.setCalculateData(i);
             }
         }else{

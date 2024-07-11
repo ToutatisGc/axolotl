@@ -1,5 +1,7 @@
 package cn.toutatis.xvoid.axolotl.excel.reader;
 
+import cn.toutatis.xvoid.axolotl.common.AxolotlCommonConfig;
+import cn.toutatis.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.toutatis.xvoid.axolotl.excel.reader.annotations.*;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
@@ -8,11 +10,10 @@ import cn.toutatis.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelRea
 import cn.toutatis.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.toutatis.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.toutatis.xvoid.toolkit.constant.Regex;
+import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
 import cn.toutatis.xvoid.toolkit.validator.Validator;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -27,16 +28,11 @@ import static cn.toutatis.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy.*;
  * @param <T> 转换实体
  * @author Toutatis_Gc
  */
-@ToString
-@Getter
-@Setter
-public class ReaderConfig<T> {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class ReaderConfig<T> extends AxolotlCommonConfig {
 
-    /**
-     * 表索引
-     * 默认读取第一张表
-     */
-    private int sheetIndex = 0;
+    private Logger LOGGER = LoggerToolkit.getLogger(this.getClass());
 
     /**
      * 表名
@@ -144,7 +140,7 @@ public class ReaderConfig<T> {
     }
 
     /**
-     *
+     * 设置默认读取策略
      */
     private Map<ExcelReadPolicy, Object> defaultReadPolicy() {
         Map<ExcelReadPolicy, Object> defaultReadPolicies = new HashMap<>();
@@ -199,6 +195,17 @@ public class ReaderConfig<T> {
             this.setInitialRowPositionOffset(indexWorkSheet.readRowOffset());
             this.setReadClassAnnotation(true);
             this.setSheetColumnEffectiveRange(indexWorkSheet.sheetColumnEffectiveRange());
+        }
+        List<Field> allFields = ReflectToolkit.getAllFields(castClass, true);
+        Map<ExcelReadPolicy, Object> policyMap = getRowReadPolicyMap();
+        if (!policyMap.containsKey(SIMPLE_USE_DICT_CODE_TRANSFER)){
+            for (Field field : allFields) {
+                if (field.getAnnotation(AxolotlDictMapping.class) != null){
+                    LoggerHelper.info(LOGGER,"实体发现字典属性，字典映射策略未开启，已自动开启.");
+                    this.setBooleanReadPolicy(SIMPLE_USE_DICT_CODE_TRANSFER,true);
+                    break;
+                }
+            }
         }
     }
 
@@ -360,5 +367,20 @@ public class ReaderConfig<T> {
     public void setSheetColumnEffectiveRange(int start,int end){
         this.setSheetColumnEffectiveRangeStart(start);
         this.setSheetColumnEffectiveRangeEnd(end);
+    }
+
+    @Override
+    public void setDict(int sheetIndex, String field, Map<String, String> dict) {
+        if (Validator.strIsBlank(field)){
+            throw new IllegalArgumentException("字段不能为空");
+        }
+        if (dict!= null && !dict.isEmpty()){
+            dictionaryMapping.put(sheetIndex,field,dict);
+            boolean useDictCode = getReadPolicyAsBoolean(ExcelReadPolicy.SIMPLE_USE_DICT_CODE_TRANSFER);
+            if (!useDictCode){
+                LoggerHelper.info(LOGGER,"字典映射策略未开启，已自动开启.");
+                this.setBooleanReadPolicy(ExcelReadPolicy.SIMPLE_USE_DICT_CODE_TRANSFER,true);
+            }
+        }
     }
 }

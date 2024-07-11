@@ -1,5 +1,6 @@
 package cn.toutatis.xvoid.axolotl.excel.reader.constant;
 
+import cn.toutatis.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import lombok.Getter;
 
 /**
@@ -73,6 +74,8 @@ public enum ExcelReadPolicy {
 
     /**
      * 如果字段存在值覆盖掉原值
+     * true:覆盖
+     * false:不覆盖
      */
     FIELD_EXIST_OVERRIDE(Type.BOOLEAN, true,true),
 
@@ -83,9 +86,14 @@ public enum ExcelReadPolicy {
 
     /**
      * 使用setter方法赋值代替反射直接操作字段
-     * TODO 读取赋值
      */
-    READ_FIELD_USE_SETTER(Type.BOOLEAN, true,false);
+    READ_FIELD_USE_SETTER(Type.BOOLEAN, true,false),
+
+    /**
+     * 是否使用字典转换
+     */
+    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, false, false)
+    ;
 
 
     public enum Type{

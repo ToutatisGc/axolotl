@@ -8,6 +8,7 @@ import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.toutatis.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.toutatis.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.toutatis.xvoid.toolkit.log.LoggerToolkit;
+import cn.toutatis.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.Lists;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.slf4j.Logger;
@@ -72,12 +73,11 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         }
         writeContext.getHeaders().put(switchSheetIndex,headers);
         writeContext.setDatas(datas);
-        if (styleRender instanceof AbstractStyleRender){
-            AbstractStyleRender abstractStyleRender = (AbstractStyleRender) styleRender;
-            abstractStyleRender.setWriteConfig(writeConfig);
-            abstractStyleRender.setContext(writeContext);
-            abstractStyleRender.getComponentRender().setWriteConfig(writeConfig);
-            abstractStyleRender.getComponentRender().setContext(writeContext);
+        if (styleRender instanceof AbstractStyleRender innerStyleRender){
+            innerStyleRender.setWriteConfig(writeConfig);
+            innerStyleRender.setContext(writeContext);
+            innerStyleRender.getComponentRender().setConfig(writeConfig);
+            innerStyleRender.getComponentRender().setContext(writeContext);
         }
         if(writeContext.isFirstBatch(switchSheetIndex)){
             sheet = workbook.createSheet();
@@ -88,6 +88,10 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
             sheet = workbook.getSheetAt(switchSheetIndex);
         }
         if(datas != null){
+            if (Validator.objNotNull(datas)){
+                writeConfig.setMetaClass(datas.get(0).getClass());
+                writeConfig.autoProcessEntity2OpenDictPolicy();
+            }
             styleRender.renderData(sheet, datas);
         }
         return null;

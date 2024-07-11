@@ -43,10 +43,10 @@ public enum ExcelWritePolicy {
     TEMPLATE_SHIFT_WRITE_ROW(Type.BOOLEAN, true, true),
 
     /**
-     * 当某个占位符的参数名在写入数据的属性名中无法找到时，是否将占位符替换为空字符串，反之会保留该占位符
+     * 当某个占位符的参数名在写入数据的属性名中无法找到时，是否将占位符替换为config.getBlankValue()，反之会保留该占位符
      * 为没有指定的占位符填充默认值
      */
-    TEMPLATE_PLACEHOLDER_FILL_DEFAULT(Type.BOOLEAN, true, true),
+    TEMPLATE_PLACEHOLDER_FILL_DEFAULT(Type.BOOLEAN, true, false),
 
     /**
      * 当给占位符赋值为空时，是否只将占位符替换为空字符串，反之则将占位符所在的整个单元格的值都设为空
@@ -80,7 +80,7 @@ public enum ExcelWritePolicy {
     /**
      * 是否使用字典转换
      */
-    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, true, false)
+    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, false, false)
     ;
 
     /**
