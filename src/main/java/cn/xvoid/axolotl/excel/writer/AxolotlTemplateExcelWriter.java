@@ -8,7 +8,6 @@ import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.xvoid.axolotl.excel.writer.style.ComponentRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.*;
-import cn.xvoid.axolotl.excel.writer.support.base.*;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -17,6 +16,7 @@ import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
+import cn.xvoid.axolotl.excel.writer.support.base.*;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -41,8 +41,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 /**
  * 模板文档文件写入器
@@ -166,18 +164,17 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             if(dataMapping.containsKey(singleKey)){
                 // 已经写入过则跳过写入
                 if(alreadyUsedReferenceData.containsKey(placeholder)){
-                    debug(LOGGER, format("已跳过使用的占位符[%s]",placeholder));
+                    LoggerHelper.debug(LOGGER, LoggerHelper.format("已跳过使用的占位符[%s]",placeholder));
                     continue;
                 }
                 // 写入单元格值
-                Cell cell = ExcelToolkit.createOrCatchCell(sheet, cellAddress.getRowPosition(), cellAddress.getColumnPosition(), null);
+                Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
                 String stringCellValue = cell.getStringCellValue();
                 Object info = dataMapping.get(singleKey);
                 if(info != null){
-                    String humanReadablePosition = ExcelToolkit.getHumanReadablePosition(cellAddress.getRowPosition(), cellAddress.getColumnPosition());
+                    LoggerHelper.debug(LOGGER, LoggerHelper.format("设置模板占位符[%s]值[%s]",placeholder,info));
                     String replaceString = stringCellValue.replace(placeholder, info.toString());
                     cell.setCellValue(replaceString);
-                    debug(LOGGER, format("设置[%s]模板占位符[%s]值[%s]",humanReadablePosition,placeholder,info));
                 }else{
                     String defaultValue = cellAddress.getDefaultValue();
                     String newCellValue = null;
@@ -191,17 +188,17 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         }
                     }
                     if (newCellValue == null){
-                        debug(LOGGER, format("%s设置模板占位符[%s]为空值",gatherUnusedStage ? "[收尾阶段]":config.getBlankValue(),placeholder));
+                        LoggerHelper.debug(LOGGER, LoggerHelper.format("%s设置模板占位符[%s]为空值",gatherUnusedStage ? "[收尾阶段]":config.getBlankValue(),placeholder));
                         cell.setBlank();
                     }else{
-                        debug(LOGGER, format("%s设置模板占位符[%s]为[%s]值",gatherUnusedStage ? "[收尾阶段]":"", placeholder,isDefaultValue ? "默认":"空"));
+                        LoggerHelper.debug(LOGGER, LoggerHelper.format("%s设置模板占位符[%s]为[%s]值",gatherUnusedStage ? "[收尾阶段]":"", placeholder,isDefaultValue ? "默认":"空"));
                         cell.setCellValue(newCellValue);
                     }
                 }
                 cellAddress.setWrittenRow(cell.getRowIndex());
                 alreadyUsedReferenceData.put(placeholder,true);
             }else{
-                debug(LOGGER, format("未使用模板占位符[%s]",placeholder));
+                LoggerHelper.debug(LOGGER, LoggerHelper.format("未使用模板占位符[%s]",placeholder));
             }
         }
     }
@@ -331,7 +328,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                             }
                         }
                         if (writerGetter != null){
-                            debug(LOGGER, "[%s]模板重定向自定义Getter方法[%s]",key , writerGetter.value());
+                            LoggerHelper.debug(LOGGER, "[%s]模板重定向自定义Getter方法[%s]",key , writerGetter.value());
                             getterMethod = instanceClass.getMethod(writerGetter.value());
                             isDirect = true;
                         }
@@ -339,7 +336,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         String[] methodNameSplit = noSuchMethodException.getMessage().split("\\.");
                         String methodName = methodNameSplit[methodNameSplit.length - 1];
                         methodName = methodName.substring(0, methodName.length() - 2);
-                        error(LOGGER, "[%s]模板获取Getter方法[%s]失败",key , methodName);
+                        LoggerHelper.error(LOGGER, "[%s]模板获取Getter方法[%s]失败",key , methodName);
                         getterMethod = null;
                         fieldInfo.setExist(false);
                         fieldInfo.setName(methodName);
@@ -361,11 +358,11 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         }
                     }else{
                         if (ignoreException){
-                            error(LOGGER, "未找到字段[%s]的Getter方法,写入将跳过该字段", key);
+                            LoggerHelper.error(LOGGER, "未找到字段[%s]的Getter方法,写入将跳过该字段", key);
                             fieldInfo.setIgnore(true);
                             fieldInfo.setExist(false);
                         }else{
-                            throw new AxolotlWriteException(format("未找到字段[%s]的Getter方法", key));
+                            throw new AxolotlWriteException(LoggerHelper.format("未找到字段[%s]的Getter方法", key));
                         }
                     }
                     writeFieldNames.put(key,fieldInfo);
@@ -384,12 +381,12 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                 fieldInfo.setName(tempName);
                                 ignore = getterMethod.getAnnotation(AxolotlWriteIgnore.class);
                                 if (ignore != null){
-                                    debug(LOGGER, "Getter方法[%s]被忽略", tempName);
+                                    LoggerHelper.debug(LOGGER, "Getter方法[%s]被忽略", tempName);
                                     fieldInfo.setIgnore(true);
                                 }else{
                                     if (field != null){
                                         if (field.getAnnotation(AxolotlWriteIgnore.class) != null){
-                                            debug(LOGGER, "字段[%s]被忽略", tempName);
+                                            LoggerHelper.debug(LOGGER, "字段[%s]被忽略", tempName);
                                             fieldInfo.setIgnore(true);
                                         }
                                     }else{
@@ -397,14 +394,14 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                     }
                                 }
                             }else{
-                                debug(LOGGER, "Getter方法[%s]为私有,跳过使用", tempName);
+                                LoggerHelper.debug(LOGGER, "Getter方法[%s]为私有,跳过使用", tempName);
                             }
                         } catch (NoSuchMethodException ignored) {
                             fieldInfo.setExist(false);
                         }
                         if (getterMethod == null && field != null){
                             if (field.getAnnotation(AxolotlWriteIgnore.class) != null){
-                                debug(LOGGER, "字段[%s]被忽略,跳过使用", tempName);
+                                LoggerHelper.debug(LOGGER, "字段[%s]被忽略,跳过使用", tempName);
                                 fieldInfo.setIgnore(true);
                             }
                         }
@@ -413,7 +410,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                         if (field != null){
                             ignore = field.getAnnotation(AxolotlWriteIgnore.class);
                             if (ignore != null){
-                                debug(LOGGER, "字段[%s]被忽略,跳过使用", key);
+                                LoggerHelper.debug(LOGGER, "字段[%s]被忽略,跳过使用", key);
                                 continue;
                             }
                             writeFieldNames.put(key, fieldInfo);
@@ -495,7 +492,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         }
         // 存储非模板列
         if(!alreadyFill){
-            debug(LOGGER,"获取模板行[%s]个非模板列",nonTemplateCellAddressList.size());
+            LoggerHelper.debug(LOGGER,"获取模板行[%s]个非模板列",nonTemplateCellAddressList.size());
             context.getSheetNonTemplateCells().put(sheetIndex,writeFieldNamesList,nonTemplateCellAddressList);
         }
         return nonWrittenAddress;
@@ -569,7 +566,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                                         value = method.invoke(data);
                                     }catch (Exception exception){
                                         if (ignoreException){
-                                            error(LOGGER,"获取字段[%s]值失败,将赋予空值",fieldMappingKey);
+                                            LoggerHelper.error(LOGGER,"获取字段[%s]值失败,将赋予空值",fieldMappingKey);
                                             value = null;
                                         }else{throw exception;}
                                     }
@@ -712,11 +709,11 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 // 设置模板行行高
                 XSSFSheet sheet = this.getWorkbookSheet(sheetIndex);
                 short templateRowHeight = sheet.getRow(maxRowPosition).getHeight();
-                debug(LOGGER,"设置模板行[%s]行高为[%s]",maxRowPosition,templateRowHeight);
+                LoggerHelper.debug(LOGGER,"设置模板行[%s]行高为[%s]",maxRowPosition,templateRowHeight);
                 context.getLineHeightRecords().put(sheetIndex, designConditions.getWriteFieldNamesList(),templateRowHeight);
             }else{
                 context.getLineHeightRecords().put(sheetIndex, designConditions.getWriteFieldNamesList(), (short) -1);
-                debug(LOGGER,"未找到任意占位符,取消设置行高.");
+                LoggerHelper.debug(LOGGER,"未找到任意占位符,取消设置行高.");
             }
         }
         // 第一次写入需要跳过占位符那一行，所以移动需要少一行
@@ -777,7 +774,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             int circleReferenceDataSize = context.getCircleReferenceData().size();
             int calculateReferenceDataSize = context.getCalculateReferenceData().size();
             context.getResolvedSheetRecord().put(sheetIndex,true);
-            debug(LOGGER, format("%s工作表索引[%s]解析模板完成，共解析到[%s]个占位符,引用占位符[%s]个,列表占位符[%s]个,计算占位符[%s]个",
+            LoggerHelper.debug(LOGGER, LoggerHelper.format("%s工作表索引[%s]解析模板完成，共解析到[%s]个占位符,引用占位符[%s]个,列表占位符[%s]个,计算占位符[%s]个",
                     isFinal? "[收尾阶段]":"",
                     sheetIndex,
                     singleReferenceDataSize + circleReferenceDataSize + calculateReferenceDataSize,
@@ -786,7 +783,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     calculateReferenceDataSize
             ));
         }else{
-            debug(LOGGER, format("工作表[%s]已被解析过，跳过本次解析",sheetIndex));
+            LoggerHelper.debug(LOGGER, LoggerHelper.format("工作表[%s]已被解析过，跳过本次解析",sheetIndex));
         }
     }
 
@@ -827,7 +824,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             }
             CellRangeAddress cellMerged = ExcelToolkit.isCellMerged(getWorkbookSheet(sheetIndex), rowIndex, columnIndex);
             if (cellMerged != null){
-                LoggerHelper.debug(LOGGER, format("解析到占位符[%s]为合并单元格[%s]",cellAddress.getPlaceholder(),cellMerged.formatAsString()));
+                LoggerHelper.debug(LOGGER, LoggerHelper.format("解析到占位符[%s]为合并单元格[%s]",cellAddress.getPlaceholder(),cellMerged.formatAsString()));
                 cellAddress.setMergeRegion(cellMerged);
             }
             boolean isCirclePattern = pattern.equals(TemplatePlaceholderPattern.CIRCLE_REFERENCE_TEMPLATE_PATTERN);
@@ -900,7 +897,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             config.close();
         }else{
             String message = "输出流为空,请指定输出流";
-            debug(LOGGER,message);
+            LoggerHelper.debug(LOGGER,message);
             throw new AxolotlWriteException(message);
         }
     }

@@ -9,6 +9,7 @@ import cn.xvoid.axolotl.excel.reader.support.CellGetInfo;
 import cn.xvoid.axolotl.excel.reader.support.DataCastAdapter;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
+import cn.xvoid.common.standard.StringPool;
 import cn.xvoid.toolkit.constant.Regex;
 import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.log.LoggerToolkit;
@@ -128,7 +129,7 @@ public class DefaultDateTimeAdapter<NT> extends AbstractDataCastAdapter<NT> impl
      * @return 处理后的单元格数据
      */
     private Object checkTrimFeature2NewString(Map<ExcelReadPolicy, Object> excelPolicies, ReaderConfig<?> readerConfig, CastContext<?> context, Object cellValue){
-        if(context.getDataFormat().contains(" ")){
+        if(context.getDataFormat().contains(StringPool.SPACE)){
             //format存在空格，不进行去空格处理
             LoggerHelper.debug(LOGGER,LoggerHelper.format("日期格式化:[%s] 带有空格,不进行 [TRIM_CELL_VALUE] 特性处理",context.getDataFormat()));
             return cellValue;

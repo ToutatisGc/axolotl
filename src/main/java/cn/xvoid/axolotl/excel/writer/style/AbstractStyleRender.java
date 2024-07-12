@@ -40,6 +40,8 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
+
 /**
  * 样式渲染器抽象类
  * 继承此抽象类可以获取环境变量实现自定义样式渲染

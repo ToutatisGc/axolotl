@@ -10,8 +10,6 @@ import org.apache.commons.beanutils.BeanUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-import static cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER;
-import static cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING;
 import static cn.xvoid.axolotl.excel.writer.themes.configurable.AxolotlConfigurableTheme.DEFAULT_COLUMN_WIDTH;
 import static cn.xvoid.axolotl.excel.writer.themes.configurable.AxolotlConfigurableTheme.HEADER_ROW_HEIGHT;
 
@@ -162,8 +160,8 @@ public interface ConfigurableStyleConfig {
      */
     static Map<ExcelWritePolicy,CellPropertyHolder> loadCommonConfigFromDefault(CellPropertyHolder defaultCellPropHolder,ConfigurableStyleConfig config){
         Map<ExcelWritePolicy, CellPropertyHolder> cellPropHolderMap = new HashMap<>();
-        cellPropHolderMap.put(AUTO_INSERT_SERIAL_NUMBER,null);
-        cellPropHolderMap.put(AUTO_INSERT_TOTAL_IN_ENDING,null);
+        cellPropHolderMap.put(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER,null);
+        cellPropHolderMap.put(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,null);
 
         Map<ExcelWritePolicy, CellConfigProperty> configPropertyMap = new HashMap<>();
         config.commonStyleConfig(configPropertyMap);

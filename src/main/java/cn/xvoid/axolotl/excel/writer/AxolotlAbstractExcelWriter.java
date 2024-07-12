@@ -53,7 +53,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
         SXSSFWorkbook workbook;
         // 读取模板文件内容
         if (templateFile != null){
-            debug(LOGGER, format("正在使用模板文件[%s]作为写入模板",templateFile.getAbsolutePath()));
+            LoggerHelper.debug(LOGGER, LoggerHelper.format("正在使用模板文件[%s]作为写入模板",templateFile.getAbsolutePath()));
             TikaShell.preCheckFileNormalThrowException(templateFile);
             DetectResult detect = TikaShell.detect(templateFile, CommonMimeType.OOXML_EXCEL);
             if (!detect.isWantedMimeType()){
@@ -65,7 +65,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
                 workbook = new SXSSFWorkbook(XSSFWorkbookFactory.createWorkbook(opcPackage));
             }catch (IOException | InvalidFormatException e){
                 e.printStackTrace();
-                throw new AxolotlWriteException(format("模板文件[%s]读取失败",templateFile.getAbsolutePath()));
+                throw new AxolotlWriteException(LoggerHelper.format("模板文件[%s]读取失败",templateFile.getAbsolutePath()));
             }
         }else {
             workbook = new SXSSFWorkbook();
@@ -96,8 +96,6 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     @Override
     public void switchSheet(int sheetIndex) {
         LoggerHelper.debug(LOGGER,"切换到工作表[%s]",sheetIndex);
-//        ExcelToolkit.s
-        // TODO 创建工作表
         this.writeContext.setSwitchSheetIndex(sheetIndex);
     }
 
@@ -108,13 +106,13 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     protected void checkWriteConfig(CommonWriteConfig writeConfig){
         if(writeConfig == null){
             String message = "写入配置不能为空";
-            error(LOGGER,message);
+            LoggerHelper.error(LOGGER,message);
             throw new AxolotlWriteException(message);
         }
         OutputStream outputStream = writeConfig.getOutputStream();
         if(outputStream == null){
             String message = "输出流不能为空,请指定输出流";
-            error(LOGGER,message);
+            LoggerHelper.error(LOGGER,message);
             throw new AxolotlWriteException(message);
         }
     }

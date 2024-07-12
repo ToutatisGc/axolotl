@@ -5,7 +5,6 @@ import cn.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlAbstractExcelReader;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
-import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException.ExceptionType;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkitKt;
@@ -79,7 +78,7 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
     @Override
     public List<T> next() {
         if (!hasNext()){
-            throw new AxolotlExcelReadException(ExceptionType.READ_EXCEL_ERROR,"读取数据错误");
+            throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,"读取数据错误");
         }
         currentReadBatch++;
         LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,"读取数据行数:"+currentReadBatch*AxolotlDefaultReaderConfig.XVOID_DEFAULT_READ_EACH_BATCH_SIZE);

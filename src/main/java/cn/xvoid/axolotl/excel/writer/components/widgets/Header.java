@@ -3,7 +3,6 @@ package cn.xvoid.axolotl.excel.writer.components.widgets;
 import cn.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
 import cn.xvoid.toolkit.clazz.LambdaToolkit;
 import cn.xvoid.toolkit.clazz.XFunc;
-import com.google.common.collect.Lists;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.CellStyle;
 
@@ -75,13 +74,12 @@ public class Header {
 
     public Header(String name, Header... childs) {
         this.name = name;
-
-        this.childs = Lists.newArrayList(childs);
+        this.childs = List.of(childs);
     }
 
     public Header(String name, boolean participateInCalculate, Header... childs) {
         this.name = name;
-        this.childs = Lists.newArrayList(childs);
+        this.childs = List.of(childs);
         this.participateInCalculate = participateInCalculate;
     }
 
@@ -89,13 +87,13 @@ public class Header {
     public Header(String name, String fieldName, Header... childs) {
         this.name = name;
         this.fieldName = fieldName;
-        this.childs = Lists.newArrayList(childs);
+        this.childs = List.of(childs);
     }
 
     public Header(String name, String fieldName,boolean participateInCalculate, Header... childs) {
         this.name = name;
         this.fieldName = fieldName;
-        this.childs = Lists.newArrayList(childs);
+        this.childs = List.of(childs);
         this.participateInCalculate = participateInCalculate;
     }
 
@@ -115,7 +113,7 @@ public class Header {
     }
 
     public Header childs(Header... header) {
-        this.childs = Lists.newArrayList(header);
+        this.childs = List.of(header);
         return this;
     }
 

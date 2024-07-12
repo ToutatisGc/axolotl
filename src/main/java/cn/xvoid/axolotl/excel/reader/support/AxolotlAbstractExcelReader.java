@@ -4,6 +4,7 @@ import cn.xvoid.axolotl.Meta;
 import cn.xvoid.axolotl.excel.reader.ReadConfigBuilder;
 import cn.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.xvoid.axolotl.excel.reader.WorkBookContext;
+import cn.xvoid.axolotl.excel.reader.annotations.AxolotlReaderSetter;
 import cn.xvoid.axolotl.excel.reader.annotations.ColumnBind;
 import cn.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
@@ -11,18 +12,19 @@ import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastAdapter;
 import cn.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
+import cn.xvoid.axolotl.excel.writer.style.ComponentRender;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
-import cn.xvoid.axolotl.excel.reader.annotations.SpecifyPositionBind;
+import cn.xvoid.toolkit.clazz.ClassToolkit;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkitKt;
+import cn.xvoid.axolotl.excel.reader.annotations.SpecifyPositionBind;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.io.ByteStreams;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -318,11 +320,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
                 LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME, String.format("处理合并单元格[%s]",mergedRegion.formatAsString()));
                 for (int rowIndex = firstRow; rowIndex <= lastRow; rowIndex++) {
                     for (int columnIndex = firstColumn; columnIndex <= lastColumn; columnIndex++) {
-                        Row row = sheet.getRow(rowIndex);
-                        Cell cell =row.getCell(columnIndex);
-                        if (cell == null){
-                            cell = row.createCell(columnIndex, leftTopCell.getCellType());
-                        }
+                        Cell cell = ExcelToolkit.createOrCatchCell(sheet, rowIndex, columnIndex, null);
                         switch (leftTopCell.getCellType()){
                             case STRING:
                                 cell.setCellValue(leftTopCell.getStringCellValue());
@@ -403,7 +401,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
                             Cell cell = cellIterator.next();
                             // 应该没有人会用数字当表头吧...
                             if (cell != null && cell.getCellType() == CellType.STRING){
-                                String cellValue = cell.getStringCellValue();
+                                // FIX 20240701 移除两边空格
+                                String cellValue = cell.getStringCellValue().trim();
                                 if (headerKeys.containsKey(cellValue) && notAlreadyRecordKeys.containsKey(cellValue)){
                                     LoggerHelper.debug(LOGGER,LoggerHelper.format("查找到表头[%s]", cellValue));
                                     headerCache.put(cellValue, headerCache.row(cellValue).size()+1 , cell.getColumnIndex());
@@ -537,14 +536,46 @@ public abstract class AxolotlAbstractExcelReader<T> {
         Field field = ReflectToolkit.recursionGetField(instance.getClass(),mappingInfo.getFieldName());
         assert field != null;
         field.setAccessible(true);
-        // TODO 赋值调用SETTER特性
-        // TODO 字典转换
         Object o = field.get(instance);
+        boolean useSetter = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.READ_FIELD_USE_SETTER);
         if (o!= null){
             if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.FIELD_EXIST_OVERRIDE)){
-                field.set(instance, adaptiveValue);
+                this.assignOrInvokeSetter(instance, adaptiveValue, useSetter, field);
             }
         }else {
+            this.assignOrInvokeSetter(instance, adaptiveValue, useSetter, field);
+        }
+    }
+
+    /**
+     * 根据设定，将给定的值分配给对象的字段或者通过setter方法设置。
+     * 如果useSetter为true，并且字段上有AxolotlReaderSetter注解，则尝试通过注解指定的方法名调用相应的方法。
+     * 如果没有指定方法名或者useSetter为false，则直接通过反射设置字段值。
+     *
+     * @param instance 需要设置字段值的对象实例
+     * @param adaptiveValue 要分配或设置的值
+     * @param useSetter 指定是否使用setter方法进行设置
+     * @param field 目标字段
+     * @throws IllegalAccessException 当访问字段或调用方法时发生访问权限问题时抛出
+     */
+    private void assignOrInvokeSetter(Object instance, Object adaptiveValue, boolean useSetter, Field field) throws IllegalAccessException {
+        if (useSetter){
+            AxolotlReaderSetter readerSetter = field.getAnnotation(AxolotlReaderSetter.class);
+            String methodName = null;
+            if (readerSetter != null){
+                methodName =  readerSetter.value();
+            }
+            if (methodName != null){
+                ReflectToolkit.invokeMethod(methodName, instance, ClassToolkit.castObjectArray2ClassArray(List.of(adaptiveValue)), adaptiveValue);
+            }else{
+                ReflectToolkit.invokeFieldSetter(field, instance, adaptiveValue);
+            }
+        }else{
+            int modifiers = field.getModifiers();
+            if(Modifier.isStatic(modifiers)){
+                LoggerHelper.error(LOGGER,"静态字段[%s]不可赋值",field.getName());
+                return;
+            }
             field.set(instance, adaptiveValue);
         }
     }
@@ -736,21 +767,23 @@ public abstract class AxolotlAbstractExcelReader<T> {
         short endColumnRange = sheetColumnEffectiveRange[1] < 0 ? row.getLastCellNum() : (short) sheetColumnEffectiveRange[1];
         for (int i = sheetColumnEffectiveRange[0]; i < endColumnRange; i++) {
             Cell cell = row.getCell(i);
-            workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
-            int idx = cell.getColumnIndex() + 1;
-            String key = "CELL_" + idx;
-            instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null,readerConfig).getCellValue());
-            if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
-                instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                if (cell.getCellType() == CellType.NUMERIC){
-                    if (DateUtil.isCellDateFormatted(cell)){
-                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                        instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
-                    }else{
+            if (cell != null){
+                workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
+                int idx = cell.getColumnIndex() + 1;
+                String key = "CELL_" + idx;
+                instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null,readerConfig).getCellValue());
+                if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
+                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                    if (cell.getCellType() == CellType.NUMERIC){
+                        if (DateUtil.isCellDateFormatted(cell)){
+                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                            instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
+                        }else{
+                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                        }
+                    }else {
                         instance.put("CELL_TYPE_"+idx,cell.getCellType());
                     }
-                }else {
-                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
                 }
             }
         }
@@ -779,7 +812,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
      *
      * @param readerConfig 读取配置
      */
-    protected void preCheckAndFixReadConfig(ReaderConfig<?> readerConfig) {
+    public void preCheckAndFixReadConfig(ReaderConfig<?> readerConfig) {
         //检查部分
         if (readerConfig == null){
             String msg = "读取配置不能为空";

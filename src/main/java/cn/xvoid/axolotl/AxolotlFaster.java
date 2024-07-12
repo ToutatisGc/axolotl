@@ -187,7 +187,7 @@ public class AxolotlFaster {
      * @param templateNullValueWithTemplateFill  特性 ExcelWritePolicy.TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL  当占位符值为空时是否将整个单元格赋值为空
      * @param templateShiftWriteRow  特性 ExcelWritePolicy.TEMPLATE_SHIFT_WRITE_ROW  处理#{}占位符时，新增行是否创建，反之则直接使用现有行
      * @param templateNonTemplateCellFill  特性  ExcelWritePolicy.TEMPLATE_NON_TEMPLATE_CELL_FILL  处理#{}占位符时，与占位符同行的其他单元格数据是否也渲染到新增行上
-     * @param dict 字典值列表 <属性名,字典值参数>
+     * @param dict 字典值列表(属性名,字典值参数)
      * @return 写入结果
      */
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, boolean templateNullValueWithTemplateFill, boolean templateShiftWriteRow, boolean templateNonTemplateCellFill, Map<String,Object> dict){
@@ -277,7 +277,6 @@ public class AxolotlFaster {
      * @param fixMapping 引用字段
      * @param datas 列表数据
      * @param templateWriteConfig 模板写入配置
-     * @return
      */
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, TemplateWriteConfig templateWriteConfig){
         TemplateWriteConfig config = new TemplateWriteConfig();
@@ -585,7 +584,7 @@ public class AxolotlFaster {
      * @param autoInsertTotalInEnding 结尾添加合计
      * @param autoCatchColumnLength  自动列宽
      * @param autoInsertSerialNumber 第一行添加序号
-     * @param dict 字典值列表 <属性名,字典值参数>
+     * @param dict 字典值列表(属性名,字典值参数)
      */
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, String title, ExcelStyleRender styleRender, String sheetName, String fontName, boolean autoInsertTotalInEnding, boolean autoCatchColumnLength, boolean autoInsertSerialNumber, Map<String,Object> dict){
         AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
@@ -782,7 +781,6 @@ public class AxolotlFaster {
      * @param headers 表头
      * @param data 数据
      * @param autoWriteConfig 写入配置
-     * @return
      */
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, AutoWriteConfig autoWriteConfig){
         AutoWriteConfig config = new AutoWriteConfig();
@@ -802,7 +800,6 @@ public class AxolotlFaster {
     /**
      * 获取无泛型Excel读取器
      * @param excelFile excel文件
-     * @return
      */
     public static AxolotlExcelReader<?> getExcelReader(File excelFile){
         return Axolotls.getExcelReader(excelFile);
@@ -811,7 +808,6 @@ public class AxolotlFaster {
     /**
      * 获取无泛型Excel读取器
      * @param inputStream excel文件流
-     * @return
      */
     public static AxolotlExcelReader<?> getExcelReader(InputStream inputStream){
         return Axolotls.getExcelReader(inputStream);
@@ -822,7 +818,6 @@ public class AxolotlFaster {
      * @param reader 读取器
      * @param config 读取配置
      * @return 读取结果  List集合
-     * @param <T>
      */
     public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, ReaderConfig<T> config){
         if(reader == null){
@@ -843,11 +838,10 @@ public class AxolotlFaster {
      * @param startColumnIndex 读取范围：读取开始 列索引
      * @param endColumnIndex 读取范围：读取开始 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
-     * @param dict 字典值  Map<字段名,Map<字典名,字典值>>  或   Map<字段名,List<Map或实体类{key:字典名,value:字典值}>>
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  List集合
-     * @param <T>
      */
     public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
         if(reader == null){
@@ -1050,7 +1044,6 @@ public class AxolotlFaster {
      * @param reader 读取器
      * @param config 读取配置
      * @return 读取结果  java对象
-     * @param <T>
      */
     public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, ReaderConfig<T> config){
         if(reader == null){
@@ -1070,11 +1063,10 @@ public class AxolotlFaster {
      * @param startColumnIndex 读取范围：读取开始 列索引
      * @param endColumnIndex 读取范围：读取开始 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
-     * @param dict 字典值  Map<字段名,Map<字典名,字典值>>  或   Map<字段名,List<Map或实体类{key:字典名,value:字典值}>>
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  java对象
-     * @param <T>
      */
     public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
         if(reader == null){
@@ -1283,7 +1275,6 @@ public class AxolotlFaster {
      * @param reader Excel流形式读取器
      * @param config 读取配置
      * @return 读取结果 流形式的迭代器
-     * @param <T>
      */
     public static <T> AxolotlExcelStream<T> readSheetUseStream(AxolotlStreamExcelReader<?> reader, ReaderConfig<T> config){
         if(reader == null){
@@ -1303,11 +1294,10 @@ public class AxolotlFaster {
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
      * @param endColumnIndex 读取范围：读取开始 列索引
-     * @param dict 字典值  Map<字段名,Map<字典名,字典值>>  或   Map<字段名,List<Map或实体类{key:字典名,value:字典值}>>
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  流形式的迭代器
-     * @param <T>
      */
     public static <T> AxolotlExcelStream<T> readSheetUseStream(AxolotlStreamExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
         if(reader == null){

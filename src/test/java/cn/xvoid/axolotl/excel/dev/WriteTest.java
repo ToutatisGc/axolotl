@@ -2,23 +2,37 @@ package cn.xvoid.axolotl.excel.dev;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.xvoid.axolotl.AxolotlFaster;
 import cn.xvoid.axolotl.Axolotls;
 import cn.xvoid.axolotl.excel.entities.reader.DmsRegReceivables;
+import cn.xvoid.axolotl.excel.entities.reader.SunUser;
+import cn.xvoid.axolotl.excel.entities.writer.MpOrgDataIssueNew;
 import cn.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
 import cn.xvoid.axolotl.excel.writer.TemplateWriteConfig;
 import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
+import cn.xvoid.toolkit.clazz.ReflectToolkit;
+import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.file.FileToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +63,7 @@ public class WriteTest {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         commonWriteConfig.setOutputStream(fileOutputStream);
         AxolotlTemplateExcelWriter axolotlAutoExcelWriter = Axolotls.getTemplateExcelWriter(file, commonWriteConfig);
-        //Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
+        Map<String, String> map = Map.of("fix2", "测试内容2", "fix1", new SimpleDateFormat(Time.YMD_HORIZONTAL_FORMAT_REGEX).format(Time.getCurrentMillis()));
         ArrayList<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             JSONObject json = new JSONObject(true);
@@ -71,7 +85,7 @@ public class WriteTest {
             LIST.add(dmsRegReceivables);
         }
 
-        axolotlAutoExcelWriter.write(null, LIST);
+        axolotlAutoExcelWriter.write(map, LIST);
         axolotlAutoExcelWriter.close();
     }
 
@@ -101,9 +115,9 @@ public class WriteTest {
                 sch.put("salary", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP).multiply(new BigDecimal("1000")));
                 datas2.add(sch);
             }
-            axolotlAutoExcelWriter.write(null, datas2);
-//            Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
-//            axolotlAutoExcelWriter.write(map, null);
+            axolotlAutoExcelWriter.write(null, datas2);*/
+            /*Map<String, Object> map = Map.of("name", "Toutatis","nation","汉");
+            axolotlAutoExcelWriter.write(map, null);
             ArrayList<JSONObject> datas = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
                 JSONObject sch = new JSONObject();
@@ -112,16 +126,16 @@ public class WriteTest {
                 sch.put("graduate", true);
                 datas.add(sch);
             }
-//            axolotlAutoExcelWriter.write(Map.of("age",50), datas);
-//            datas.clear();
-//            for (int i = 0; i < 5; i++) {
-//                JSONObject sch = new JSONObject();
-//                sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
-//                sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
-//                sch.put("graduate", true);
-//                datas.add(sch);
-//            }
-            axolotlAutoExcelWriter.write(null, datas);
+            axolotlAutoExcelWriter.write(Map.of("age",50), datas);
+            datas.clear();
+            for (int i = 0; i < 5; i++) {
+                JSONObject sch = new JSONObject();
+                sch.put("schoolName","北京-"+RandomStringUtils.randomAlphabetic(16));
+                sch.put("schoolYears", RandomUtil.randomBigDecimal(BigDecimal.ZERO, BigDecimal.TEN).setScale(0, RoundingMode.HALF_UP));
+                sch.put("graduate", true);
+                datas.add(sch);
+            }
+            axolotlAutoExcelWriter.write(null, datas);*/
         }
     }
     @Test
@@ -133,7 +147,7 @@ public class WriteTest {
 // 创建写入器
         try (AxolotlTemplateExcelWriter axolotlAutoExcelWriter = new AxolotlTemplateExcelWriter(file, commonWriteConfig)) {
             List list = new ArrayList();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 100; i++) {
                 SunUser sunUser = new SunUser();
                 for (Field declaredField : SunUser.class.getDeclaredFields()) {
                     ReflectToolkit.setObjectField(sunUser, declaredField, "11"+i);
@@ -219,8 +233,32 @@ public class WriteTest {
             axolotlAutoExcelWriter.write(map,list);
         }
 
-
     }
-             */
 
-}}}
+    @Test
+    public void test11() throws FileNotFoundException {
+        File tem = FileToolkit.getResourceFileAsFile("workbook/write/dataScheduleOther.xlsx");
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
+        List list = new ArrayList();
+
+        for (int i = 0; i < 20; i++) {
+            MpOrgDataIssueNew mpOrgDataIssueNew = new MpOrgDataIssueNew();
+            list.add(mpOrgDataIssueNew);
+        }
+        Map<String, String> map = new HashMap<>();
+        map.put("fileName","测试文件名");
+        map.put("bankName","山西省");
+//            map.put("dataIssue","2024-02");
+        map.put("operationTime", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+       // AxolotlFaster.writeToTemplate(tem,fileOutputStream,map,list);
+        Map<String, Object> dict = new HashMap<>();
+        dict.put("regionStatus",Map.of("ST_001","正常"));
+        HashMap<String, Object> dict1 = new HashMap<>();
+        dict1.put("regionStatus",Map.of("ST_001","正常1"));
+        AxolotlFaster.templateWriteToExcelMultiSheet(tem, fileOutputStream,
+                AxolotlFaster.buildTemplateWriteSheetInfo(0,map,list,true,true,dict),
+                AxolotlFaster.buildTemplateWriteSheetInfo(0,map,list,true,true,dict1),
+                AxolotlFaster.buildTemplateWriteSheetInfo(1,map,list,true,true,dict)
+                );
+    }
+}

@@ -3,7 +3,6 @@ package cn.xvoid.axolotl.excel.reader;
 import cn.xvoid.axolotl.common.AxolotlCommonConfig;
 import cn.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.xvoid.axolotl.excel.reader.annotations.*;
-import cn.xvoid.axolotl.excel.reader.annotations.*;
 import cn.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
@@ -13,6 +12,7 @@ import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Regex;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
+import cn.xvoid.axolotl.excel.reader.annotations.*;
 import lombok.*;
 import org.slf4j.Logger;
 
@@ -21,8 +21,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy.*;
 
 /**
  * 读取配置
@@ -145,7 +143,7 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
      */
     private Map<ExcelReadPolicy, Object> defaultReadPolicy() {
         Map<ExcelReadPolicy, Object> defaultReadPolicies = new HashMap<>();
-        for (ExcelReadPolicy policy : values()) {
+        for (ExcelReadPolicy policy : ExcelReadPolicy.values()) {
             if (policy.isDefaultPolicy()){
                 defaultReadPolicies.put(policy,policy.getValue());
             }
@@ -199,11 +197,11 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
         }
         List<Field> allFields = ReflectToolkit.getAllFields(castClass, true);
         Map<ExcelReadPolicy, Object> policyMap = getRowReadPolicyMap();
-        if (!policyMap.containsKey(SIMPLE_USE_DICT_CODE_TRANSFER)){
+        if (!policyMap.containsKey(ExcelReadPolicy.SIMPLE_USE_DICT_CODE_TRANSFER)){
             for (Field field : allFields) {
                 if (field.getAnnotation(AxolotlDictMapping.class) != null){
                     LoggerHelper.info(LOGGER,"实体发现字典属性，字典映射策略未开启，已自动开启.");
-                    this.setBooleanReadPolicy(SIMPLE_USE_DICT_CODE_TRANSFER,true);
+                    this.setBooleanReadPolicy(ExcelReadPolicy.SIMPLE_USE_DICT_CODE_TRANSFER,true);
                     break;
                 }
             }
@@ -219,7 +217,7 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
         List<Field> declaredFields = ReflectToolkit.getAllFields(castClass, true);
         List<EntityCellMappingInfo<?>> indexPositionMappingInfos = new ArrayList<>();
         List<EntityCellMappingInfo<?>> positionMappingInfos = new ArrayList<>();
-        boolean preciseLocalization = getReadPolicyAsBoolean(DATA_BIND_PRECISE_LOCALIZATION);
+        boolean preciseLocalization = getReadPolicyAsBoolean(ExcelReadPolicy.DATA_BIND_PRECISE_LOCALIZATION);
         AtomicInteger idx = new AtomicInteger(-1);
         for (Field declaredField : declaredFields) {
             idx.getAndIncrement();
@@ -361,7 +359,7 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
         if(castClass!=null){
             try {
                 if (castClass == Map.class){
-                    if (getReadPolicyAsBoolean(SORTED_READ_SHEET_DATA)){
+                    if (getReadPolicyAsBoolean(ExcelReadPolicy.SORTED_READ_SHEET_DATA)){
                         return (T) new LinkedHashMap<String,Object>();
                     }else{
                         return (T) new HashMap<String, Object>();

@@ -10,11 +10,11 @@ import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.xvoid.axolotl.excel.writer.support.base.WriteContext;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.common.standard.StringPool;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
+import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,8 +26,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.*;
-
-import static cn.xvoid.axolotl.common.annotations.DictMappingPolicy.*;
 
 /**
  * 通用组件渲染器
@@ -79,8 +77,7 @@ public class ComponentRender {
         List<String> options = selectBox.getOptions();
         int switchSheetIndex = context.getSwitchSheetIndex();
         Sheet sheet;
-        if(context instanceof AutoWriteContext){
-            AutoWriteContext autoWriteContext = (AutoWriteContext)context;
+        if(context instanceof AutoWriteContext autoWriteContext){
             sheet = autoWriteContext.getWorkbook().getSheetAt(switchSheetIndex);
         }else{
             throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
@@ -138,8 +135,7 @@ public class ComponentRender {
         String value = fieldInfo.getValue().toString();
         if (getCommonWriteConfig().getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
             Map<Integer, BigDecimal> endingTotalMapping;
-            if (context instanceof AutoWriteContext){
-                AutoWriteContext autoWriteContext = (AutoWriteContext)context;
+            if (context instanceof AutoWriteContext autoWriteContext){
                 endingTotalMapping = autoWriteContext.getEndingTotalMapping().row(context.getSwitchSheetIndex());
             }else {
                 throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
@@ -240,7 +236,7 @@ public class ComponentRender {
                 if(fieldName != null){
                     Map<String, Object> instanceMap = (Map<String, Object>) dataInstance;
                     //获取字典策略
-                    String policyKey = String.format(CommonWriteConfig.DICT_MAP_TYPE_POLICY_PREFIX, fieldName);
+                    String policyKey = CommonWriteConfig.DICT_MAP_TYPE_POLICY_PREFIX.formatted(fieldName);
                     if (instanceMap.containsKey(policyKey)){
                         Object fieldPolicy = instanceMap.get(policyKey);
                         if (fieldPolicy instanceof DictMappingPolicy){
@@ -258,7 +254,7 @@ public class ComponentRender {
                             }
                         }
                     }
-                    String defaultValueKey = String.format(CommonWriteConfig.DICT_MAP_TYPE_DEFAULT_PREFIX, fieldName);
+                    String defaultValueKey = CommonWriteConfig.DICT_MAP_TYPE_DEFAULT_PREFIX.formatted(fieldName);
                     if (instanceMap.containsKey(defaultValueKey)){
                         Object defaultValueObject =  instanceMap.get(defaultValueKey);
                         if (defaultValueObject != null){
@@ -319,8 +315,8 @@ public class ComponentRender {
             }
             // 统一策略阶段空值使用默认策略
             if (fieldDictMappingPolicy == null){
-                LoggerHelper.debug(LOGGER, "未获取到字典策略，字段[%s]使用默认策略[%s]",fieldName, KEEP_ORIGIN);
-                fieldDictMappingPolicy = KEEP_ORIGIN;
+                LoggerHelper.debug(LOGGER, "未获取到字典策略，字段[%s]使用默认策略[%s]",fieldName, DictMappingPolicy.KEEP_ORIGIN);
+                fieldDictMappingPolicy = DictMappingPolicy.KEEP_ORIGIN;
                 dictMappingExecutor.isUsage = true;
             }else{
                 LoggerHelper.debug(LOGGER, "字段[%s]使用字典策略[%s]",fieldName, fieldDictMappingPolicy);
@@ -339,24 +335,13 @@ public class ComponentRender {
     }
 
     private String adaptive(String value, DictMappingPolicy fieldDictMappingPolicy, String fieldDictMappingDefaultValue){
-        String result;
-        switch (fieldDictMappingPolicy) {
-            case KEEP_ORIGIN:
-                result = value;
-                break;
-            case USE_DEFAULT:
-                result = fieldDictMappingDefaultValue;
-                break;
-            case NULL_VALUE:
-                result = null;
-                break;
-            default:
-                return null;
-        }
-// 使用结果
-        return result;
+        return switch (fieldDictMappingPolicy) {
+            case KEEP_ORIGIN -> value;
+            case USE_DEFAULT -> fieldDictMappingDefaultValue;
+            case NULL_VALUE -> null;
+        };
     }
-
+    
     private CommonWriteConfig getCommonWriteConfig(){
         return (CommonWriteConfig) config;
     }
