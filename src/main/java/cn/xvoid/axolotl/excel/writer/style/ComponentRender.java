@@ -77,7 +77,8 @@ public class ComponentRender {
         List<String> options = selectBox.getOptions();
         int switchSheetIndex = context.getSwitchSheetIndex();
         Sheet sheet;
-        if(context instanceof AutoWriteContext autoWriteContext){
+        if(context instanceof AutoWriteContext){
+            AutoWriteContext autoWriteContext = (AutoWriteContext) context;
             sheet = autoWriteContext.getWorkbook().getSheetAt(switchSheetIndex);
         }else{
             throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
@@ -135,7 +136,8 @@ public class ComponentRender {
         String value = fieldInfo.getValue().toString();
         if (getCommonWriteConfig().getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
             Map<Integer, BigDecimal> endingTotalMapping;
-            if (context instanceof AutoWriteContext autoWriteContext){
+            if (context instanceof AutoWriteContext){
+                AutoWriteContext autoWriteContext = (AutoWriteContext) context;
                 endingTotalMapping = autoWriteContext.getEndingTotalMapping().row(context.getSwitchSheetIndex());
             }else {
                 throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
@@ -236,7 +238,7 @@ public class ComponentRender {
                 if(fieldName != null){
                     Map<String, Object> instanceMap = (Map<String, Object>) dataInstance;
                     //获取字典策略
-                    String policyKey = CommonWriteConfig.DICT_MAP_TYPE_POLICY_PREFIX.formatted(fieldName);
+                    String policyKey = String.format(CommonWriteConfig.DICT_MAP_TYPE_POLICY_PREFIX,fieldName);
                     if (instanceMap.containsKey(policyKey)){
                         Object fieldPolicy = instanceMap.get(policyKey);
                         if (fieldPolicy instanceof DictMappingPolicy){
@@ -254,7 +256,7 @@ public class ComponentRender {
                             }
                         }
                     }
-                    String defaultValueKey = CommonWriteConfig.DICT_MAP_TYPE_DEFAULT_PREFIX.formatted(fieldName);
+                    String defaultValueKey = String.format(CommonWriteConfig.DICT_MAP_TYPE_DEFAULT_PREFIX,fieldName);
                     if (instanceMap.containsKey(defaultValueKey)){
                         Object defaultValueObject =  instanceMap.get(defaultValueKey);
                         if (defaultValueObject != null){
