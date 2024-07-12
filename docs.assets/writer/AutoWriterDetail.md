@@ -10,7 +10,7 @@ Author: Toutais_Gc zhangzk
 
 ## Part.2 标准主题配置
 
-​	主题样式是通过实现`cn.toutatis.xvoid.axolotl.excel.writer.style.ExcelStyleRender`接口定制。使用此接口可完全按照开发者需求定制样式。
+​	主题样式是通过实现`cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender`接口定制。使用此接口可完全按照开发者需求定制样式。
 
 接口分为几个生命周期，在不同的生命周期下操作不同的数据和样式：
 
