@@ -24,6 +24,7 @@ import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkitKt;
 import cn.xvoid.axolotl.excel.reader.annotations.SpecifyPositionBind;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import lombok.Setter;
@@ -567,7 +568,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
                 methodName =  readerSetter.value();
             }
             if (methodName != null){
-                ReflectToolkit.invokeMethod(methodName, instance, ClassToolkit.castObjectArray2ClassArray(List.of(adaptiveValue)), adaptiveValue);
+                ReflectToolkit.invokeMethod(methodName, instance, ClassToolkit.castObjectArray2ClassArray(Lists.newArrayList(adaptiveValue)), adaptiveValue);
             }else{
                 ReflectToolkit.invokeFieldSetter(field, instance, adaptiveValue);
             }

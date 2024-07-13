@@ -120,9 +120,9 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             LoggerHelper.debug(LOGGER, "使用自定义字体：%s",fontName);
             setGlobalFontName(fontName);
         }else{
-            setGlobalFontName(Objects.requireNonNullElse(themeFont, StyleHelper.STANDARD_FONT_NAME));
+            setGlobalFontName(themeFont != null ? themeFont : StyleHelper.STANDARD_FONT_NAME);
         }
-        this.setThemeColor(Objects.requireNonNullElse(themeColor, StyleHelper.STANDARD_THEME_COLOR));
+        this.setThemeColor(themeColor != null ? themeColor : StyleHelper.STANDARD_THEME_COLOR);
     }
 
     @Override
