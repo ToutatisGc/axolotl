@@ -13,7 +13,7 @@ import java.util.List;
  * 流式Sheet读取迭代器
  * @param <T> 转换实体泛型
  */
-public class AxolotlExcelStream<T> implements Iterator<Object> {
+public class AxolotlExcelStream<T> implements Iterator<T> {
 
     /**
      * 行迭代器
@@ -37,24 +37,34 @@ public class AxolotlExcelStream<T> implements Iterator<Object> {
     }
 
     /**
+     * 迭代器方式获取数据<p>
      * 是否有下一行<p>
-     * 该方法无法直接获取到正确的读取数据，请使用 {@link AxolotlExcelStream#readDataBatch(int, ReadBatchTask<T>) }来获取流数据
+     * 该方法用于获取全部数据，起始行、结束行、初始行偏移量等读取范围配置皆不生效 <p>
+     * 若要使 起始行、结束行、初始行偏移量 等范围配置生效，请使用 {@link AxolotlExcelStream#readDataBatch(int, ReadBatchTask<T>) }来获取数据
      * @return 是否有下一行
      */
     @Override
-    @Deprecated
     public boolean hasNext() {
         return rowIterator.hasNext();
     }
 
     /**
+     * 迭代器方式获取数据<p>
      * 获取下一行并转换为实体<p>
-     * 该方法无法直接获取到正确的读取数据，请使用 {@link AxolotlExcelStream#readDataBatch(int, ReadBatchTask<T>) }来获取流数据
+     * 该方法用于获取全部数据，起始行、结束行、初始行偏移量等读取范围配置皆不生效 <p>
+     * 若要使 起始行、结束行、初始行偏移量 等范围配置生效，请使用 {@link AxolotlExcelStream#readDataBatch(int, ReadBatchTask<T>) }来获取数据
      * @return 转换实体
      */
     @Override
-    @Deprecated
-    public Object next() {
+    public T next() {
+        return reader.castRow2Instance(rowIterator.next(), readerConfig);
+    }
+
+    /**
+     * 按行获取数据，使用范围配置进行数据过滤
+     * @return 一行数据
+     */
+    private Object nextObject() {
         Row next = rowIterator.next();
         int startIndex = readerConfig.getStartIndex();
         int endIndex = readerConfig.getEndIndex();
@@ -74,15 +84,6 @@ public class AxolotlExcelStream<T> implements Iterator<Object> {
         return reader.castRow2Instance(next, readerConfig);
     }
 
-    /*@SuppressWarnings("unchecked")
-    public T nextObject(){
-        Object next = next();
-        if (next instanceof SpecifyRow){
-            return null;
-        }
-        return (T) next;
-    }
-*/
 
     /**
      * 因超出读取范围被遗弃的行
@@ -93,7 +94,8 @@ public class AxolotlExcelStream<T> implements Iterator<Object> {
 
 
     /**
-     * 分批次读取流中的数据
+     * 分批次读取流中的数据 <p>
+     * 用此方法获取数据时，起始行、结束行、初始行偏移量 等范围配置生效
      * @param batchSize 每批数据的数量
      * @param task 读取任务  每批数据读取结束时都会执行任务一次
      */
@@ -104,7 +106,7 @@ public class AxolotlExcelStream<T> implements Iterator<Object> {
         List<T> data = new ArrayList<>();
         int idx = 0;
         while (this.hasNext()){
-            Object next = this.next();
+            Object next = this.nextObject();
             if (next instanceof SpecifyRow){
                 continue;
             }
