@@ -55,6 +55,14 @@ public class AutoWriteConfig extends CommonWriteConfig {
     private String fontName;
 
     /**
+     * 自动列宽内边距,
+     * 用于配置自动列宽后单元格两端到文字的距离
+     * 在启用 ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH (自动列宽)特性 时设置才能生效,
+     * 默认为 1.35
+     */
+    private double autoFitPadding = 1.35;
+
+    /**
      * 样式渲染器
      */
     private ExcelStyleRender styleRender = ExcelWriteThemes.$DEFAULT.getRender();

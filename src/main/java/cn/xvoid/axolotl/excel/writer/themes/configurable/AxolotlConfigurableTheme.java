@@ -396,10 +396,14 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
             LoggerHelper.debug(LOGGER,"开始自动计算列宽");
+            double autoFitPadding = 1.35;
+            if(writeConfig.getAutoFitPadding() >= 0){
+                autoFitPadding = writeConfig.getAutoFitPadding();
+            }
             for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
                 sheet.trackAllColumnsForAutoSizing();
                 sheet.autoSizeColumn(columnIdx,true);
-                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.35));
+                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * autoFitPadding));
             }
         }
         Map<Integer, Integer> specialRowHeightMapping = writeConfig.getSpecialRowHeightMapping(sheetIndex);

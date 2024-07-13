@@ -20,7 +20,7 @@ public enum ExcelWritePolicy {
     AUTO_INSERT_SERIAL_NUMBER(Type.BOOLEAN, true, false),
 
     /**
-     * 默认填充单元格为白色
+     * 默认创建26列空白单元格填充整个屏幕
      */
     AUTO_FILL_DEFAULT_CELL_WHITE(Type.BOOLEAN, true, true),
 
