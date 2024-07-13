@@ -79,6 +79,7 @@ public class AutoWriteTest {
     public void testAuto2() throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream("D:\\" + IdUtil.randomUUID() + ".xlsx");
         AutoWriteConfig commonWriteConfig = new AutoWriteConfig();
+        commonWriteConfig.setAutoColumnWidthRatio(1);
         commonWriteConfig.setThemeStyleRender(ExcelWriteThemes.ADMINISTRATION_RED);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING,true);
         commonWriteConfig.setWritePolicy(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH,true);

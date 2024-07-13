@@ -41,7 +41,6 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
-import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 /**
  * 样式渲染器抽象类
@@ -118,12 +117,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public void checkedAndUseCustomTheme(String themeFont,AxolotlColor themeColor){
         String fontName = writeConfig.getFontName();
         if (fontName != null){
-            debug(LOGGER, "使用自定义字体：%s",fontName);
+            LoggerHelper.debug(LOGGER, "使用自定义字体：%s",fontName);
             setGlobalFontName(fontName);
         }else{
-            setGlobalFontName(themeFont != null ? themeFont : StyleHelper.STANDARD_FONT_NAME);
+            setGlobalFontName(Objects.requireNonNullElse(themeFont, StyleHelper.STANDARD_FONT_NAME));
         }
-        this.setThemeColor(themeColor != null ? themeColor : StyleHelper.STANDARD_THEME_COLOR);
+        this.setThemeColor(Objects.requireNonNullElse(themeColor, StyleHelper.STANDARD_THEME_COLOR));
     }
 
     @Override
@@ -134,17 +133,17 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             String sheetName = writeConfig.getSheetName();
             if(Validator.strNotBlank(sheetName)){
                 int sheetIndex = context.getSwitchSheetIndex();
-                info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
+                LoggerHelper.info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
                 context.getWorkbook().setSheetName(sheetIndex,sheetName);
             }else {
-                debug(LOGGER,"未设置工作表名称");
+                LoggerHelper.debug(LOGGER,"未设置工作表名称");
             }
             boolean fillWhite = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_FILL_DEFAULT_CELL_WHITE);
             if (fillWhite){
                 fillWhiteCell(sheet, globalFontName);
             }
             if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
-                debug(LOGGER,"开启自动获取列宽");
+                LoggerHelper.debug(LOGGER,"开启自动获取列宽");
                 sheet.trackAllColumnsForAutoSizing();
             }
         }else {
@@ -180,7 +179,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public AxolotlWriteResult createTitleRow(SXSSFSheet sheet){
         String title = writeConfig.getTitle();
         if (Validator.strNotBlank(title)){
-            debug(LOGGER,"设置工作表标题:[%s]",title);
+            LoggerHelper.debug(LOGGER,"设置工作表标题:[%s]",title);
             int switchSheetIndex = context.getSwitchSheetIndex();
             Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
             int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
@@ -192,7 +191,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             return new AxolotlWriteResult(true, LoggerHelper.format("设置工作表标题:[%s]",title));
         }else{
             String message = "未设置工作表标题";
-            debug(LOGGER,message);
+            LoggerHelper.debug(LOGGER,message);
             return new AxolotlWriteResult(false, message);
         }
     }
@@ -204,7 +203,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      */
     public void mergeTitleRegion(SXSSFSheet sheet,int titleColumnCount,CellStyle titleStyle){
         if (titleColumnCount > 1){
-            debug(LOGGER,"合并标题栏单元格,共[%s]列",titleColumnCount);
+            LoggerHelper.debug(LOGGER,"合并标题栏单元格,共[%s]列",titleColumnCount);
             CellRangeAddress cellAddresses = new CellRangeAddress(START_POSITION, START_POSITION, START_POSITION, titleColumnCount-1);
             StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleStyle);
             sheet.addMergedRegion(cellAddresses);
@@ -229,18 +228,18 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             List<Header> cacheHeaders;
             if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                 cacheHeaders = new ArrayList<>();
-                cacheHeaders.add(new Header("序号"));
+                cacheHeaders.add(new cn.xvoid.axolotl.excel.writer.components.widgets.Header("序号"));
                 cacheHeaders.addAll(headers);
             }else{
                 cacheHeaders = headers;
             }
             context.getAlreadyWriteRow().put(switchSheetIndex,++alreadyWriteRow);
             headerMaxDepth = ExcelToolkit.getMaxDepth(headers, 0);
-            debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
+            LoggerHelper.debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
             int sheetIndex = context.getSwitchSheetIndex();
             Map<String, Integer> headerCache = context.getHeaderColumnIndexMapping().row(sheetIndex);
             //根节点渲染
-            for (Header header : cacheHeaders) {
+            for (cn.xvoid.axolotl.excel.writer.components.widgets.Header header : cacheHeaders) {
                 CellStyle usedCellStyle = headerDefaultCellStyle;
                 usedCellStyle = getCellStyle(header, usedCellStyle);
                 Row row = ExcelToolkit.createOrCatchRow(sheet, alreadyWriteRow);
@@ -251,7 +250,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 cell.setCellValue(title);
                 int orlopCellNumber = header.countOrlopCellNumber();
                 context.getAlreadyWrittenColumns().put(switchSheetIndex,context.getAlreadyWrittenColumns().getOrDefault(switchSheetIndex,0)+orlopCellNumber);
-                debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title, alreadyWriteRow,headerColumnCount,orlopCellNumber);
+                LoggerHelper.debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title, alreadyWriteRow,headerColumnCount,orlopCellNumber);
                 // 有子节点说明需要向下迭代并合并
                 CellRangeAddress cellAddresses;
                 if (header.getChilds()!=null && !header.getChilds().isEmpty()){
@@ -270,7 +269,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
 
                     String fieldName = header.getFieldName();
                     if (fieldName != null){
-                        debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,headerColumnCount);
+                        LoggerHelper.debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,headerColumnCount);
                         headerCache.put(fieldName,headerColumnCount);
                     }
                     if (!writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
@@ -278,13 +277,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                         if (columnWidth < 0){
                             columnWidth = StyleHelper.getPresetCellLength(title);
                         }
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),columnWidth);
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),columnWidth);
                         sheet.setColumnWidth(headerColumnCount, columnWidth);
                     }else{
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),"AUTO");
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),"AUTO");
                     }
                     if (header.isParticipateInCalculate()){
-                        debug(LOGGER,"列[%s]表头[%s]参与计算",headerColumnCount,header.getName());
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]参与计算",headerColumnCount,header.getName());
                         writeConfig.addCalculateColumnIndex(sheetIndex,headerColumnCount);
                     }
                 }
@@ -296,7 +295,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
         }else{
             headerMaxDepth = 0;
-            debug(LOGGER,"未设置表头");
+            LoggerHelper.debug(LOGGER,"未设置表头");
         }
         context.getHeaderRowCount().put(switchSheetIndex,headerMaxDepth);
         alreadyWriteRow+=(headerMaxDepth-1);
@@ -312,7 +311,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param usedCellStyle 使用样式
      * @return 表头样式
      */
-    public CellStyle getCellStyle(Header header, CellStyle usedCellStyle) {
+    public CellStyle getCellStyle(cn.xvoid.axolotl.excel.writer.components.widgets.Header header, CellStyle usedCellStyle) {
         if (header.getCustomCellStyle() != null){
             return header.getCustomCellStyle();
         }else{
@@ -478,10 +477,10 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                         if (columnWidth == -1){
                             columnWidth = StyleHelper.getPresetCellLength(header.getName());
                         }
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),columnWidth);
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),columnWidth);
                         sheet.setColumnWidth(alreadyWriteColumn, columnWidth);
                     }else{
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),"AUTO");
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),"AUTO");
                     }
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, usedCellStyle);
@@ -498,11 +497,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }else{
                     String fieldName = header.getFieldName();
                     if (fieldName != null){
-                        debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,alreadyWriteColumn);
+                        LoggerHelper.debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,alreadyWriteColumn);
                         headerCache.put(fieldName,alreadyWriteColumn);
                     }
                     if (header.isParticipateInCalculate()){
-                        debug(LOGGER,"列[%s]表头[%s]参与计算",alreadyWriteColumn,header.getName());
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]参与计算",alreadyWriteColumn,header.getName());
                         writeConfig.addCalculateColumnIndex(sheetIndex,alreadyWriteColumn);
                     }
                 }
@@ -607,7 +606,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(fieldName),null);
                 }else {
                     if (!alreadyNotice){
-                        warn(LOGGER,"未映射字段[%s]请在表头Header中映射字段!",fieldName);
+                        LoggerHelper.warn(LOGGER,"未映射字段[%s]请在表头Header中映射字段!",fieldName);
                         alreadyNotice = true;
                     }
                     continue;
@@ -681,16 +680,16 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                         AxolotlWriterGetter axolotlWriterGetter = tmpMethod.getAnnotation(AxolotlWriterGetter.class);
                         if (axolotlWriterGetter != null && axolotlWriterGetter.value() != null){
                             try {
-                                debug(LOGGER,"Getter方法[%s]将被重定向到[%s]",tmpMethod.getName(),axolotlWriterGetter.value());
+                                LoggerHelper.debug(LOGGER,"Getter方法[%s]将被重定向到[%s]",tmpMethod.getName(),axolotlWriterGetter.value());
                                 tmpMethod = dataClass.getMethod(axolotlWriterGetter.value());
                                 if (!Modifier.isPublic(getterMethod.getModifiers())){
-                                    String message = format("重定向Getter方法[%s]失败,方法[%s]为私有方法", tmpMethod.getName(), axolotlWriterGetter.value());
-                                    error(LOGGER,message);
+                                    String message = LoggerHelper.format("重定向Getter方法[%s]失败,方法[%s]为私有方法", tmpMethod.getName(), axolotlWriterGetter.value());
+                                    LoggerHelper.error(LOGGER,message);
                                     throw new AxolotlWriteException(message);
                                 }
                             } catch (NoSuchMethodException e) {
-                                String message = format("Getter方法[%s]重定向失败,方法不存在", tmpMethod.getName());
-                                error(LOGGER,message);
+                                String message = LoggerHelper.format("Getter方法[%s]重定向失败,方法不存在", tmpMethod.getName());
+                                LoggerHelper.error(LOGGER,message);
                                 throw new AxolotlWriteException(message);
                             }
                         }
@@ -711,17 +710,17 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                             } catch (IllegalAccessException | InvocationTargetException e) {
                                 e.printStackTrace();
                                 if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_EXCEPTION_RETURN_RESULT)){
-                                    LoggerHelper.error(LOGGER,format("[%s]方法调用失败,将赋予null值",methodName));
+                                    LoggerHelper.error(LOGGER, LoggerHelper.format("[%s]方法调用失败,将赋予null值",methodName));
                                 }else{
                                     throw new AxolotlWriteException(e.getMessage());
                                 }
                             }
                             dataMap.put(fieldName,invokeValue);
                         }else{
-                            LoggerHelper.debug(LOGGER,format("方法[%s]参数数量大于0将跳过",getterMethod.getName()));
+                            LoggerHelper.debug(LOGGER, LoggerHelper.format("方法[%s]参数数量大于0将跳过",getterMethod.getName()));
                         }
                     }else{
-                        LoggerHelper.debug(LOGGER,format("方法[%s]为私有方法将跳过",getterMethod.getName()));
+                        LoggerHelper.debug(LOGGER, LoggerHelper.format("方法[%s]为私有方法将跳过",getterMethod.getName()));
                     }
                 }
             }else {
@@ -760,13 +759,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
 
     @Override
     public AxolotlWriteResult finish(SXSSFSheet sheet) {
-        debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
+        LoggerHelper.debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
         int sheetIndex = context.getWorkbook().getSheetIndex(sheet);
         int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(sheetIndex);
         // 创建结尾合计行
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
             Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(sheetIndex);
-            debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
+            LoggerHelper.debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
             SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
             row.setHeight((short) 600);
             DataInverter<?> dataInverter = writeConfig.getDataInverter();
@@ -811,19 +810,25 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
-            debug(LOGGER,"开始自动计算列宽");
+            LoggerHelper.debug(LOGGER,"开始自动计算列宽");
+            double autoFitPadding;
+            if(writeConfig.getAutoColumnWidthRatio() >= 1){
+                autoFitPadding = writeConfig.getAutoColumnWidthRatio();
+            }else {
+                throw new AxolotlWriteException("自动计算列宽比例必须大于等于1");
+            }
             for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
                 sheet.autoSizeColumn(columnIdx,true);
-                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.35));
+                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * autoFitPadding));
             }
         }
         Map<Integer, Integer> specialRowHeightMapping = writeConfig.getSpecialRowHeightMapping(sheetIndex);
         for (Map.Entry<Integer, Integer> heightEntry : specialRowHeightMapping.entrySet()) {
-            debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
+            LoggerHelper.debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
             sheet.getRow(heightEntry.getKey()).setHeightInPoints(heightEntry.getValue());
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS)){
-            warn(LOGGER,"即将隐藏空白列，增加导出耗时");
+            LoggerHelper.warn(LOGGER,"即将隐藏空白列，增加导出耗时");
             int maxColumnIndex = -1;
             for (Row cells : sheet) {
                 maxColumnIndex = Math.max(cells.getLastCellNum(),maxColumnIndex);

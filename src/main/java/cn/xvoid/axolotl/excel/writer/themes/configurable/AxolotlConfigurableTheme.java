@@ -7,8 +7,8 @@ import cn.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
-import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
+import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.toolkit.log.LoggerToolkit;
@@ -31,8 +31,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
-import static cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER;
-import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
+import static cn.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
 /**
  * 可配置主题
@@ -131,23 +130,23 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             globalCellPropHolder = ConfigurableStyleConfig.cloneStyleProperties(globalConfig,globalCellPropHolder);
             String fontName = writeConfig.getFontName();
             if (fontName != null){
-                debug(LOGGER, "使用自定义字体：%s",fontName);
+                LoggerHelper.debug(LOGGER, "使用自定义字体：%s",fontName);
                 globalCellPropHolder.setFontName(fontName);
             }
-            debug(LOGGER,"全局样式读取完毕");
+            LoggerHelper.debug(LOGGER,"全局样式读取完毕");
 
             //程序写入单元格样式配置
             commonCellPropHolder = ConfigurableStyleConfig.loadCommonConfigFromDefault(globalCellPropHolder,configurableStyleConfig);
-            debug(LOGGER,"程序写入单元格样式读取完毕");
+            LoggerHelper.debug(LOGGER,"程序写入单元格样式读取完毕");
 
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
             String sheetName = writeConfig.getSheetName();
             if(Validator.strNotBlank(sheetName)){
                 int sheetIndex = context.getSwitchSheetIndex();
-                info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
+                LoggerHelper.info(LOGGER,"设置工作表索引[%s]表名为:[%s]",sheetIndex,sheetName);
                 context.getWorkbook().setSheetName(sheetIndex,sheetName);
             }else {
-                debug(LOGGER,"未设置工作表名称");
+                LoggerHelper.debug(LOGGER,"未设置工作表名称");
             }
             boolean fillWhite = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_FILL_DEFAULT_CELL_WHITE);
             if (fillWhite){
@@ -168,7 +167,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         if(headerCellPropHolder.getRowHeight() == null){
             headerCellPropHolder.setRowHeight(HEADER_ROW_HEIGHT);
         }
-        debug(LOGGER,"表头样式读取完毕");
+        LoggerHelper.debug(LOGGER,"表头样式读取完毕");
 
         //读取标题配置
         CellConfigProperty titleConfig = new CellConfigProperty();
@@ -177,7 +176,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         if(titleCellPropHolder.getRowHeight() == null){
             titleCellPropHolder.setRowHeight(TITLE_ROW_HEIGHT);
         }
-        debug(LOGGER,"标题样式读取完毕");
+        LoggerHelper.debug(LOGGER,"标题样式读取完毕");
 
         // 1.创建标题行
         AxolotlWriteResult writeTitle = createTitleRow(sheet);
@@ -200,7 +199,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     @Override
     public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
         //创建系统列单元格样式 用于序号与空值填充
-        CellPropertyHolder cellProperty = commonCellPropHolder.get(AUTO_INSERT_SERIAL_NUMBER);
+        CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
      //   XSSFCellStyle commonCellStyle = (XSSFCellStyle) createCellStyle(commonCellPropHolder);
         for (Object datum : data) {
             // 获取对象属性
@@ -222,7 +221,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             // 写入序号
             //序号列索引
             int serialNumberColumnNumber = -1;
-            boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER);
+            boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
             if (autoInsertSerialNumber){
                 SXSSFCell cell = dataRow.createCell(writtenColumn);
                 cell.setCellValue(serialNumber);
@@ -245,7 +244,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                         cell = (SXSSFCell) ExcelToolkit.createOrCatchCell(sheet,alreadyWriteRow,columnMapping.get(fieldName),null);
                     }else {
                         if (!alreadyNotice){
-                            warn(LOGGER,"未映射字段[%s]请在表头Header中映射字段!",fieldName);
+                            LoggerHelper.warn(LOGGER,"未映射字段[%s]请在表头Header中映射字段!",fieldName);
                             alreadyNotice = true;
                         }
                         continue;
@@ -325,7 +324,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                     //空值填充不设置行高列宽
                 }
             }
-            debug(LOGGER,"第["+alreadyWriteRow+"]行内容渲染结束");
+            LoggerHelper.debug(LOGGER,"第["+alreadyWriteRow+"]行内容渲染结束");
         }
 
 
@@ -334,14 +333,14 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
     @Override
     public AxolotlWriteResult finish(SXSSFSheet sheet) {
-        debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
+        LoggerHelper.debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
         int sheetIndex = context.getWorkbook().getSheetIndex(sheet);
         CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING);
         int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(sheetIndex);
         // 创建结尾合计行
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
             Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(sheetIndex);
-            debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
+            LoggerHelper.debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
             SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
             if(cellProperty == null){
                 //未配置 取上一行行高
@@ -354,7 +353,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             for (int i = 0; i < alreadyWrittenColumns; i++) {
                 SXSSFCell cell = row.createCell(i);
                 String cellValue = writeConfig.getBlankValue();
-                if (i == 0 && writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER)){
+                if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                     cellValue = "合计";
                    // sheet.setColumnWidth(i, commonCellPropHolder.getColumnWidth());
                 }
@@ -394,20 +393,26 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             }
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
-            debug(LOGGER,"开始自动计算列宽");
+            LoggerHelper.debug(LOGGER,"开始自动计算列宽");
+            double autoFitPadding;
+            if(writeConfig.getAutoColumnWidthRatio() >= 1){
+                autoFitPadding = writeConfig.getAutoColumnWidthRatio();
+            }else {
+                throw new AxolotlWriteException("自动计算列宽比例必须大于等于1");
+            }
             for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
                 sheet.trackAllColumnsForAutoSizing();
                 sheet.autoSizeColumn(columnIdx,true);
-                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * 1.35));
+                sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * autoFitPadding));
             }
         }
         Map<Integer, Integer> specialRowHeightMapping = writeConfig.getSpecialRowHeightMapping(sheetIndex);
         for (Map.Entry<Integer, Integer> heightEntry : specialRowHeightMapping.entrySet()) {
-            debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
+            LoggerHelper.debug(LOGGER,"设置工作表[%s]第%s行高度为%s",sheet.getSheetName(),heightEntry.getKey(),heightEntry.getValue());
             sheet.getRow(heightEntry.getKey()).setHeightInPoints(heightEntry.getValue());
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_HIDDEN_BLANK_COLUMNS)){
-            warn(LOGGER,"即将隐藏空白列，增加导出耗时");
+            LoggerHelper.warn(LOGGER,"即将隐藏空白列，增加导出耗时");
             int maxColumnIndex = -1;
             for (Row cells : sheet) {
                 maxColumnIndex = Math.max(cells.getLastCellNum(),maxColumnIndex);
@@ -434,7 +439,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             sheet.setDefaultColumnWidth(globalCellPropHolder.getColumnWidth() == null ? DEFAULT_COLUMN_WIDTH : globalCellPropHolder.getColumnWidth());
         }
         sheet.setDefaultRowHeight(globalCellPropHolder.getRowHeight() == null ? DATA_ROW_HEIGHT : globalCellPropHolder.getRowHeight());
-        debug(LOGGER,"渲染空白单元格");
+        LoggerHelper.debug(LOGGER,"渲染空白单元格");
     }
 
     /**
@@ -446,7 +451,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     public AxolotlWriteResult createTitleRow(SXSSFSheet sheet){
         String title = writeConfig.getTitle();
         if (Validator.strNotBlank(title)){
-            debug(LOGGER,"设置工作表标题:[%s]",title);
+            LoggerHelper.debug(LOGGER,"设置工作表标题:[%s]",title);
             int switchSheetIndex = context.getSwitchSheetIndex();
             Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
             int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
@@ -458,7 +463,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             return new AxolotlWriteResult(true, LoggerHelper.format("设置工作表标题:[%s]",title));
         }else{
             String message = "未设置工作表标题";
-            debug(LOGGER,message);
+            LoggerHelper.debug(LOGGER,message);
             return new AxolotlWriteResult(false, message);
         }
     }
@@ -477,15 +482,15 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         int alreadyWriteRow = context.getAlreadyWriteRow().getOrDefault(context.getSwitchSheetIndex(),-1);
         if (headers != null && !headers.isEmpty()){
             List<Header> cacheHeaders;
-            if (writeConfig.getWritePolicyAsBoolean(AUTO_INSERT_SERIAL_NUMBER)){
-                CellPropertyHolder cellProperty = commonCellPropHolder.get(AUTO_INSERT_SERIAL_NUMBER);
+            if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
+                CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
                 cacheHeaders = new ArrayList<>();
                 if(cellProperty == null){
                     //未配置 走表头默认样式
-                    cacheHeaders.add(new Header("序号"));
+                    cacheHeaders.add(new cn.xvoid.axolotl.excel.writer.components.widgets.Header("序号"));
                 }else{
                     //配置 走程序写入单元格的列宽
-                    Header header = new Header("序号");
+                    cn.xvoid.axolotl.excel.writer.components.widgets.Header header = new cn.xvoid.axolotl.excel.writer.components.widgets.Header("序号");
                     header.setCustomCellStyle(createCellStyle(cellProperty));
                     header.setColumnWidth(cellProperty.getColumnWidth());
                     cacheHeaders.add(header);
@@ -496,11 +501,11 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             }
             context.getAlreadyWriteRow().put(switchSheetIndex,++alreadyWriteRow);
             headerMaxDepth = ExcelToolkit.getMaxDepth(headers, 0);
-            debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
+            LoggerHelper.debug(LOGGER,"起始行次为[%s]，表头最大深度为[%s]",alreadyWriteRow,headerMaxDepth);
             int sheetIndex = context.getSwitchSheetIndex();
             Map<String, Integer> headerCache = context.getHeaderColumnIndexMapping().row(sheetIndex);
             //根节点渲染
-            for (Header header : cacheHeaders) {
+            for (cn.xvoid.axolotl.excel.writer.components.widgets.Header header : cacheHeaders) {
                 CellStyle usedCellStyle = getCellStyle(header, headerCellPropHolder);
                 Row row = ExcelToolkit.createOrCatchRow(sheet, alreadyWriteRow);
                 row.setHeight(headerCellPropHolder.getRowHeight());
@@ -510,7 +515,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 cell.setCellValue(title);
                 int orlopCellNumber = header.countOrlopCellNumber();
                 context.getAlreadyWrittenColumns().put(switchSheetIndex,context.getAlreadyWrittenColumns().getOrDefault(switchSheetIndex,0)+orlopCellNumber);
-                debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title, alreadyWriteRow,headerColumnCount,orlopCellNumber);
+                LoggerHelper.debug(LOGGER,"渲染表头[%s],行[%s],列[%s],子表头列数量[%s]",title, alreadyWriteRow,headerColumnCount,orlopCellNumber);
                 // 有子节点说明需要向下迭代并合并
                 CellRangeAddress cellAddresses;
                 if (header.getChilds()!=null && !header.getChilds().isEmpty()){
@@ -529,7 +534,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
                     String fieldName = header.getFieldName();
                     if (fieldName != null){
-                        debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,headerColumnCount);
+                        LoggerHelper.debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,headerColumnCount);
                         headerCache.put(fieldName,headerColumnCount);
                     }
                     if (!writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
@@ -541,13 +546,13 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                                 columnWidth = StyleHelper.getPresetCellLength(title);
                             }
                         }
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),columnWidth);
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),columnWidth);
                         sheet.setColumnWidth(headerColumnCount, columnWidth);
                     }else{
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),"AUTO");
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",headerColumnCount,header.getName(),"AUTO");
                     }
                     if (header.isParticipateInCalculate()){
-                        debug(LOGGER,"列[%s]表头[%s]参与计算",headerColumnCount,header.getName());
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]参与计算",headerColumnCount,header.getName());
                         writeConfig.addCalculateColumnIndex(sheetIndex,headerColumnCount);
                     }
                 }
@@ -559,7 +564,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             }
         }else{
             headerMaxDepth = 0;
-            debug(LOGGER,"未设置表头");
+            LoggerHelper.debug(LOGGER,"未设置表头");
         }
         context.getHeaderRowCount().put(switchSheetIndex,headerMaxDepth);
         alreadyWriteRow+=(headerMaxDepth-1);
@@ -613,7 +618,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             row.setHeight(headerRecursiveInfo.getRowHeight());
             int sheetIndex = context.getSwitchSheetIndex();
             Map<String, Integer> headerCache = context.getHeaderColumnIndexMapping().row(sheetIndex);
-            for (Header header : headers) {
+            for (cn.xvoid.axolotl.excel.writer.components.widgets.Header header : headers) {
                 CellStyle usedCellStyle = getCellStyle(header,headerRecursiveInfo.getCellProperty());
                 int alreadyWriteColumn = headerRecursiveInfo.getAlreadyWriteColumn();
                 Cell cell = ExcelToolkit.createOrCatchCell(sheet, row.getRowNum(), alreadyWriteColumn, null);
@@ -632,10 +637,10 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                         if (columnWidth == -1){
                             columnWidth = StyleHelper.getPresetCellLength(header.getName());
                         }
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),columnWidth);
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),columnWidth);
                         sheet.setColumnWidth(alreadyWriteColumn, columnWidth);
                     }else{
-                        debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),"AUTO");
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]设置列宽[%s]",alreadyWriteColumn,header.getName(),"AUTO");
                     }
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, usedCellStyle);
@@ -652,11 +657,11 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 }else{
                     String fieldName = header.getFieldName();
                     if (fieldName != null){
-                        debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,alreadyWriteColumn);
+                        LoggerHelper.debug(LOGGER,"映射字段[%s]到列索引[%s]",fieldName,alreadyWriteColumn);
                         headerCache.put(fieldName,alreadyWriteColumn);
                     }
                     if (header.isParticipateInCalculate()){
-                        debug(LOGGER,"列[%s]表头[%s]参与计算",alreadyWriteColumn,header.getName());
+                        LoggerHelper.debug(LOGGER,"列[%s]表头[%s]参与计算",alreadyWriteColumn,header.getName());
                         writeConfig.addCalculateColumnIndex(sheetIndex,alreadyWriteColumn);
                     }
                 }
@@ -673,7 +678,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      */
     private CellStyle getCellStyle(Header header, CellPropertyHolder defaultCellStyle) {
         if (header.getCustomCellStyle() != null){
-            debug(LOGGER,"["+header.getName()+"] Header内部样式配置读取完毕,优先级:高");
+            LoggerHelper.debug(LOGGER,"["+header.getName()+"] Header内部样式配置读取完毕,优先级:高");
             return header.getCustomCellStyle();
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
@@ -733,10 +738,10 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 if(axolotlCellStyle.getVerticalAlignment() != null){
                     headerStyle.setVerticalAlignment(axolotlCellStyle.getVerticalAlignment());
                 }
-                debug(LOGGER,"["+header.getName()+"] Header内部样式配置读取完毕,优先级:中");
+                LoggerHelper.debug(LOGGER,"["+header.getName()+"] Header内部样式配置读取完毕,优先级:中");
                 return createCellStyle(headerStyle);
             }else{
-                debug(LOGGER,"["+header.getName()+"] 未在Header内设置样式，选择默认表头样式配置");
+                LoggerHelper.debug(LOGGER,"["+header.getName()+"] 未在Header内设置样式，选择默认表头样式配置");
                 return createCellStyle(defaultCellStyle);
             }
         }
