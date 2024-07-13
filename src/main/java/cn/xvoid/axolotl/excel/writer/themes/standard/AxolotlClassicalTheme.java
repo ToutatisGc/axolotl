@@ -6,6 +6,7 @@ import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.toolkit.log.LoggerToolkit;
+import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -13,6 +14,8 @@ import org.slf4j.Logger;
 import static cn.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
 import java.util.*;
+
+import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 
 public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelStyleRender {
 
@@ -55,7 +58,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         }
 
         // 4.创建冻结窗格
-        sheet.createFreezePane(StyleHelper.START_POSITION, context.getAlreadyWriteRow().get(switchSheetIndex)+1);
+        sheet.createFreezePane(START_POSITION, context.getAlreadyWriteRow().get(switchSheetIndex)+1);
 
         return headerWriteResult;
     }

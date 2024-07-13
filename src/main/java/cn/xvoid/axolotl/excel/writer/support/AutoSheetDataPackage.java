@@ -1,8 +1,8 @@
 package cn.xvoid.axolotl.excel.writer.support;
 
-import cn.xvoid.axolotl.AxolotlFaster;
 import cn.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.xvoid.axolotl.excel.writer.components.widgets.Header;
+import cn.xvoid.axolotl.AxolotlFaster;
 import lombok.Data;
 
 import java.util.List;

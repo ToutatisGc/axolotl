@@ -79,7 +79,7 @@ public class ComponentRender {
         int switchSheetIndex = context.getSwitchSheetIndex();
         Sheet sheet;
         if(context instanceof AutoWriteContext){
-            AutoWriteContext autoWriteContext = (AutoWriteContext)context;
+            AutoWriteContext autoWriteContext = (AutoWriteContext) context;
             sheet = autoWriteContext.getWorkbook().getSheetAt(switchSheetIndex);
         }else{
             throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
@@ -138,7 +138,7 @@ public class ComponentRender {
         if (getCommonWriteConfig().getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING) && Validator.strIsNumber(value)){
             Map<Integer, BigDecimal> endingTotalMapping;
             if (context instanceof AutoWriteContext){
-                AutoWriteContext autoWriteContext = (AutoWriteContext)context;
+                AutoWriteContext autoWriteContext = (AutoWriteContext) context;
                 endingTotalMapping = autoWriteContext.getEndingTotalMapping().row(context.getSwitchSheetIndex());
             }else {
                 throw new IllegalArgumentException("该功能为自动写入功能,请使用AutoWriteContext");
@@ -204,7 +204,7 @@ public class ComponentRender {
         //字段键名称
         String alreadyKey = sheetIndex + StringPool.COLON + instanceClass.getSimpleName() + StringPool.COLON + fieldName;
         if (alreadyRecordDict.containsKey(alreadyKey)){
-            debug(LOGGER,"字典值转换编码到名称: " + alreadyKey + " 已存在,直接返回.");
+            LoggerHelper.debug(LOGGER,"字典值转换编码到名称: " + alreadyKey + " 已存在,直接返回.");
             DictMappingExecutor dictMappingExecutor = alreadyRecordDict.get(alreadyKey);
             if (dictMappingExecutor.isUsage){
                 if (dictMappingExecutor.useManualConfigPriority){

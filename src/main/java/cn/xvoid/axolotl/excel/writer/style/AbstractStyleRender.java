@@ -40,6 +40,7 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 /**
@@ -186,7 +187,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
             SXSSFRow titleRow = sheet.createRow(alreadyWriteRow);
             titleRow.setHeight(StyleHelper.STANDARD_TITLE_ROW_HEIGHT);
-            SXSSFCell startPositionCell = titleRow.createCell(StyleHelper.START_POSITION);
+            SXSSFCell startPositionCell = titleRow.createCell(START_POSITION);
             startPositionCell.setCellValue(writeConfig.getTitle());
             return new AxolotlWriteResult(true, LoggerHelper.format("设置工作表标题:[%s]",title));
         }else{
@@ -204,11 +205,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public void mergeTitleRegion(SXSSFSheet sheet,int titleColumnCount,CellStyle titleStyle){
         if (titleColumnCount > 1){
             debug(LOGGER,"合并标题栏单元格,共[%s]列",titleColumnCount);
-            CellRangeAddress cellAddresses = new CellRangeAddress(StyleHelper.START_POSITION, StyleHelper.START_POSITION, StyleHelper.START_POSITION, titleColumnCount-1);
+            CellRangeAddress cellAddresses = new CellRangeAddress(START_POSITION, START_POSITION, START_POSITION, titleColumnCount-1);
             StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,titleStyle);
             sheet.addMergedRegion(cellAddresses);
         }else{
-            sheet.getRow(StyleHelper.START_POSITION).getCell(StyleHelper.START_POSITION).setCellStyle(titleStyle);
+            sheet.getRow(START_POSITION).getCell(START_POSITION).setCellStyle(titleStyle);
         }
     }
 
@@ -581,7 +582,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
         SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
         dataRow.setHeight(StyleHelper.STANDARD_ROW_HEIGHT);
-        int writtenColumn = StyleHelper.START_POSITION;
+        int writtenColumn = START_POSITION;
         int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
         // 写入数据
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());

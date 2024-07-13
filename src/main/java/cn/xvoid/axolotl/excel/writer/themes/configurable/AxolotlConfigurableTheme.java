@@ -3,15 +3,14 @@ package cn.xvoid.axolotl.excel.writer.themes.configurable;
 import cn.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
 import cn.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.xvoid.axolotl.excel.writer.style.*;
-import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
-import cn.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
-import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
-import cn.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
+import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
+import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
+import cn.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
+import cn.xvoid.axolotl.toolkit.ExcelToolkit;
+import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
 import lombok.Data;
@@ -31,9 +30,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER;
 import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
-import static cn.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
 /**
  * 可配置主题
@@ -192,7 +191,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }
 
         // 4.创建冻结窗格
-        sheet.createFreezePane(StyleHelper.START_POSITION, context.getAlreadyWriteRow().get(context.getSwitchSheetIndex())+1);
+        sheet.createFreezePane(START_POSITION, context.getAlreadyWriteRow().get(context.getSwitchSheetIndex())+1);
 
         return headerWriteResult;
     }
@@ -213,7 +212,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
             alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
             SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
-            int writtenColumn = StyleHelper.START_POSITION;
+            int writtenColumn = START_POSITION;
             int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
             // 写入数据
             Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
@@ -454,7 +453,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
             SXSSFRow titleRow = sheet.createRow(alreadyWriteRow);
             titleRow.setHeight(titleCellPropHolder.getRowHeight());
-            SXSSFCell startPositionCell = titleRow.createCell(StyleHelper.START_POSITION);
+            SXSSFCell startPositionCell = titleRow.createCell(START_POSITION);
             startPositionCell.setCellValue(writeConfig.getTitle());
             return new AxolotlWriteResult(true, LoggerHelper.format("设置工作表标题:[%s]",title));
         }else{

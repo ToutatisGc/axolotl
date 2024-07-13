@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-
 /**
  * 自动写入的写入配置
  * @author Toutatis_Gc

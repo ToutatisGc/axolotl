@@ -11,12 +11,12 @@ import cn.xvoid.axolotl.excel.writer.support.base.*;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
-import cn.xvoid.axolotl.excel.writer.support.base.*;
 import cn.xvoid.common.standard.StringPool;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
+import cn.xvoid.axolotl.excel.writer.support.base.*;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -168,7 +168,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                     continue;
                 }
                 // 写入单元格值
-                Cell cell = ExcelToolkit.createOrCatchCell(sheet, cellAddress.getRowPosition(), cellAddress.getColumnPosition(), null);
+                Cell cell = sheet.getRow(cellAddress.getRowPosition()).getCell(cellAddress.getColumnPosition());
                 String stringCellValue = cell.getStringCellValue();
                 Object info = dataMapping.get(singleKey);
                 if(info != null){

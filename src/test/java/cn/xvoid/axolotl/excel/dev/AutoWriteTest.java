@@ -90,7 +90,7 @@ public class AutoWriteTest {
         List<Header> headers = new ArrayList<>();
         headers.add(new Header("代码","code"));
         headers.add(new Header("简称","intro"));
-        headers.add(new Header("是否特别处理",StockEntity::getSt));
+        headers.add(new Header("是否特别处理", StockEntity::getSt));
         headers.add(new Header("最新日期","localDateTimeStr"));
         headers.add(new Header("最新收盘价（元）",StockEntity::getClosingPrice));
         headers.add(new Header("涨跌幅（%）",StockEntity::getPriceLimit));

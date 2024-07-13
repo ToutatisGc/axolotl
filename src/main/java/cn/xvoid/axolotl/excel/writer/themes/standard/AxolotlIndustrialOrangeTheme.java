@@ -6,6 +6,7 @@ import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.toolkit.log.LoggerToolkit;
+import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -65,7 +66,7 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
         StyleHelper.setCellAsPlainText(dataStyle);
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
         if (!columnMapping.isEmpty()){
-            debug(LOGGER,"已有字段映射表,将按照字段映射渲染数据[%s]",columnMapping);
+            LoggerHelper.debug(LOGGER,"已有字段映射表,将按照字段映射渲染数据[%s]",columnMapping);
         }
         for (Object datum : data) {
             this.defaultRenderNextData(sheet, datum, dataStyle);

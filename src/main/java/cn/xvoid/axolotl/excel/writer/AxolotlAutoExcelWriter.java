@@ -7,9 +7,9 @@ import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
-import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
+import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import com.google.common.collect.Lists;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.slf4j.Logger;
@@ -66,7 +66,7 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      */
     public AxolotlWriteResult write(List<Header> headers, List<?> datas) throws AxolotlWriteException {
         int switchSheetIndex = writeContext.getSwitchSheetIndex();
-        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(switchSheetIndex));
+        info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(switchSheetIndex));
         SXSSFSheet sheet;
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
         if (styleRender == null){

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER;
 import static java.lang.String.format;
 
 /**
@@ -136,11 +137,11 @@ public class CommonWriteConfig extends AxolotlCommonConfig {
     public void autoProcessEntity2OpenDictPolicy(){
         List<Field> allFields = ReflectToolkit.getAllFields(metaClass, true);
         Map<ExcelWritePolicy, Object> policyMap = getWritePolicies();
-        if (!policyMap.containsKey(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER)){
+        if (!policyMap.containsKey(SIMPLE_USE_DICT_CODE_TRANSFER)){
             for (Field field : allFields) {
                 if (field.getAnnotation(AxolotlDictMapping.class) != null){
                     LoggerHelper.info(LOGGER,"实体发现字典属性，字典映射策略未开启，已自动开启.");
-                    this.setWritePolicy(ExcelWritePolicy.SIMPLE_USE_DICT_CODE_TRANSFER,true);
+                    this.setWritePolicy(SIMPLE_USE_DICT_CODE_TRANSFER,true);
                     break;
                 }
             }

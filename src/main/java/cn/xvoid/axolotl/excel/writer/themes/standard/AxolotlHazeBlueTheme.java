@@ -6,6 +6,7 @@ import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.toolkit.log.LoggerToolkit;
+import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import java.util.List;
 import java.util.Map;
 
+import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.xvoid.axolotl.toolkit.LoggerHelper.debug;
 
 public class AxolotlHazeBlueTheme extends AbstractStyleRender implements ExcelStyleRender {
@@ -59,7 +61,7 @@ public class AxolotlHazeBlueTheme extends AbstractStyleRender implements ExcelSt
         }
 
         // 4.创建冻结窗格
-        sheet.createFreezePane(StyleHelper.START_POSITION, context.getAlreadyWriteRow().get(switchSheetIndex)+1);
+        sheet.createFreezePane(START_POSITION, context.getAlreadyWriteRow().get(switchSheetIndex)+1);
 
         return headerWriteResult;
     }

@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import java.util.List;
 import java.util.Map;
 
+import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
 import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 public class AxolotlAdministrationRedTheme extends AbstractStyleRender implements ExcelStyleRender {
@@ -72,7 +73,7 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
         }
 
         // 5.创建冻结窗格
-        sheet.createFreezePane(StyleHelper.START_POSITION, context.getAlreadyWriteRow().get(context.getSwitchSheetIndex())+1);
+        sheet.createFreezePane(START_POSITION, context.getAlreadyWriteRow().get(context.getSwitchSheetIndex())+1);
 
         return headerWriteResult;
     }
