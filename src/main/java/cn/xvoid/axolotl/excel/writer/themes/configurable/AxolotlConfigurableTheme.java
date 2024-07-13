@@ -3,7 +3,6 @@ package cn.xvoid.axolotl.excel.writer.themes.configurable;
 import cn.xvoid.axolotl.excel.writer.components.configuration.AxolotlCellStyle;
 import cn.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
-import cn.xvoid.axolotl.excel.writer.style.*;
 import cn.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
@@ -12,7 +11,6 @@ import cn.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
-import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
 import lombok.Data;
@@ -262,7 +260,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 if(dataCellPropHolder.getRowHeight() == null){
                     dataCellPropHolder.setRowHeight(DATA_ROW_HEIGHT);
                 }
-                List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> headers = context.getHeaders().get(switchSheetIndex);
+                List<Header> headers = context.getHeaders().get(switchSheetIndex);
                 if(dataCellPropHolder.getColumnWidth() == null && (headers == null || headers.isEmpty())){
                     dataCellPropHolder.setColumnWidth(DEFAULT_COLUMN_WIDTH);
                 }
@@ -396,9 +394,11 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
             LoggerHelper.debug(LOGGER,"开始自动计算列宽");
-            double autoFitPadding = 1.35;
-            if(writeConfig.getAutoFitPadding() >= 0){
-                autoFitPadding = writeConfig.getAutoFitPadding();
+            double autoFitPadding;
+            if(writeConfig.getAutoColumnWidthRatio() >= 1){
+                autoFitPadding = writeConfig.getAutoColumnWidthRatio();
+            }else {
+                throw new AxolotlWriteException("自动计算列宽比例必须大于等于1");
             }
             for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
                 sheet.trackAllColumnsForAutoSizing();
@@ -476,12 +476,12 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      */
     private AxolotlWriteResult defaultRenderHeaders(SXSSFSheet sheet){
         int switchSheetIndex = context.getSwitchSheetIndex();
-        List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> headers = context.getHeaders().get(switchSheetIndex);
+        List<Header> headers = context.getHeaders().get(switchSheetIndex);
         int headerMaxDepth;
         int headerColumnCount = 0;
         int alreadyWriteRow = context.getAlreadyWriteRow().getOrDefault(context.getSwitchSheetIndex(),-1);
         if (headers != null && !headers.isEmpty()){
-            List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> cacheHeaders;
+            List<Header> cacheHeaders;
             if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                 CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
                 cacheHeaders = new ArrayList<>();
@@ -519,7 +519,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 // 有子节点说明需要向下迭代并合并
                 CellRangeAddress cellAddresses;
                 if (header.getChilds()!=null && !header.getChilds().isEmpty()){
-                    List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> childs = header.getChilds();
+                    List<Header> childs = header.getChilds();
                     int childMaxDepth = ExcelToolkit.getMaxDepth(childs, 0);
                     cellAddresses = new CellRangeAddress(alreadyWriteRow, alreadyWriteRow +(headerMaxDepth-childMaxDepth)-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
                     HeaderRecursiveInfo headerRecursiveInfo = new HeaderRecursiveInfo();
@@ -610,7 +610,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      * @param headerRecursiveInfo 递归信息
      */
     @SneakyThrows
-    private void recursionRenderHeaders(SXSSFSheet sheet, List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
+    private void recursionRenderHeaders(SXSSFSheet sheet, List<Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
         if (headers != null && !headers.isEmpty()){
             int maxDepth = ExcelToolkit.getMaxDepth(headers, 0);
             int startRow = headerRecursiveInfo.getAllRow() - maxDepth -1;

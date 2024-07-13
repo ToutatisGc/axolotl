@@ -220,12 +220,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      */
     public AxolotlWriteResult defaultRenderHeaders(SXSSFSheet sheet, CellStyle headerDefaultCellStyle){
         int switchSheetIndex = context.getSwitchSheetIndex();
-        List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> headers = context.getHeaders().get(switchSheetIndex);
+        List<Header> headers = context.getHeaders().get(switchSheetIndex);
         int headerMaxDepth;
         int headerColumnCount = 0;
         int alreadyWriteRow = context.getAlreadyWriteRow().getOrDefault(context.getSwitchSheetIndex(),-1);
         if (headers != null && !headers.isEmpty()){
-            List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> cacheHeaders;
+            List<Header> cacheHeaders;
             if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                 cacheHeaders = new ArrayList<>();
                 cacheHeaders.add(new cn.xvoid.axolotl.excel.writer.components.widgets.Header("序号"));
@@ -254,7 +254,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 // 有子节点说明需要向下迭代并合并
                 CellRangeAddress cellAddresses;
                 if (header.getChilds()!=null && !header.getChilds().isEmpty()){
-                    List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> childs = header.getChilds();
+                    List<Header> childs = header.getChilds();
                     int childMaxDepth = ExcelToolkit.getMaxDepth(childs, 0);
                     cellAddresses = new CellRangeAddress(alreadyWriteRow, alreadyWriteRow +(headerMaxDepth-childMaxDepth)-1, headerColumnCount, headerColumnCount+orlopCellNumber-1);
                     HeaderRecursiveInfo headerRecursiveInfo = new HeaderRecursiveInfo();
@@ -449,7 +449,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param headerRecursiveInfo 递归信息
      */
     @SneakyThrows
-    private void recursionRenderHeaders(SXSSFSheet sheet, List<cn.xvoid.axolotl.excel.writer.components.widgets.Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
+    private void recursionRenderHeaders(SXSSFSheet sheet, List<Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
         if (headers != null && !headers.isEmpty()){
             int maxDepth = ExcelToolkit.getMaxDepth(headers, 0);
             int startRow = headerRecursiveInfo.getAllRow() - maxDepth -1;
@@ -810,9 +810,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
             LoggerHelper.debug(LOGGER,"开始自动计算列宽");
-            double autoFitPadding = 1.35;
-            if(writeConfig.getAutoFitPadding() >= 0){
-                autoFitPadding = writeConfig.getAutoFitPadding();
+            double autoFitPadding;
+            if(writeConfig.getAutoColumnWidthRatio() >= 1){
+                autoFitPadding = writeConfig.getAutoColumnWidthRatio();
+            }else {
+                throw new AxolotlWriteException("自动计算列宽比例必须大于等于1");
             }
             for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
                 sheet.autoSizeColumn(columnIdx,true);

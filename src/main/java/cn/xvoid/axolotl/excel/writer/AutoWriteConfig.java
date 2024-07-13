@@ -5,7 +5,6 @@ import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
-import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
@@ -55,12 +54,12 @@ public class AutoWriteConfig extends CommonWriteConfig {
     private String fontName;
 
     /**
-     * 自动列宽内边距,
+     * 自动列宽比例,
      * 用于配置自动列宽后单元格两端到文字的距离
      * 在启用 ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH (自动列宽)特性 时设置才能生效,
-     * 默认为 1.35
+     * 默认为 1.35 保持中文比例显示正常
      */
-    private double autoFitPadding = 1.35;
+    private double autoColumnWidthRatio = 1.35D;
 
     /**
      * 样式渲染器
