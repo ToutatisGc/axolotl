@@ -313,9 +313,22 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 
 ##### 4.1.1.5 JSR-303支持（数据校验）
 
-本框架支持Bean Validation,使用Hibernate-Validator进行实体属性校验。
+​	本框架支持Bean Validation,使用Hibernate-Validator进行实体属性校验。
 
-详情请参考 [📂【Hibernate-Validator 8.0.1.Final 使用手册】](docs.assets\hibernate_validator_reference.pdf) (Java8版本使用为6.2.5.Final)
+​	详情请参考 [📂【Hibernate-Validator 8.0.1.Final 使用手册】](docs.assets\hibernate_validator_reference.pdf) (Java8版本使用为6.2.5.Final)
+
+​	<font color='red'>**校验时请指定groups分组参数AxolotlValid.class以便于实体校验器校验实体导入字段是否正常。**</font>
+
+```java
+@NotBlank(message = "name is blank", groups = {AxolotlValid.class})
+private String name;
+```
+
+​	**手动校验可以使用工具类校验:**
+
+```java
+ EntityValidator.INSTANCE().validate(testEntity, Insert.class);
+```
 
 📖一般POJO类使用注解如下：
 
@@ -403,7 +416,7 @@ while (dataIterator.hasNext()){
 
 1. 通过注解指定adapter:
 
-```
+```java
 @ColumnBind(headerName = "工程名称",adapter = DefaultStringAdapter.class)
 private String a1;
 

@@ -15,6 +15,7 @@ import cn.xvoid.toolkit.validator.Validator;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 
+import java.text.DecimalFormat;
 import java.util.Map;
 
 /**
@@ -62,13 +63,15 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 short dataFormat = cellGetInfo.get_cell().getCellStyle().getDataFormat();
                 boolean isText = (dataFormat == StyleHelper.DATA_FORMAT_GENERAL_INDEX || dataFormat == StyleHelper.DATA_FORMAT_PLAIN_TEXT_INDEX);
                 if (isText){
-                    if ((Double) cellValue % 1 == 0) {
-                        return Integer.toString(((Double) cellValue).intValue());
-                    }else {
-//                        DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
-//                        return decimalFormat.format(cellValue);
-                        return cellValue.toString();
-                    }
+                    DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
+                    return decimalFormat.format(cellValue);
+//                    if ((Double) cellValue % 1 == 0) {
+//                        return Integer.toString(((Double) cellValue).intValue());
+//                    }else {
+////                        DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
+////                        return decimalFormat.format(cellValue);
+//                        return cellValue.toString();
+//                    }
                 }else {
                     if ((Double) cellValue % 1 == 0) {
                         return Integer.toString(((Double) cellValue).intValue());

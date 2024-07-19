@@ -271,7 +271,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         this.spreadMergedCells(sheet,readerConfig);
         RT instance = readerConfig.getCastClassInstance();
         this.convertPositionCellToInstance(instance, readerConfig,sheet);
-        this.validateConvertEntity(instance, readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.VALIDATE_READ_ROW_DATA));
+        this.validateConvertEntity(instance, readerConfig);
         return instance;
     }
 
@@ -510,7 +510,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
             Object adaptiveValue = this.adaptiveCellValue2EntityClass(cellValue, indexMappingInfo, readerConfig);
             this.assignValueToField(instance,adaptiveValue,indexMappingInfo,readerConfig);
         }
-        this.validateConvertEntity(instance, readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.VALIDATE_READ_ROW_DATA));
+        this.validateConvertEntity(instance,readerConfig);
     }
 
     /**
@@ -796,9 +796,10 @@ public abstract class AxolotlAbstractExcelReader<T> {
     /**
      * 校验读取实体是否符合验证规则
      */
-    protected <RT> void validateConvertEntity(RT instance, boolean isValidate) {
+    protected <RT> void validateConvertEntity(RT instance, ReaderConfig<RT> readerConfig) {
+        boolean isValidate = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.VALIDATE_READ_ROW_DATA);
         if (isValidate){
-            Set<ConstraintViolation<RT>> validate = validator.validate(instance);
+            Set<ConstraintViolation<RT>> validate = validator.validate(instance, readerConfig.getValidGroups());
             if (!validate.isEmpty()){
                 for (ConstraintViolation<RT> constraintViolation : validate) {
                     AxolotlExcelReadException axolotlExcelReadException = new AxolotlExcelReadException(workBookContext, constraintViolation.getMessage());

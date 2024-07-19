@@ -6,6 +6,7 @@ import cn.xvoid.axolotl.excel.reader.annotations.*;
 import cn.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
+import cn.xvoid.axolotl.excel.reader.support.AxolotlValid;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
@@ -105,6 +106,12 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
      * 默认使用默认值10条
      */
     private int searchHeaderMaxRows = -1;
+
+    /**
+     * 验证组
+     * @see jakarta.validation.Validator 验证器
+     */
+    private Class<?>[] validGroups = new Class[]{AxolotlValid.class};
 
     /**
      * 默认构造
