@@ -101,7 +101,7 @@ public class AxolotlExcelStream<T> implements Iterator<T> {
      */
     public void readDataBatch(int batchSize, ReadBatchTask<T> task){
         if(batchSize < 1){
-            throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR, "每批数据的数量必须为正整数");
+            throw new IllegalArgumentException("每批数据的数量必须为正整数");
         }
         List<T> data = new ArrayList<>();
         int idx = 0;
