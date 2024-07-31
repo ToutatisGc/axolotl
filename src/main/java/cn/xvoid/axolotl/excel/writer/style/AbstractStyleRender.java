@@ -592,7 +592,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
         if (autoInsertSerialNumber){
             SXSSFCell cell = dataRow.createCell(writtenColumn);
-            cell.setCellValue(serialNumber);
+            cell.setCellValue(serialNumber+1);
             cell.setCellStyle(rowStyle);
             writtenColumnMap.put(columnMappingEmpty?writtenColumn++:0,1);
         }

@@ -224,7 +224,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
             if (autoInsertSerialNumber){
                 SXSSFCell cell = dataRow.createCell(writtenColumn);
-                cell.setCellValue(serialNumber);
+                cell.setCellValue(serialNumber+1);
                 if(cellProperty != null){
                     //设置行高 执行顺序为1 优先级较低
                     dataRow.setHeight(cellProperty.getRowHeight());
