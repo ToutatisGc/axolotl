@@ -23,6 +23,8 @@ import java.util.Map;
  * @author Toutatis_Gc
  */
 public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implements DataCastAdapter<String> {
+
+    private static final DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
     @Override
     public String cast(CellGetInfo cellGetInfo, CastContext<String> context) {
         Object cellValue = cellGetInfo.getCellValue();
@@ -63,7 +65,6 @@ public class DefaultStringAdapter extends AbstractDataCastAdapter<String> implem
                 short dataFormat = cellGetInfo.get_cell().getCellStyle().getDataFormat();
                 boolean isText = (dataFormat == StyleHelper.DATA_FORMAT_GENERAL_INDEX || dataFormat == StyleHelper.DATA_FORMAT_PLAIN_TEXT_INDEX);
                 if (isText){
-                    DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
                     return decimalFormat.format(cellValue);
 //                    if ((Double) cellValue % 1 == 0) {
 //                        return Integer.toString(((Double) cellValue).intValue());
