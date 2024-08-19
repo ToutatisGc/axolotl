@@ -80,7 +80,12 @@ public enum ExcelWritePolicy {
     /**
      * 是否使用字典转换
      */
-    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, false, false)
+    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, false, false),
+
+    /**
+     * 计算数据为整数数据时，忽略默认小数位,展示为整数
+     */
+    SIMPLE_CALCULATE_INTEGER_IGNORE_DECIMAL(Type.BOOLEAN, true, false),
     ;
 
     /**

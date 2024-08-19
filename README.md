@@ -4,7 +4,7 @@
 
 ## Part.1 简介
 
-**✨此项目目前处于ALPHA版本✨**
+**✨此项目目前处于BETA版本✨**
 
 ------
 
@@ -37,16 +37,16 @@
 
 ### 1.1 版本更新说明
 
-#### 🔝Java17 版本 <font color='red'>1.0.15</font> 更新说明
+#### 🔝Java17 版本 <font color='red'>1.0.16</font> 更新说明
 
-发布时间：[2024-05-UNKNOW]
+发布时间：[2024-08-19]
 
-- 增加读取特性READ_FIELD_USE_SETTER，读取字段使用字段的Setter方法，而并非使用反射赋值。
-- 增加字典映射支持，使用config.setDict()方法，可设置字典码与字面量的转换。
-- 增加写入特性SIMPLE_USE_GETTER_METHOD写入时，获取值使用Getter方法。
-- 为模板写入器增加了数据转换器的支持，同自动写入器保持一致。
-- 新增`AxolotlFaster`类添加语法糖，使导入导出时减少配置方法语法更精简。
-- 修复部分多表写入BUG。
+- **(极为重要)修改了整体包的路径引用需要从cn.toutatis.xvoid -> cn.xvoid**
+- **(极为重要)注解校验功能需要在注解的group中添加AxolotlValid组,以避免一个类复用时校验无法通过的问题。**
+- 自动序号将从1开始计数。
+- 添加AxolotlFaster工具类快捷导出。
+- 使用表头匹配功能时,增加了移除单元格左右空格的优化，并允许多个表头名称去匹配,允许相对模糊的匹配。
+- 修复了一些特性引起的读取逻辑不清晰。
 
 #### 🧩历史版本更新说明
 
@@ -769,18 +769,21 @@ autoWriteConfig.setThemeStyleRender(theme);
 
 在写入数据时，支持写入策略来对数据进行处理。
 
-| 策略名称                               | 使用范围 | 说明                                                         |
-| -------------------------------------- | -------- | ------------------------------------------------------------ |
-| AUTO_CATCH_COLUMN_LENGTH               | 自动写入 | 自动计算列长度                                               |
-| AUTO_INSERT_SERIAL_NUMBER              | 自动写入 | 自动在第一列插入编号                                         |
-| AUTO_FILL_DEFAULT_CELL_WHITE           | 自动写入 | 默认填充单元格为白色                                         |
-| AUTO_INSERT_TOTAL_IN_ENDING            | 自动写入 | 自动在结尾插入合计行                                         |
-| AUTO_HIDDEN_BLANK_COLUMNS              | 自动写入 | 默认隐藏工作表空白列<br /><font color='red'>将影响导出性能和增大存储空间</font> |
-| TEMPLATE_SHIFT_WRITE_ROW               | 模板写入 | 数据写入自动将数据写入下移到下一行                           |
-| TEMPLATE_PLACEHOLDER_FILL_DEFAULT      | 模板写入 | 为没有指定的占位符填充默认值                                 |
-| TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL | 模板写入 | 空值是否使用模板填充                                         |
-| TEMPLATE_NON_TEMPLATE_CELL_FILL        | 模板写入 | 非模板单元格是否模板填充                                     |
-| EXCEPTION_RETURN_RESULT                | 通用     | 异常将返回结果，不抛出异常                                   |
+| 策略名称                                | 使用范围 | 说明                                                         |
+| --------------------------------------- | -------- | ------------------------------------------------------------ |
+| AUTO_CATCH_COLUMN_LENGTH                | 自动写入 | 自动计算列长度                                               |
+| AUTO_INSERT_SERIAL_NUMBER               | 自动写入 | 自动在第一列插入编号                                         |
+| AUTO_FILL_DEFAULT_CELL_WHITE            | 自动写入 | 默认填充单元格为白色                                         |
+| AUTO_INSERT_TOTAL_IN_ENDING             | 自动写入 | 自动在结尾插入合计行                                         |
+| AUTO_HIDDEN_BLANK_COLUMNS               | 自动写入 | 默认隐藏工作表空白列<br /><font color='red'>将影响导出性能和增大存储空间</font> |
+| TEMPLATE_SHIFT_WRITE_ROW                | 模板写入 | 数据写入自动将数据写入下移到下一行                           |
+| TEMPLATE_PLACEHOLDER_FILL_DEFAULT       | 模板写入 | 为没有指定的占位符填充默认值                                 |
+| TEMPLATE_NULL_VALUE_WITH_TEMPLATE_FILL  | 模板写入 | 空值是否使用模板填充                                         |
+| TEMPLATE_NON_TEMPLATE_CELL_FILL         | 模板写入 | 非模板单元格是否模板填充                                     |
+| SIMPLE_EXCEPTION_RETURN_RESULT          | 通用     | 异常将返回结果，不抛出异常                                   |
+| SIMPLE_USE_GETTER_METHOD                | 通用     | 是否使用getter方法,取消则直接使用反射字段值                  |
+| SIMPLE_USE_DICT_CODE_TRANSFER           | 通用     | 是否使用字典转换                                             |
+| SIMPLE_CALCULATE_INTEGER_IGNORE_DECIMAL | 通用     | 计算数据为整数数据时，忽略默认小数位,展示为整数              |
 
 ### 4.2 PDF操作
 

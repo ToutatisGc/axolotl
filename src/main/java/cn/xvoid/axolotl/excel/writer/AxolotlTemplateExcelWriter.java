@@ -8,6 +8,7 @@ import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.xvoid.axolotl.excel.writer.style.ComponentRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.*;
+import cn.xvoid.axolotl.excel.writer.support.inverters.DataInverter;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -241,9 +242,15 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         HashBasedTable<Integer, String, CellAddress> calculateReferenceData = context.getCalculateReferenceData();
         Map<String, CellAddress> calculateData = calculateReferenceData.row(sheetIndex);
         Map<String, BigDecimal> extract = new HashMap<>();
+        DataInverter<?> dataInverter = config.getDataInverter();
+        boolean calculateIgnoreDecimal = config.getWritePolicyAsBoolean(ExcelWritePolicy.SIMPLE_CALCULATE_INTEGER_IGNORE_DECIMAL);
         for (String s : calculateData.keySet()) {
             BigDecimal calculatedValue = calculateData.get(s).getCalculatedValue();
-            extract.put(s,calculatedValue.setScale(AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP));
+            boolean isInteger = false;
+            if (calculateIgnoreDecimal){
+                isInteger = calculatedValue.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0;
+            }
+            extract.put(s,calculatedValue.setScale(isInteger ? 0 : AxolotlDefaultReaderConfig.XVOID_DEFAULT_DECIMAL_SCALE, RoundingMode.HALF_UP));
         }
         this.writeSingleData(getWorkbookSheet(sheetIndex),extract,calculateReferenceData,true);
     }
