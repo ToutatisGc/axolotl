@@ -288,7 +288,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     }
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses,usedCellStyle);
-                if (headerMaxDepth > 1){
+                if (headerMaxDepth > 1 && cellAddresses.getNumberOfCells() != 1){
                     sheet.addMergedRegion(cellAddresses);
                 }
                 headerColumnCount+=orlopCellNumber;
@@ -484,7 +484,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                     }
                 }
                 StyleHelper.renderMergeRegionStyle(sheet,cellAddresses, usedCellStyle);
-                if (mergeRowNumber !=  startRow){
+                if (mergeRowNumber !=  startRow && cellAddresses.getNumberOfCells() != 1){
                     sheet.addMergedRegion(cellAddresses);
                 }
                 headerRecursiveInfo.setAlreadyWriteColumn(endColumnPosition);

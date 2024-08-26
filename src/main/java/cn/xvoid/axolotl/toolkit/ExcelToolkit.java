@@ -44,11 +44,13 @@ public class ExcelToolkit {
         if (row == null){
             return true;
         }
-        int isAllBlank = 0;
-        short lastCellNum = rangeEnd < 0 ? row.getLastCellNum() : (short) rangeEnd;
+        short rowLastCellNum = row.getLastCellNum();
+        if (rowLastCellNum <= 0){return true;}
+        short lastCellNum = rangeEnd < 0 ?  rowLastCellNum: (short) rangeEnd;
         if(rangeStart > lastCellNum){
             throw new IllegalArgumentException("读取列起始位置必须大于结束位置");
         }
+        int isAllBlank = 0;
         for (int i = rangeStart; i < lastCellNum; i++) {
             Cell cell = row.getCell(i);
             if (cell == null || cell.getCellType() == CellType.BLANK){
