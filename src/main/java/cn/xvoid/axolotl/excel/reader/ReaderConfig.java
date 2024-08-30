@@ -7,6 +7,7 @@ import cn.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlValid;
+import cn.xvoid.axolotl.excel.reader.support.docker.MapDocker;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
@@ -113,6 +114,8 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
      */
     private Class<?>[] validGroups = new Class[]{AxolotlValid.class};
 
+    private Map<String, MapDocker<?>> mapDockerMap = new LinkedHashMap<>();
+
     /**
      * 默认构造
      */
@@ -144,6 +147,10 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
         this.setCastClass(castClass);
 
     }
+
+//    private Map<String,MapDocker<?>> defaultMapDockers() {
+//         TODO 添加映射
+//    }
 
     /**
      * 设置默认读取策略

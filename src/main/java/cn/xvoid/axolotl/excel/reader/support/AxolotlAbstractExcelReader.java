@@ -17,6 +17,7 @@ import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
+import cn.xvoid.common.standard.StringPool;
 import cn.xvoid.toolkit.clazz.ClassToolkit;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Time;
@@ -47,6 +48,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -759,6 +761,9 @@ public abstract class AxolotlAbstractExcelReader<T> {
         return cellGetInfo;
     }
 
+    private final static DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
+
+    private static final String MAP_VALUE_PREFIX = "CELL_";
     /**
      * [ROOT]
      * 填充单元格数据到map
@@ -774,23 +779,32 @@ public abstract class AxolotlAbstractExcelReader<T> {
             if (cell != null){
                 workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
                 int idx = cell.getColumnIndex() + 1;
-                String key = "CELL_" + idx;
-                instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null,readerConfig).getCellValue());
+
+                CellGetInfo cellOriginalValue = getCellOriginalValue(row, cell.getColumnIndex(), null, readerConfig);
+                instance.putAll(mapMasterKey(i, cellOriginalValue,readerConfig));
+
                 if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
                     instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                    if (cell.getCellType() == CellType.NUMERIC){
-                        if (DateUtil.isCellDateFormatted(cell)){
-                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                            instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
-                        }else{
-                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                        }
-                    }else {
-                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                    }
                 }
             }
         }
+    }
+
+    /**
+     * map万能钥匙
+     * @param index 列索引
+     * @param cellGetInfo 单元格值
+     * @param readerConfig 读取配置
+     * @return map读取信息
+     * @param <RT> 读取类型
+     */
+    private <RT> Map<String, Object> mapMasterKey(int index, CellGetInfo cellGetInfo, ReaderConfig<RT> readerConfig) {
+        Map<String, Object> cellExtendedInformation = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.SORTED_READ_SHEET_DATA) ? new LinkedHashMap<>() : new HashMap<>();
+        String key = MAP_VALUE_PREFIX + index;
+        cellExtendedInformation.put(key, cellGetInfo.getCellValue());
+        CellType cellType = cellGetInfo.getCellType();
+//
+        return cellExtendedInformation;
     }
 
     /**

@@ -25,7 +25,7 @@ public class CellGetInfo {
     private Object cellValue = null;
 
     /**
-     * 单元格对象只有数字格式会将单元格赋值
+     * 注意:cellType单元格对象只有数字格式会将单元格赋值,其余为null
      */
     private Cell _cell;
 
