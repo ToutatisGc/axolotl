@@ -11,6 +11,7 @@ import cn.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastAdapter;
 import cn.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
+import cn.xvoid.axolotl.excel.reader.support.docker.MapDocker;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.xvoid.axolotl.excel.writer.style.ComponentRender;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
@@ -784,7 +785,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
                 instance.putAll(mapMasterKey(i, cellOriginalValue,readerConfig));
 
                 if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
-                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
+                    instance.put("CELL_"+idx+"@TYPE",cell.getCellType());
                 }
             }
         }
@@ -802,8 +803,29 @@ public abstract class AxolotlAbstractExcelReader<T> {
         Map<String, Object> cellExtendedInformation = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.SORTED_READ_SHEET_DATA) ? new LinkedHashMap<>() : new HashMap<>();
         String key = MAP_VALUE_PREFIX + index;
         cellExtendedInformation.put(key, cellGetInfo.getCellValue());
-        CellType cellType = cellGetInfo.getCellType();
-//
+        Map<String, MapDocker<?>> mapDockerMap = readerConfig.getMapDockerMap();
+        boolean allowPutNullValue = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.MAP_ALLOW_PUT_NULL_VALUE);
+        for (Map.Entry<String, MapDocker<?>> dockerEntry : mapDockerMap.entrySet()) {
+            String extendKey = key+StringPool.AT+dockerEntry.getKey();
+            if (!readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.FIELD_EXIST_OVERRIDE) && cellExtendedInformation.containsKey(extendKey)){
+                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,String.format("字段:[%s]已存在,跳过",extendKey));
+                continue;
+            }
+            MapDocker<?> docker = dockerEntry.getValue();
+            Object convertedValue = docker.convert(index, cellGetInfo, readerConfig);
+            if (convertedValue == null){
+                Boolean nullDisplay = docker.getNullDisplay();
+                if (nullDisplay == null){
+                    nullDisplay = allowPutNullValue;
+                    LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,String.format("字段:[%s]为空,是否显示:[使用全局配置]- %s",extendKey,nullDisplay));
+                }else{
+                    LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,String.format("字段:[%s]为空,是否显示:%s",extendKey,nullDisplay));
+                }
+                if (nullDisplay){cellExtendedInformation.put(extendKey,null);}
+            }else{
+                cellExtendedInformation.put(extendKey, convertedValue);
+            }
+        }
         return cellExtendedInformation;
     }
 

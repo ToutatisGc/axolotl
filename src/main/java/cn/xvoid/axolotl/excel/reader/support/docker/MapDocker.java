@@ -5,18 +5,12 @@ import cn.xvoid.axolotl.excel.reader.support.CellGetInfo;
 
 
 public interface MapDocker<T> {
-//
-//    /**
-//     * 设置map拓展后缀
-//     * @param name 后缀
-//     */
-//    void setSuffix(String name);
-//
-//    /**
-//     * 获取map拓展后缀
-//     * @return 后缀
-//     */
-//    String getSuffix();
+
+    /**
+     * 获取map拓展后缀
+     * @return 后缀
+     */
+    String getSuffix();
 
     /**
      * 设置转换后为null是否显示
@@ -35,6 +29,6 @@ public interface MapDocker<T> {
      * @param cellGetInfo 单元格值
      * @return 转换
      */
-    public T convert(int index,CellGetInfo cellGetInfo, ReaderConfig<?> readerConfig);
+    T convert(int index, CellGetInfo cellGetInfo, ReaderConfig<?> readerConfig);
 
 }

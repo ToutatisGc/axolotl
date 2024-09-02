@@ -1,5 +1,6 @@
 package cn.xvoid.axolotl.excel.reader;
 
+import cn.xvoid.axolotl.Meta;
 import cn.xvoid.axolotl.common.AxolotlCommonConfig;
 import cn.xvoid.axolotl.common.annotations.AxolotlDictMapping;
 import cn.xvoid.axolotl.excel.reader.annotations.*;
@@ -9,15 +10,19 @@ import cn.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlValid;
 import cn.xvoid.axolotl.excel.reader.support.docker.MapDocker;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
+import cn.xvoid.axolotl.exceptions.AxolotlException;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
+import cn.xvoid.common.exception.base.VoidRuntimeException;
+import cn.xvoid.toolkit.clazz.ClassToolkit;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Regex;
 import cn.xvoid.toolkit.log.LoggerToolkit;
+import cn.xvoid.toolkit.log.LoggerToolkitKt;
 import cn.xvoid.toolkit.validator.Validator;
-import cn.xvoid.axolotl.excel.reader.annotations.*;
 import lombok.*;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -114,43 +119,122 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
      */
     private Class<?>[] validGroups = new Class[]{AxolotlValid.class};
 
-    private Map<String, MapDocker<?>> mapDockerMap = new LinkedHashMap<>();
 
     /**
-     * 默认构造
+     * 声明一个私有的、不可变的、基于泛型的映射集合，用于存储不同类型的Map映射对象
+     * 使用 LinkedHashMap 以保持插入顺序
+     */
+    private final Map<String, MapDocker<?>> mapDockerMap = new LinkedHashMap<>();
+
+    /**
+     * 默认构造函数，创建一个带有默认配置的ReaderConfig对象
      */
     public ReaderConfig() {
         this(true);
     }
 
     /**
-     * @param castClass 读取的Java类型
+     * 构造函数，创建一个带有指定类型参数的ReaderConfig对象，并应用默认配置
+     *
+     * @param castClass 指定的类型参数，用于类型转换或校验
      */
     public ReaderConfig(Class<T> castClass) {
-        this(true);
-        this.setCastClass(castClass);
+        this.setCastClass(castClass,true);
     }
 
     /**
+     * 构造函数，创建一个ReaderConfig对象，并根据参数决定是否应用默认配置
      *
+     * @param withDefaultConfig 表示是否应用默认配置的布尔值
      */
     public ReaderConfig(boolean withDefaultConfig) {
-        if (withDefaultConfig) {
-            rowReadPolicyMap.putAll(defaultReadPolicy());
-        }
+        this(null,withDefaultConfig);
     }
 
+    /**
+     * 构造函数，创建一个ReaderConfig对象，根据参数决定是否应用默认配置以及设置类型参数
+     *
+     * @param castClass 指定的类型参数，用于类型转换或校验，可以为null
+     * @param withDefaultConfig 表示是否应用默认配置的布尔值
+     */
     public ReaderConfig(Class<T> castClass, boolean withDefaultConfig) {
         if (withDefaultConfig) {
             rowReadPolicyMap.putAll(defaultReadPolicy());
+            setInnerMapDockers(null);
         }
-        this.setCastClass(castClass);
-
+        if (castClass != null){
+            this.setCastClass(castClass);
+        }
     }
 
-//    private Map<String,MapDocker<?>> defaultMapDockers() {
-//         TODO 添加映射
-//    }
+    /**
+     * 设置内部字典映射器的列表
+     * 本方法负责加载和筛选字典映射器类，并将其添加到mapDockerMap中
+     * 只有在include列表中指定的映射器才会被添加，如果include为null，则全部添加
+     *
+     * @param include 一个包含需要加载的字典映射器后缀名的列表，如果为null，则加载所有映射器
+     */
+    public void setInnerMapDockers(List<String> include) {
+        LinkedHashMap<String, MapDocker<?>> mapDockers = new LinkedHashMap<>();
+        String packageName = MapDocker.class.getPackageName();
+        try {
+            LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,"CONFIG","加载默认字典映射器");
+            List<Class<?>> dockerPackage = ClassToolkit.getClassesForPackage(packageName+".impl");
+            for (Class<?> originClass : dockerPackage) {
+                @SuppressWarnings("unchecked")
+                Class<? extends MapDocker<?>> dockerClass = (Class<? extends MapDocker<?>>) originClass;
+                MapDocker<?> docker = ReflectToolkit.createInstance(dockerClass);
+                String suffix = docker.getSuffix();
+                if (include == null || include.contains(suffix)) {
+                    mapDockers.put(suffix, docker);
+                }
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            throw new VoidRuntimeException(e.getMessage());
+        }
+        mapDockerMap.putAll(mapDockers);
+    }
+
+    /**
+     * 设置单个MapDocker实例
+     * 此方法用于向内部集合中添加一个MapDocker实例，使用默认后缀
+     * @param mapDocker 要添加的MapDocker实例，不能为null
+     * @throws AxolotlException 如果提供的mapDocker为null，则抛出异常
+     */
+    public void setMapDocker(MapDocker<?> mapDocker) {
+        if (mapDocker == null){throw new AxolotlException("MapDocker不能为null");}
+        this.setMapDocker(mapDocker.getSuffix(), mapDocker);
+    }
+
+    /**
+     * 设置带有特定后缀的MapDocker实例
+     * 此方法允许指定MapDocker实例的后缀，并将其添加到内部集合中
+     * @param suffix MapDocker实例的后缀，用于后续检索，不能为null
+     * @param mapDocker 要添加的MapDocker实例，不能为null
+     * @throws AxolotlException 如果提供的mapDocker或suffix为null，则抛出异常
+     */
+    public void setMapDocker(String suffix, MapDocker<?> mapDocker) {
+        if (mapDocker == null){throw new AxolotlException("MapDocker不能为null");}
+        if (suffix == null){throw new AxolotlException("MapDocker后缀不能为null");}
+        this.mapDockerMap.put(suffix, mapDocker);
+    }
+
+    /**
+     * 批量设置MapDocker实例
+     * 此方法用于一次性将多个MapDocker实例添加到内部集合中
+     * @param mapDockers 包含多个MapDocker实例的映射，键为后缀
+     */
+    public void setMapDockers(Map<String, MapDocker<?>> mapDockers) {
+        this.mapDockerMap.putAll(mapDockers);
+    }
+
+    /**
+     * 清空所有MapDocker实例
+     * 此方法用于清空内部集合中所有的MapDocker实例
+     */
+    public void clearMapDockers() {
+        this.mapDockerMap.clear();
+    }
 
     /**
      * 设置默认读取策略

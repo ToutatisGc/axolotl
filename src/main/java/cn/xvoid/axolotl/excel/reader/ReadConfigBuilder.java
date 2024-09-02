@@ -15,7 +15,7 @@ public class ReadConfigBuilder<T> {
      * @param castClass 类型
      */
     public ReadConfigBuilder(Class<T> castClass) {
-        readerConfig = new ReaderConfig<>(castClass);
+        readerConfig = new ReaderConfig<>(castClass,true);
     }
 
     /**
