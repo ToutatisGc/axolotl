@@ -829,11 +829,10 @@ public abstract class AxolotlAbstractExcelReader<T> {
             }
         }
         if (mapConvertObjectPolicy){
-            AxolotlCellMapInfo axolotlCellMapInfo = new AxolotlCellMapInfo();
-            axolotlCellMapInfo.setCellIndex(index);
-            axolotlCellMapInfo.setOriginalValue(cellGetInfo.getCellValue());
-            axolotlCellMapInfo.setCellType(cellGetInfo.getCellType());
-            axolotlCellMapInfo.setDockerValues(convertedInfo);
+            AxolotlCellMapInfo axolotlCellMapInfo = new AxolotlCellMapInfo(index,cellGetInfo.getCellValue(),cellGetInfo.getCellType());
+            if (!convertedInfo.isEmpty()){
+                axolotlCellMapInfo.setDockerValues(convertedInfo);
+            }
             globalInfo.put(key, axolotlCellMapInfo);
         }else {
             globalInfo.put(key, cellGetInfo.getCellValue());

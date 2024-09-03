@@ -6,6 +6,7 @@ import cn.xvoid.axolotl.excel.reader.support.CellGetInfo;
 import cn.xvoid.axolotl.excel.reader.support.docker.AbstractMapDocker;
 import cn.xvoid.common.standard.StringPool;
 import cn.xvoid.toolkit.constant.Regex;
+import cn.xvoid.toolkit.number.NumberToolkit;
 import org.apache.poi.ss.usermodel.CellType;
 
 import java.text.DecimalFormat;
@@ -54,7 +55,11 @@ public class PlainTextMapDocker extends AbstractMapDocker<String> {
         String formatValue;
         if (cellGetInfo.getCellType() == CellType.NUMERIC) {
             // 使用预定义的格式化规则处理数值型单元格
-            formatValue = decimalTextFormat.format(cellValue);
+            if (NumberToolkit.isInteger((Double) cellValue)){
+                formatValue = decimalTextFormat.format(cellValue);
+            }else{
+                formatValue = cellValue.toString();
+            }
         } else {
             // 直接转换非数值型单元格为字符串
             formatValue = cellValue.toString();
