@@ -3,6 +3,7 @@ package cn.xvoid.axolotl.excel.dev;
 import cn.xvoid.axolotl.Axolotls;
 import cn.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.xvoid.axolotl.excel.reader.ReadConfigBuilder;
+import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.toolkit.file.FileToolkit;
 import org.junit.Test;
 
@@ -18,6 +19,17 @@ public class ReadTest {
         AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<Map> mapList = excelReader.readSheetData(
                 new ReadConfigBuilder<>(Map.class)
+        );
+        System.err.println(mapList);
+    }
+
+    @Test
+    public void testDataValidation2() {
+        File file = FileToolkit.getResourceFileAsFile("workbook/有效性测试.xlsx");
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
+        List<Map> mapList = excelReader.readSheetData(
+                new ReadConfigBuilder<>(Map.class)
+                        .setBooleanReadPolicy(ExcelReadPolicy.MAP_CONVERT_INFO_OBJECT,false)
         );
         System.err.println(mapList);
     }

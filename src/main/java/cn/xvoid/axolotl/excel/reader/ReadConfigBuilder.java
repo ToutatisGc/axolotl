@@ -1,5 +1,7 @@
 package cn.xvoid.axolotl.excel.reader;
 
+import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
+
 /**
  * 读取配置构建器
  *
@@ -136,6 +138,22 @@ public class ReadConfigBuilder<T> {
         readerConfig.setSheetColumnEffectiveRange(start,end);
         return this;
     }
+
+    /**
+     * 设置Excel读取策略的配置方法
+     *
+     * @param policy Excel读取策略，用于指定特定的读取行为或选项
+     * @param value 与读取策略关联的布尔值，用于启用或禁用特定行为
+     * @return 返回配置构建器对象，以支持链式调用
+     * 本方法通过接收一个Excel读取策略（ExcelReadPolicy）和一个布尔值，来配置Excel文件的读取方式
+     * ExcelReadPolicy是一个枚举类型，包含了不同读取策略的选项，如是否自动过滤空行、是否忽略错误的公式等
+     * 通过此方法，可以在构建Excel读取配置的过程中，灵活地设置各种读取策略，以满足不同的需求
+     */
+    public ReadConfigBuilder<T> setBooleanReadPolicy(ExcelReadPolicy policy, boolean value) {
+        readerConfig.setBooleanReadPolicy(policy,value);
+        return this;
+    }
+
 
     /**
      * 构建读取配置

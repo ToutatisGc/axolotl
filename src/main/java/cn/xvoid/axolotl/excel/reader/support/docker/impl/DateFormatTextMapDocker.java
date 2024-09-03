@@ -18,6 +18,13 @@ import org.slf4j.Logger;
  */
 public class DateFormatTextMapDocker extends AbstractMapDocker<String> {
 
+    /**
+     * 无参构造方法，默认为不显示空值
+     */
+    public DateFormatTextMapDocker() {
+        this.setNullDisplay(false);
+    }
+
     // 定义后缀名为日期格式的常量
     public static final String SUFFIX_NAME = "DATE_FMT";
 
