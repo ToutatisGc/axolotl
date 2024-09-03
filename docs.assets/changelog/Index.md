@@ -2,27 +2,34 @@
 
 ## 最新更新：
 
-​	最后更新时间：<font color='red'>2024-04-30</font>
+​	最后更新时间：<font color='red'>2024-09-03</font>
 
-​	Java17依赖版本**（LTS）**：<font color='red'>1.0.15</font>
+​	Java17依赖版本**（LTS）**：<font color='red'>1.0.17</font>
 
-​	Java8依赖版本：<font color='red'>1.0.15-8</font>
+​	Java8依赖版本：<font color='red'>1.0.17-8</font>
 
-### 🔝Java17 版本 <font color='red'>1.0.15</font> 更新说明
+### 🔝 Java17 版本 <font color='red'>1.0.17</font> 更新说明
 
-发布时间：[2024-06-27]
+发布时间：[2024-09]
 
-- 增加读取特性READ_FIELD_USE_SETTER，读取字段使用字段的Setter方法，而并非使用反射赋值。
-- 增加字典映射支持，使用config.setDict()方法，可设置字典码与字面量的转换。
-- 增加写入特性SIMPLE_USE_GETTER_METHOD写入时，获取值使用Getter方法。
-- 为模板写入器增加了数据转换器的支持，同自动写入器保持一致。
-- 新增`AxolotlFaster`类添加语法糖，使导入导出时减少配置方法语法更精简。
-- 修复部分多表写入BUG。
+- 🎉**(重要功能)**新增读取Map拓展功能,可自由添加MapDocker赋予单元格更多类型,详情查看使用文档。
+- **默认校验组接口AxolotlValid改为AxolotlValid.Simple内部接口,将接口进一步隔离。**
 
 
 ## 历史更新：
 
-### 🧩Java17 版本 <font color='red'>1.0.15</font> 更新说明
+### 🧩 Java17 版本 <font color='red'>1.0.16</font> 更新说明
+
+发布时间：[2024-08-19]
+
+- **(极为重要)修改了整体包的路径引用需要从cn.toutatis.xvoid -> cn.xvoid。**
+- **(极为重要)注解校验功能需要在注解的group中添加AxolotlValid组,以避免一个类复用时校验无法通过的问题。**
+- 自动序号将从1开始计数。
+- 添加AxolotlFaster工具类快捷导出。
+- 使用表头匹配功能时,增加了移除单元格左右空格的优化，并允许多个表头名称去匹配,允许相对模糊的匹配。
+- 修复了一些特性引起的读取逻辑不清晰。
+
+### 🧩 Java17 版本 <font color='red'>1.0.15</font> 更新说明
 
 发布时间：[2024-06-27]
 
@@ -33,7 +40,7 @@
 - 新增`AxolotlFaster`类添加语法糖，使导入导出时减少配置方法语法更精简。
 - 修复部分多表写入BUG。
 
-### 🧩Java17 版本 1.0.14 更新说明
+### 🧩 Java17 版本 1.0.14 更新说明
 
 发布时间：[2024-04-03]
 

@@ -117,7 +117,7 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
      * 验证组
      * @see jakarta.validation.Validator 验证器
      */
-    private Class<?>[] validGroups = new Class[]{AxolotlValid.class};
+    private Class<?>[] validGroups = new Class[]{AxolotlValid.Simple.class};
 
 
     /**
