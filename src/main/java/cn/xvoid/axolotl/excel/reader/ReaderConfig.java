@@ -16,6 +16,7 @@ import cn.xvoid.common.exception.base.VoidRuntimeException;
 import cn.xvoid.toolkit.clazz.ClassToolkit;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Regex;
+import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkitKt;
 import cn.xvoid.toolkit.validator.Validator;
@@ -66,6 +67,12 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
      * endIndex = -1时将读取表尾
      */
     private int endIndex = -1;
+
+    /**
+     * 全局日期格式
+     * @since 1.0.17 将日期格式提升到全局变量
+     */
+    private String globalDateFormat = Time.YMD_HORIZONTAL_FORMAT_REGEX;
 
     /**
      * 工作表有效列起始范围
@@ -335,7 +342,9 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
             SpecifyPositionBind specifyPositionBind = declaredField.getAnnotation(SpecifyPositionBind.class);
             if (specifyPositionBind != null) {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.POSITION);
-                entityCellMappingInfo.setFormat(specifyPositionBind.format());
+                String format = specifyPositionBind.format();
+                if ("NULL".equalsIgnoreCase(format)){format = globalDateFormat;}
+                entityCellMappingInfo.setFormat(format);
                 entityCellMappingInfo.setDataCastAdapter(specifyPositionBind.adapter());
                 String position = specifyPositionBind.value().toUpperCase();
                 String[] alphaNumeric = Regex.splitAlphaNumeric(position);
@@ -363,7 +372,9 @@ public class ReaderConfig<T> extends AxolotlCommonConfig {
                 entityCellMappingInfo.setMappingType(EntityCellMappingInfo.MappingType.INDEX);
                 entityCellMappingInfo.setColumnPosition(columnBind.columnIndex());
                 entityCellMappingInfo.setDataCastAdapter(columnBind.adapter());
-                entityCellMappingInfo.setFormat(columnBind.format());
+                String format = columnBind.format();
+                if ("NULL".equalsIgnoreCase(format)){format = globalDateFormat;}
+                entityCellMappingInfo.setFormat(format);
                 String[] headers = columnBind.headerName();
                 if (headers.length > 0){
                     indexPositionMappingInfos.addAll(cloneMultipleHeaderMappingInfo(entityCellMappingInfo,headers, columnBind));

@@ -66,7 +66,7 @@ public class DateFormatTextMapDocker extends AbstractMapDocker<String> {
             // 如果单元格是以日期格式显示的数值
             if (DateUtil.isCellDateFormatted(cell)){
                 // 返回格式化后的日期字符串
-                return Time.regexTime(cell.getDateCellValue());
+                return Time.regexTime(readerConfig.getGlobalDateFormat(),cell.getDateCellValue());
             }else{
                 // 如果启用了调试策略并且日志记录器允许trace级别日志
                 if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG) && LOGGER.isTraceEnabled()){

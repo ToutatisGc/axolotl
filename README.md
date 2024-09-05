@@ -43,6 +43,7 @@
 
 - 🎉**(重要功能)**新增读取Map拓展功能,可自由添加MapDocker赋予单元格更多类型,详情查看使用文档。
 - **默认校验组接口AxolotlValid改为AxolotlValid.Simple内部接口,将接口进一步隔离。**
+- 将绑定注解的format分离为全局变量和注解变量,提升灵活性。
 
 #### 🧩历史版本更新说明
 
@@ -65,7 +66,7 @@
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>1.0.15</version>
+    <version>1.0.17</version>
 </dependency>
 ```
 
@@ -75,7 +76,7 @@
 <dependency>
     <groupId>cn.toutatis</groupId>
     <artifactId>axolotl</artifactId>
-    <version>1.0.15-8</version>
+    <version>1.0.17-8</version>
 </dependency>
 ```
 
@@ -112,6 +113,17 @@ AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
 List<Object> data = excelReader.readSheetData();
 System.out.println(data);
 ```
+
+**<font color='green'>[Ver.1.0.17新增功能]</font>** 读取Map时读取器增加拓展方法:
+
+```java
+// 该方法将单元格值和拓展类型拍平为map中的key来区分单元格中的不同属性,例如CELL_0为第列,CELL_0@PLAIN_TEXT为CELL_0的文本值
+List<Map<String, Object>> maps = excelReader.readSheetDataAsFlatMap(null);
+// 该方法将行中单元格转为AxolotlCellMapInfo对象,对象中包含单元格原值,转换值,单元格类型等
+List<Map<String, AxolotlCellMapInfo>> maps = excelReader.readSheetDataAsMapObject(null);
+```
+
+详情查看Map拓展坞[【📌点击跳转至对应章节】](#Anchor-MapDocker)。
 
 #### 3.2.2 写入Excel文件
 
@@ -305,6 +317,8 @@ readerConfig.setBooleanReadPolicy(ReadPolicy.IGNORE_EMPTY_SHEET_ERROR, false);
 | TRIM_CELL_VALUE                 | 修整单元格去掉单元格所有的空格和换行符                       | Boolean  | true           | true   |
 | USE_MAP_DEBUG                   | 使用Map接收数据时，打印调试信息                              | Boolean  | true           | true   |
 | FIELD_EXIST_OVERRIDE            | 如果字段存在值覆盖掉原值                                     | Boolean  | true           | true   |
+| MAP_ALLOW_PUT_NULL_VALUE        | 允许map中put Null值<br />false将忽略空值,不put对应Key值      | Boolean  | true           | true   |
+| MAP_CONVERT_INFO_OBJECT         | 读取数据时，将数据转换成Map信息对象                          | Boolean  | true           | true   |
 | **VALIDATE_READ_ROW_DATA**      | 读取数据后校验数据                                           | Boolean  | true           | true   |
 
 ##### 4.1.1.5 JSR-303支持（数据校验）
@@ -406,7 +420,9 @@ while (dataIterator.hasNext()){
 
 ##### 4.1.1.8 数据适配器
 
-​	**数据适配器（DataCastAdapter）**用于将Excel单元格转换为Java实体对应属性的的处理器，在获取到单元格数据时适配为转换类实例对象中对应字段类型并赋值。
+###### 实体类型:
+
+​	实体类型使用**数据适配器（DataCastAdapter）**将Excel单元格转换为Java实体对应属性的的处理器，在获取到单元格数据时适配为转换类实例对象中对应字段类型并赋值。
 
 **📖适配器的配置：**
 
@@ -541,6 +557,136 @@ public abstract class AbstractDataCastAdapter<FT> implements DataCastAdapter<FT>
 | ---------------------------------------------- | ------------------------------------------------------------ |
 | ReaderConfig<?> readerConfig                   | 为读取表格时的相关配置信息，包括已启用的读取特性、读取的sheet表相关信息、读取表头的范围信息（当以表头名称绑定列时可用）、实体类属性与表格的映射信息（所有属性）以及读取的行次、列次范围信息等等。 |
 | EntityCellMappingInfo<?> entityCellMappingInfo | 主要为当前属性的相关映射信息，如属性类型、属性名称、对应单元格的行次列次、单元格映射类型以及该属性排除的读取特性等等。 |
+
+###### 映射(Map)类型:<span id="Anchor-MapDocker"> </span>
+
+​	映射类型(Map)由于开发者无法对获取的值进行类型转换,可使用**MapDocker(数据坞)**进行字段拓展，在单元格原值的基础上拓展出多个转换值。
+
+**📖功能说明:**
+
+> ​	举例单元格值为2024-10-01，在POI中获取的值为(Double)45566,为什么是45566,因为Excel中使用的日期系统基准日期被称为"1900 Date System",Excel将1900年1月1日定义为日期序列值1,每天依次累加。在这种情况下，使用Map读取时框架无法知道转换类型，获取到值为浮点数类型，但我们实际需要的可能是字符串类型，也可能是日期类型，在这种情况下我们需要转换为对应格式，MapDocker的出现解决了该问题。
+>
+> ​	在策略MAP_CONVERT_INFO_OBJECT的模式下,单元格Map信息会转换为AxolotlCellMapInfo对象,并将该值拓展dockerValues属性中并以DATE_LOCAL_TIME作为Key的一个LocalDateTime格式的值。
+
+**📖MapDocker使用说明：**
+
+​	在MAP_CONVERT_INFO_OBJECT策略下,Map的Value会转换为AxolotlCellMapInfo类,该类具有如下属性:
+
+| 属性值        | 类型               | 说明                                                         |
+| ------------- | ------------------ | ------------------------------------------------------------ |
+| cellIndex     | int                | cellIndex存储了当前信息对象对应的单元格索引这个索引用于标识信息对象在数据结构中的位置 |
+| originalValue | Object             | originalValue存储了原始的单元格值这个值未经过任何处理，保持原始数据的形态 |
+| cellType      | CellType           | cellType获取单元格的类型，这有助于理解单元格数据的含义和如何处理这些数据 |
+| dockerValues  | Map<String,Object> | dockerValues是一个键值对集合，用于存储多个MapDocker转换后的值 |
+
+​	在MAP_CONVERT_INFO_OBJECT策略为False时,Map依旧保持为Map键值对的形式,但每个单元格会拓展为多个Key并以@作为分隔符添加,如以下示例:
+
+| Key(Index为单元格索引)                                       | Value            |
+| ------------------------------------------------------------ | ---------------- |
+| Cell_**[Index]**                                             | 单元格原值       |
+| Cell_**[Index]**<font color='orange'>@TYPE</font>(启用USE_MAP_DEBUG策略时添加) | 单元格类型       |
+| Cell_**[Index]**<font color='orange'>@PLAIN_TEXT</font>      | 单元格原值文本值 |
+
+**📖如何编写MapDocker:**
+
+ 1. 创建一个MapDocker,编写如何从原始值转为需求值
+
+    ```java
+    package cn.xvoid.axolotl.excel.reader.support.docker.impl;
+    
+    import cn.xvoid.axolotl.excel.reader.ReaderConfig;
+    import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
+    import cn.xvoid.axolotl.excel.reader.support.CellGetInfo;
+    import cn.xvoid.axolotl.excel.reader.support.docker.AbstractMapDocker;
+    import cn.xvoid.common.standard.StringPool;
+    import cn.xvoid.toolkit.constant.Regex;
+    import cn.xvoid.toolkit.number.NumberToolkit;
+    import org.apache.poi.ss.usermodel.CellType;
+    
+    import java.text.DecimalFormat;
+    
+    /**
+     * 纯文本映射Docker实现类
+     * 用于处理Excel单元格中的纯文本数据
+     * @author Toutatis_Gc
+     */
+    public class PlainTextMapDocker extends AbstractMapDocker<String> {
+    
+        /**
+         * 定义该Docker的后缀名
+         */
+        public static final String SUFFIX_NAME = "PLAIN_TEXT";
+    
+        /**
+         * 用于格式化数字的DecimalFormat实例
+         */
+        private final DecimalFormat decimalTextFormat = new DecimalFormat(StringPool.HASH);
+    
+        /**
+         * 获取该Docker的后缀名
+         *
+         * @return Docker的后缀名
+         */
+        @Override
+        public String getSuffix() {
+            return SUFFIX_NAME;
+        }
+    
+        /**
+         * 转换Excel单元格值为纯文本
+         *
+         * @param index 单元格索引
+         * @param cellGetInfo 单元格获取信息
+         * @param readerConfig 读取配置
+         * @return 转换后的纯文本字符串
+         */
+        @Override
+        public String convert(int index, CellGetInfo cellGetInfo, ReaderConfig<?> readerConfig) {
+            Object cellValue = cellGetInfo.getCellValue();
+            if (cellValue == null) {
+                return null;
+            }
+            String formatValue;
+            if (cellGetInfo.getCellType() == CellType.NUMERIC) {
+                // 使用预定义的格式化规则处理数值型单元格
+                if (NumberToolkit.isInteger((Double) cellValue)){
+                    formatValue = decimalTextFormat.format(cellValue);
+                }else{
+                    formatValue = cellValue.toString();
+                }
+            } else {
+                // 直接转换非数值型单元格为字符串
+                formatValue = cellValue.toString();
+            }
+            if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.TRIM_CELL_VALUE)) {
+                // 根据读取策略，可能需要去除单元格值的前后空格
+                formatValue = Regex.convertSingleLine(formatValue).replace(" ", "");
+            }
+            return formatValue;
+        }
+    }
+    ```
+
+    
+
+ 2. ReaderConfig设置该MapDocker使其生效
+
+    ```java
+    // 该方法可以自定义后缀
+    readerConfig.setMapDocker("EXAMPLE", exampleMapDocker);
+    // 使用exampleMapDocker.getSuffix();默认后缀
+    readerConfig.setMapDocker(exampleMapDocker);
+    ```
+
+    
+
+**📖默认支持的MapDocker：**
+
+| 拓展类型        | 空值是否添加 | 值                                                         |
+| --------------- | ------------ | ---------------------------------------------------------- |
+| PLAIN_TEXT      | True         | 单元格值字符串                                             |
+| DATE_FMT        | False        | 单元格格式化值(使用ReaderConfig.setGlobalDateFormat()设置) |
+| LOCAL_DATE_TIME | False        | 单元格值LocalDateTime类型                                  |
 
 ##### 4.1.1.9 实体读取相关信息
 

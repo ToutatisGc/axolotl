@@ -2,8 +2,11 @@ package cn.xvoid.axolotl.excel.reader;
 
 import cn.xvoid.axolotl.Meta;
 import cn.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
+import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlAbstractExcelReader;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
+import cn.xvoid.axolotl.excel.reader.support.docker.AxolotlCellMapInfo;
+import cn.xvoid.axolotl.excel.reader.support.docker.MapDocker;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
@@ -17,6 +20,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Excel读取器
@@ -244,6 +248,43 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
         this.spreadMergedCells(sheet,readerConfig);
         this.readSheetData(sheet,readerConfig,readResult);
         return readResult;
+    }
+
+    /**
+     * 根据提供的ReaderConfig读取Excel表格数据，并返回AxolotlCellMapInfo对象列表
+     * 该方法将结果强制转换为指定类型
+     * @see AxolotlCellMapInfo Map映射信息
+     * @param readerConfig 用于配置读取操作的配置对象，可以是任意泛型类型
+     * @return 返回一个List，其中每个Map代表一行数据，键为字符串，值为AxolotlCellMapInfo对象
+     */
+    @SuppressWarnings({"unchecked"})
+    public List<Map<String, AxolotlCellMapInfo>> readSheetDataAsMapObject(ReaderConfig<?> readerConfig){
+        ReaderConfig<?> configedMapReaderConfig = configMapReaderConfig(readerConfig,true);
+        return (List<Map<String, AxolotlCellMapInfo>>) this.readSheetData(configedMapReaderConfig);
+    }
+
+    /**
+     * 将工作表数据读取为平面映射列表
+     * Key命名规则为CELL_<单元格索引>[@自定义MapDocker]
+     * @see ReaderConfig#setMapDocker(String, MapDocker)
+     * @param readerConfig 读取配置，泛型参数表示配置的具体类型
+     * @return 返回一个List，每个元素是一个Map，表示一行数据
+     */
+    @SuppressWarnings({"unchecked"})
+    public List<Map<String, Object>> readSheetDataAsFlatMap(ReaderConfig<?> readerConfig){
+        ReaderConfig<?> configedMapReaderConfig = configMapReaderConfig(readerConfig,false);
+        return (List<Map<String, Object>>) this.readSheetData(configedMapReaderConfig);
+    }
+    @SuppressWarnings({"unchecked","rawtypes"})
+    private ReaderConfig<?> configMapReaderConfig(ReaderConfig<?> readerConfig,boolean convertObjectOrFlat){
+        ReaderConfig mapReaderConfig = readerConfig;
+        if (readerConfig == null){
+            mapReaderConfig = new ReaderConfig<Map<String, AxolotlCellMapInfo>>();
+        }
+        mapReaderConfig.setCastClass(Map.class);
+        mapReaderConfig.setBooleanReadPolicy(ExcelReadPolicy.MAP_CONVERT_INFO_OBJECT,convertObjectOrFlat);
+        LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,"读取策略已被强制设置为[MAP_CONVERT_INFO_OBJECT],并设置读取类型为[Map.class]");
+        return mapReaderConfig;
     }
 
     /**
