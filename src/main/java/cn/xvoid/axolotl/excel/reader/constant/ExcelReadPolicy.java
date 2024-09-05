@@ -1,5 +1,6 @@
 package cn.xvoid.axolotl.excel.reader.constant;
 
+import cn.xvoid.axolotl.excel.reader.support.docker.AxolotlCellMapInfo;
 import lombok.Getter;
 
 /**
@@ -72,6 +73,18 @@ public enum ExcelReadPolicy {
     USE_MAP_DEBUG(Type.BOOLEAN, true,true),
 
     /**
+     * 允许map中put Null值
+     * false将忽略空值,不put对应Key值
+     */
+    MAP_ALLOW_PUT_NULL_VALUE(Type.BOOLEAN, true,true),
+
+    /**
+     * 读取数据时，将数据转换成Map信息对象
+     * @see AxolotlCellMapInfo Map映射对象
+     */
+    MAP_CONVERT_INFO_OBJECT(Type.BOOLEAN, true,true),
+
+    /**
      * 如果字段存在值覆盖掉原值
      * true:覆盖
      * false:不覆盖
@@ -80,6 +93,7 @@ public enum ExcelReadPolicy {
 
     /**
      * 读取数据后校验数据
+     * 注意:读取Map类型不支持校验数据
      */
     VALIDATE_READ_ROW_DATA(Type.BOOLEAN, true,true),
 

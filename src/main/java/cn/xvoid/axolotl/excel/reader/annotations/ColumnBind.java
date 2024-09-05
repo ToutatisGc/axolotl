@@ -35,7 +35,7 @@ public @interface ColumnBind {
      * 数据格式化
      * 默认使用LocalDateTime格式
      */
-    String format() default Time.YMD_HORIZONTAL_FORMAT_REGEX;
+    String format() default "NULL";
 
     /**
      * 自定义适配器

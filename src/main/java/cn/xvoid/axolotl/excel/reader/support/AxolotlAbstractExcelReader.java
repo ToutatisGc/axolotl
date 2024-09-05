@@ -11,15 +11,17 @@ import cn.xvoid.axolotl.excel.reader.constant.EntityCellMappingInfo;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
 import cn.xvoid.axolotl.excel.reader.support.adapters.AbstractDataCastAdapter;
 import cn.xvoid.axolotl.excel.reader.support.adapters.AutoAdapter;
+import cn.xvoid.axolotl.excel.reader.support.docker.AxolotlCellMapInfo;
+import cn.xvoid.axolotl.excel.reader.support.docker.MapDocker;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.xvoid.axolotl.excel.writer.style.ComponentRender;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
+import cn.xvoid.common.standard.StringPool;
 import cn.xvoid.toolkit.clazz.ClassToolkit;
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
-import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkitKt;
 import cn.xvoid.axolotl.excel.reader.annotations.SpecifyPositionBind;
@@ -48,6 +50,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -757,6 +760,9 @@ public abstract class AxolotlAbstractExcelReader<T> {
         return cellGetInfo;
     }
 
+    private final static DecimalFormat decimalFormat = new DecimalFormat(StringPool.HASH);
+
+    private static final String MAP_VALUE_PREFIX = "CELL_";
     /**
      * [ROOT]
      * 填充单元格数据到map
@@ -771,24 +777,66 @@ public abstract class AxolotlAbstractExcelReader<T> {
             Cell cell = row.getCell(i);
             if (cell != null){
                 workBookContext.setCurrentReadColumnIndex(cell.getColumnIndex());
-                int idx = cell.getColumnIndex() + 1;
-                String key = "CELL_" + idx;
-                instance.put(key, getCellOriginalValue(row, cell.getColumnIndex(),null,readerConfig).getCellValue());
-                if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG)){
-                    instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                    if (cell.getCellType() == CellType.NUMERIC){
-                        if (DateUtil.isCellDateFormatted(cell)){
-                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                            instance.put("CELL_DATE_"+idx, Time.regexTime(cell.getDateCellValue()));
-                        }else{
-                            instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                        }
-                    }else {
-                        instance.put("CELL_TYPE_"+idx,cell.getCellType());
-                    }
+                int idx = cell.getColumnIndex();
+
+                CellGetInfo cellOriginalValue = getCellOriginalValue(row, cell.getColumnIndex(), null, readerConfig);
+                instance.putAll(mapMasterKey(i, cellOriginalValue,readerConfig));
+
+                if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.USE_MAP_DEBUG) && !readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.MAP_CONVERT_INFO_OBJECT)){
+                    instance.put("CELL_"+idx+"@TYPE",cell.getCellType());
                 }
             }
         }
+    }
+
+    /**
+     * map万能钥匙
+     * @param index 列索引
+     * @param cellGetInfo 单元格值
+     * @param readerConfig 读取配置
+     * @return map读取信息
+     * @param <RT> 读取类型
+     */
+    private <RT> Map<String, Object> mapMasterKey(int index, CellGetInfo cellGetInfo, ReaderConfig<RT> readerConfig) {
+        boolean sortedDataPolicy = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.SORTED_READ_SHEET_DATA);
+        boolean mapConvertObjectPolicy = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.MAP_CONVERT_INFO_OBJECT);
+        Map<String, Object> globalInfo = sortedDataPolicy ? new LinkedHashMap<>() : new HashMap<>();
+        Map<String, Object> convertedInfo = sortedDataPolicy ? new LinkedHashMap<>() : new HashMap<>();
+        String key = MAP_VALUE_PREFIX + index;
+        Map<String, MapDocker<?>> mapDockerMap = readerConfig.getMapDockerMap();
+        boolean allowPutNullValue = readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.MAP_ALLOW_PUT_NULL_VALUE);
+        for (Map.Entry<String, MapDocker<?>> dockerEntry : mapDockerMap.entrySet()) {
+            String extendKey = mapConvertObjectPolicy ? dockerEntry.getKey() : key+StringPool.AT+dockerEntry.getKey();
+            if (!readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.FIELD_EXIST_OVERRIDE) && convertedInfo.containsKey(extendKey)){
+                LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,String.format("字段:[%s]已存在,跳过",extendKey));
+                continue;
+            }
+            MapDocker<?> docker = dockerEntry.getValue();
+            Object convertedValue = docker.convert(index, cellGetInfo, readerConfig);
+            if (convertedValue == null){
+                Boolean nullDisplay = docker.getNullDisplay();
+                if (nullDisplay == null){
+                    nullDisplay = allowPutNullValue;
+                    LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,String.format("字段:[%s]为空,是否显示:[使用全局配置]- %s",extendKey,nullDisplay));
+                }else{
+                    LoggerToolkitKt.debugWithModule(LOGGER, Meta.MODULE_NAME,String.format("字段:[%s]为空,是否显示:%s",extendKey,nullDisplay));
+                }
+                if (nullDisplay){convertedInfo.put(extendKey,null);}
+            }else{
+                convertedInfo.put(extendKey, convertedValue);
+            }
+        }
+        if (mapConvertObjectPolicy){
+            AxolotlCellMapInfo axolotlCellMapInfo = new AxolotlCellMapInfo(index,cellGetInfo.getCellValue(),cellGetInfo.getCellType());
+            if (!convertedInfo.isEmpty()){
+                axolotlCellMapInfo.setDockerValues(convertedInfo);
+            }
+            globalInfo.put(key, axolotlCellMapInfo);
+        }else {
+            globalInfo.put(key, cellGetInfo.getCellValue());
+            globalInfo.putAll(convertedInfo);
+        }
+        return globalInfo;
     }
 
     /**
