@@ -1,6 +1,7 @@
 package cn.xvoid.axolotl.excel.dev;
 
 import cn.xvoid.axolotl.Axolotls;
+import cn.xvoid.axolotl.excel.entities.reader.DisGridInspectorEntity;
 import cn.xvoid.axolotl.excel.entities.reader.Members;
 import cn.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.xvoid.toolkit.file.FileToolkit;
@@ -19,4 +20,11 @@ public class BugTest {
         System.err.println(members);
     }
 
+    @Test
+    public void testReadBug2(){
+        File file = FileToolkit.getResourceFileAsFile("sec/issue2.xlsx");
+        AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
+        List<DisGridInspectorEntity> members = excelReader.readSheetData(DisGridInspectorEntity.class, 0);
+        System.err.println(members);
+    }
 }

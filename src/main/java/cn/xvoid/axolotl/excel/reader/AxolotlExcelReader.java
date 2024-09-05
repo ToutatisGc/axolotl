@@ -265,7 +265,7 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
 
     /**
      * 将工作表数据读取为平面映射列表
-     * Key命名规则为CELL_<单元格索引>[@自定义MapDocker]
+     * Key命名规则为CELL_[单元格索引]@[自定义MapDocker]
      * @see ReaderConfig#setMapDocker(String, MapDocker)
      * @param readerConfig 读取配置，泛型参数表示配置的具体类型
      * @return 返回一个List，每个元素是一个Map，表示一行数据
