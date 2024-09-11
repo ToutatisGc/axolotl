@@ -52,6 +52,7 @@ import java.lang.reflect.Modifier;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public abstract class AxolotlAbstractExcelReader<T> {
 
@@ -162,6 +163,20 @@ public abstract class AxolotlAbstractExcelReader<T> {
         this.createAdditionalExtensions();
         this.componentRender.setReader(true);
         this.componentRender.setConfig(this._sheetLevelReaderConfig);
+    }
+
+    /**
+     * 获取工作表信息
+     * <p>
+     * 本方法从当前的工作簿中获取所有工作表的名称并返回一个工作表名称的列表
+     *
+     * @return 包含所有工作表名称的列表
+     */
+    public List<String> getSheetInfo(){
+        Workbook workbook = workBookContext.getWorkbook();
+        return IntStream.range(0, workbook.getNumberOfSheets())
+                .mapToObj(workbook::getSheetName)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -883,7 +898,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         }
         Sheet indexSheet = workBookContext.getIndexSheet(sheetIndex);
         if (readerConfig.getReadPolicyAsBoolean(ExcelReadPolicy.ALLOW_READ_HIDDEN_SHEET)){
-            LoggerHelper.warn(LOGGER,"工作表[%s]为隐藏表，请注意数据正确。",sheetIndex+1);
+            LoggerHelper.warn(LOGGER,"工作表[%s]为隐藏表，请检查数据是否正确",sheetIndex+1);
         }else{
             Workbook workbook = getWorkBookContext().getWorkbook();
             if (workbook.isSheetHidden(sheetIndex) || workbook.isSheetVeryHidden(sheetIndex)){
