@@ -3,6 +3,8 @@ package cn.xvoid.axolotl.excel.reader;
 import cn.xvoid.axolotl.Meta;
 import cn.xvoid.axolotl.excel.reader.constant.AxolotlDefaultReaderConfig;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
+import cn.xvoid.axolotl.excel.reader.hooks.BatchReadTask;
+import cn.xvoid.axolotl.excel.reader.hooks.ReadProgressHook;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlAbstractExcelReader;
 import cn.xvoid.axolotl.excel.reader.support.AxolotlReadInfo;
 import cn.xvoid.axolotl.excel.reader.support.docker.AxolotlCellMapInfo;
@@ -227,14 +229,27 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
     }
 
     /**
+     * 根据提供的读取配置，从Excel中读取指定Sheet的数据，并返回一个泛型列表
+     * 该方法是readSheetData方法的重载版本，省略了自定义转换器参数和进度钩子函数
+     *
+     * @param readerConfig 一个实现了ReaderConfig接口的配置对象，用于指定Excel文件、Sheet以及数据读取的配置
+     * @param <RT> 泛型参数，表示返回列表中的元素类型，由调用者指定
+     * @return 包含从Excel Sheet中读取的数据的列表，数据类型由RT指定
+     */
+    public <RT> List<RT> readSheetData(ReaderConfig<RT> readerConfig) {
+        return this.readSheetData(readerConfig,null);
+    }
+
+    /**
      * [ROOT]
      * 读取Excel数据
      *
      * @param readerConfig 读取配置
+     * @param readProgressHook 读取进度钩子函数
      * @return 读取数据
      * @param <RT>  读取的类型泛型
      */
-    public <RT> List<RT> readSheetData(ReaderConfig<RT> readerConfig) {
+    public <RT> List<RT> readSheetData(ReaderConfig<RT> readerConfig,ReadProgressHook readProgressHook) {
         List<RT> readResult = new ArrayList<>();
         // 查找sheet
         Sheet sheet = this.searchSheet(readerConfig);
@@ -246,7 +261,7 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
         }
         // 处理合并单元格
         this.spreadMergedCells(sheet,readerConfig);
-        this.readSheetData(sheet,readerConfig,readResult);
+        this.readSheetData(sheet,readerConfig,readResult,readProgressHook);
         return readResult;
     }
 
@@ -288,11 +303,39 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
     }
 
     /**
+     * 批量读取数据方法
+     *
+     * @param batchSize 每批次读取的数据行数
+     * @param readerConfig 读取配置对象，包含读取的条件和规则
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     */
+    public void batchReadData(int batchSize, ReaderConfig<T> readerConfig, BatchReadTask<T> readTask, ReadProgressHook readProgressHook){
+
+        Sheet sheet = this.searchSheet(readerConfig);
+        this.preCheckAndFixReadConfig(readerConfig);
+        if (sheet == null){return;}
+        this.spreadMergedCells(sheet,readerConfig);
+        this.set_sheetLevelReaderConfig(readerConfig);
+        int batchCount = sheet.getLastRowNum() / batchSize;
+        // TODO 可能批次有点问题
+        for (int i = 0; i < batchCount; i++) {
+            // TODO 复制config属性,拷贝出新的配置
+//            i * batchSize, (i + 1) * batchSize
+//            _sheetLevelReaderConfig.setStartIndex(start);
+//            _sheetLevelReaderConfig.setEndIndex(end);
+            List<T> ts = new ArrayList<>();
+            this.readSheetData(sheet,readerConfig,ts,readProgressHook);
+            readTask.execute(ts);
+        }
+    }
+
+    /**
      * 读取表中每一行的数据
      *
      * @param readerConfig 读取配置
      */
-    private <RT> void readSheetData(Sheet sheet,ReaderConfig<RT> readerConfig,List<RT> list){
+    private <RT> void readSheetData(Sheet sheet, ReaderConfig<RT> readerConfig, List<RT> list, ReadProgressHook readProgressHook){
         int startIndex = readerConfig.getStartIndex();
         int endIndex = readerConfig.getEndIndex();
         if (startIndex == 0){
@@ -319,7 +362,9 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
                 }
             }
             if (instance!= null){list.add(instance);}
+            if (readProgressHook != null){readProgressHook.onReadProgress(i+1,endIndex);}
         }
+
     }
 
 }

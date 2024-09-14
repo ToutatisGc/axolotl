@@ -37,6 +37,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.util.IOUtils;
@@ -133,8 +134,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
         }
         DetectResult detectResult = this.checkFileFormat(null, new ByteArrayInputStream(dataCacheOutputStream.toByteArray()));
         this.workBookContext = new WorkBookContext(new ByteArrayInputStream(dataCacheOutputStream.toByteArray()),detectResult);
-        this.loadFileDataToWorkBook();
         this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,true);
+        this.loadFileDataToWorkBook();
         this.createAdditionalExtensions();
     }
 
@@ -158,8 +159,8 @@ public abstract class AxolotlAbstractExcelReader<T> {
         }
         DetectResult detectResult = this.checkFileFormat(excelFile, null);
         workBookContext = new WorkBookContext(excelFile,detectResult);
-        this.loadFileDataToWorkBook();
         this._sheetLevelReaderConfig = new ReaderConfig<>(clazz,withDefaultConfig);
+        this.loadFileDataToWorkBook();
         this.createAdditionalExtensions();
         this.componentRender.setReader(true);
         this.componentRender.setConfig(this._sheetLevelReaderConfig);
@@ -244,12 +245,32 @@ public abstract class AxolotlAbstractExcelReader<T> {
         try(InputStream fis = new ByteArrayInputStream(workBookContext.getDataCache())){
             Workbook workbook;
             if (workBookContext.getMimeType() == TikaShell.OOXML_EXCEL){
-                IOUtils.setByteArrayMaxOverride(200000000);
-                this.workBookContext.setEventDriven();
-                OPCPackage opcPackage = OPCPackage.open(fis);
-                workbook = XSSFWorkbookFactory.createWorkbook(opcPackage);
-                opcPackage.close();
-                IOUtils.setByteArrayMaxOverride(-1);
+                try {
+                    IOUtils.setByteArrayMaxOverride(200000000);
+                    this.workBookContext.setEventDriven();
+                    OPCPackage opcPackage = OPCPackage.open(fis);
+                    workbook = XSSFWorkbookFactory.createWorkbook(opcPackage);
+                    opcPackage.close();
+                    IOUtils.setByteArrayMaxOverride(-1);
+                }catch (IOException e){
+                    if (e.getMessage().contains("Zip bomb detected!")){
+                        boolean allowLimitProtect = _sheetLevelReaderConfig.getReadPolicyAsBoolean(ExcelReadPolicy.ALLOW_BREAK_THROUGH_RESOURCES_LIMIT_PROTECT);
+                        if (allowLimitProtect){
+                            ZipSecureFile.setMinInflateRatio(0D);
+                            LoggerHelper.warn(LOGGER,"文件大小超出系统限制，已自动开启跳过检测.");
+                            this.workBookContext.setEventDriven();
+                            OPCPackage opcPackage = OPCPackage.open(fis);
+                            workbook = XSSFWorkbookFactory.createWorkbook(opcPackage);
+                            opcPackage.close();
+                        }else {
+                            throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR,"禁止读取超过限制文件,请检查文件格式");
+                        }
+                    }else{
+                        throw e;
+                    }
+                }finally {
+                    ZipSecureFile.setMinInflateRatio(0.01D);
+                }
             }else {
                 workbook = WorkbookFactory.create(fis);
             }
