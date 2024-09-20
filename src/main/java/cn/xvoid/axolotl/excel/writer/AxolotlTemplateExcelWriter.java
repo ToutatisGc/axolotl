@@ -875,7 +875,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 this.context.setSwitchSheetIndex(i);
                 this.resolveTemplate(getWorkbookSheet(i), true);
                 this.gatherUnusedSingleReferenceDataAndFillDefault();
-//                this.gatherUnusedCircleReferenceDataAndFillDefault();
+                this.gatherUnusedCircleReferenceDataAndFillDefault();
                 this.setCalculateData(i);
             }
         }else{
