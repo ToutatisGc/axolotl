@@ -105,7 +105,12 @@ public enum ExcelReadPolicy {
     /**
      * 是否使用字典转换
      */
-    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, false, false)
+    SIMPLE_USE_DICT_CODE_TRANSFER(Type.BOOLEAN, false, false),
+
+    /**
+     * 允许超出内存限制或保护限制读取内容
+     */
+    ALLOW_BREAK_THROUGH_RESOURCES_LIMIT_PROTECT(Type.BOOLEAN, true, false)
     ;
 
 
