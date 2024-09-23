@@ -310,6 +310,7 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
      * @param readTask 执行读取任务的对象，负责处理读取到的数据
      * @param readProgressHook 读取进度钩子，可以用于监控读取进度
      */
+    @Deprecated
     public void batchReadData(int batchSize, ReaderConfig<T> readerConfig, BatchReadTask<T> readTask, ReadProgressHook readProgressHook){
 
         Sheet sheet = this.searchSheet(readerConfig);

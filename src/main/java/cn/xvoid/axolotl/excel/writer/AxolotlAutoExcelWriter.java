@@ -11,6 +11,7 @@ import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import com.google.common.collect.Lists;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.slf4j.Logger;
 
@@ -66,8 +67,8 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
      */
     public AxolotlWriteResult write(List<Header> headers, List<?> datas) throws AxolotlWriteException {
         int switchSheetIndex = writeContext.getSwitchSheetIndex();
-        info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(switchSheetIndex));
-        SXSSFSheet sheet;
+        LoggerHelper.info(LOGGER, writeContext.getCurrentWrittenBatchAndIncrement(switchSheetIndex));
+        Sheet sheet;
         ExcelStyleRender styleRender = writeConfig.getStyleRender();
         if (styleRender == null){
             throw new AxolotlWriteException("请设置写入渲染器");

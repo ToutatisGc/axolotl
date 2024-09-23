@@ -6,10 +6,8 @@ import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.toolkit.log.LoggerToolkit;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import cn.xvoid.axolotl.toolkit.LoggerHelper;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.slf4j.Logger;
@@ -18,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import static cn.xvoid.axolotl.excel.writer.style.StyleHelper.START_POSITION;
-import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
 
 public class AxolotlAdministrationRedTheme extends AbstractStyleRender implements ExcelStyleRender {
 
@@ -43,7 +40,7 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
     }
 
     @Override
-    public AxolotlWriteResult init(SXSSFSheet sheet) {
+    public AxolotlWriteResult init(Sheet sheet) {
         AxolotlWriteResult init = super.init(sheet);
         // 固定结构
         if (isFirstBatch()){
@@ -54,7 +51,7 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
     }
 
     @Override
-    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
+    public AxolotlWriteResult renderHeader(Sheet sheet) {
         // 1.创建标题行
         AxolotlWriteResult writeTitle = createTitleRow(sheet);
 
@@ -79,12 +76,12 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
     }
 
     @Override
-    public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
+    public AxolotlWriteResult renderData(Sheet sheet, List<?> data) {
         CellStyle dataStyle = this.createBlackMainTextCellStyle(BorderStyle.NONE, IndexedColors.WHITE, THEME_COLOR);
         StyleHelper.setCellAsPlainText(dataStyle);
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
         if (!columnMapping.isEmpty()){
-            debug(LOGGER,"已有字段映射表,将按照字段映射渲染数据[%s]",columnMapping);
+            LoggerHelper.debug(LOGGER,"已有字段映射表,将按照字段映射渲染数据[%s]",columnMapping);
         }
         for (Object datum : data) {
             this.defaultRenderNextData(sheet, datum, dataStyle);
@@ -93,7 +90,7 @@ public class AxolotlAdministrationRedTheme extends AbstractStyleRender implement
     }
 
     @Override
-    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+    public AxolotlWriteResult finish(Sheet sheet) {
         return super.finish(sheet);
     }
 }

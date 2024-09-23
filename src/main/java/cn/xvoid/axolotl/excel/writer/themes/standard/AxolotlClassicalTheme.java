@@ -31,7 +31,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
         super(LOGGER);
     }
     @Override
-    public AxolotlWriteResult init(SXSSFSheet sheet) {
+    public AxolotlWriteResult init(Sheet sheet) {
         if (isFirstBatch()){
             this.checkedAndUseCustomTheme(FONT_NAME,THEME_COLOR_XSSF);
             MAIN_TEXT_FONT = this.createFont(FONT_NAME,  StyleHelper.STANDARD_TEXT_FONT_SIZE,false, IndexedColors.BLACK);
@@ -40,7 +40,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     }
 
     @Override
-    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
+    public AxolotlWriteResult renderHeader(Sheet sheet) {
         // 1.渲染标题
         int switchSheetIndex = context.getSwitchSheetIndex();
         AxolotlWriteResult isCreateTitleRow = this.createTitleRow(sheet);
@@ -64,8 +64,8 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     }
 
     @Override
-    public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
-        SXSSFWorkbook workbook = context.getWorkbook();
+    public AxolotlWriteResult renderData(Sheet sheet, List<?> data) {
+        Workbook workbook = context.getWorkbook();
         BorderStyle borderStyle = BorderStyle.THIN;
         IndexedColors borderColor = IndexedColors.WHITE;
         // 交叉样式
@@ -86,7 +86,7 @@ public class AxolotlClassicalTheme extends AbstractStyleRender implements ExcelS
     }
 
     @Override
-    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+    public AxolotlWriteResult finish(Sheet sheet) {
         return super.finish(sheet);
     }
 

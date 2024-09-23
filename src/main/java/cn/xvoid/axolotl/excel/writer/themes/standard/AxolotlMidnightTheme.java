@@ -25,7 +25,7 @@ public class AxolotlMidnightTheme extends AbstractStyleRender {
     }
 
     @Override
-    public AxolotlWriteResult init(SXSSFSheet sheet) {
+    public AxolotlWriteResult init(Sheet sheet) {
         if (isFirstBatch()){
             this.checkedAndUseCustomTheme(FONT_NAME,null);
         }
@@ -33,7 +33,7 @@ public class AxolotlMidnightTheme extends AbstractStyleRender {
     }
 
     @Override
-    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
+    public AxolotlWriteResult renderHeader(Sheet sheet) {
         // 1.创建标题行
         AxolotlWriteResult writeTitle = createTitleRow(sheet);
 
@@ -59,7 +59,7 @@ public class AxolotlMidnightTheme extends AbstractStyleRender {
     }
 
     @Override
-    public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
+    public AxolotlWriteResult renderData(Sheet sheet, List<?> data) {
         CellStyle dataStyle = this.createWhiteMainTextCellStyle(BorderStyle.NONE, IndexedColors.BLACK, AxolotlColor.create(39,56,86));
         dataStyle.setBorderTop(BorderStyle.THIN);
         dataStyle.setBorderBottom(BorderStyle.THIN);

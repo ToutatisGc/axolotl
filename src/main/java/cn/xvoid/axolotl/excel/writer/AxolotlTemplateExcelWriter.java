@@ -17,7 +17,6 @@ import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.constant.Time;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
-import cn.xvoid.axolotl.excel.writer.support.base.*;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -26,9 +25,6 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -110,7 +106,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     public AxolotlWriteResult write(Map<String, ?> fixMapping, List<?> dataList) {
         LoggerHelper.info(LOGGER, context.getCurrentWrittenBatchAndIncrement(context.getSwitchSheetIndex()));
-        XSSFSheet sheet;
+        Sheet sheet;
         // 判断是否是模板写入
         AxolotlWriteResult axolotlWriteResult = new AxolotlWriteResult();
         if (context.isTemplateWrite()){
@@ -154,7 +150,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         // 注入通用信息
         HashMap<String, Object> dataMapping = (singleMap != null ? new HashMap<>(singleMap) : new HashMap<>());
         this.injectCommonConstInfo(dataMapping,gatherUnusedStage);
-        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
+        int sheetIndex = getSheetIndex(sheet);
         Map<String, CellAddress> addressMapping = referenceData.row(sheetIndex);
         // 记录已使用的引用数据
         Map<String, Boolean> alreadyUsedReferenceData = context.getAlreadyUsedReferenceData().row(sheetIndex);
@@ -467,9 +463,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         if(templateLineIdx < 0){
             return nonWrittenAddress;
         }
-        XSSFSheet sheet = getWorkbookSheet(sheetIndex);
+        Sheet sheet = getWorkbookSheet(sheetIndex);
         // 获取到写入字段的行次，并转为列和地址的映射
-        XSSFRow templateRow = sheet.getRow(templateLineIdx);
+        Row templateRow = sheet.getRow(templateLineIdx);
         Map<Integer,CellAddress > templateColumnMap = circleReferenceData.values()
                 .stream().filter(cellAddress -> cellAddress.getRowPosition() == templateLineIdx)
                 .collect(Collectors.toMap(CellAddress::getColumnPosition, cellAddress -> cellAddress));
@@ -484,7 +480,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
                 if (alreadyFill){continue;}
                 // 将非模板列存储
                 if(initialWriting && nonTemplateCellFill){
-                    XSSFCell cell = templateRow.getCell(i);
+                    Cell cell = templateRow.getCell(i);
                     if(cell == null){continue;}
                     CellAddress nonTempalteCellAddress = new CellAddress(null, templateLineIdx, i, cell.getCellStyle());
                     nonTempalteCellAddress.set_nonTemplateCell(cell);
@@ -514,7 +510,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      */
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    private void writeCircleData(XSSFSheet sheet, List<?> circleDataList){
+    private void writeCircleData(Sheet sheet, List<?> circleDataList){
         // 数据不为空则写入数据
         if (Validator.objNotNull(circleDataList)){
             DesignConditions designConditions = this.calculateConditions(circleDataList);
@@ -715,7 +711,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
             int sheetIndex = designConditions.getSheetIndex();
             if(maxRowPosition >= 0){
                 // 设置模板行行高
-                XSSFSheet sheet = this.getWorkbookSheet(sheetIndex);
+                Sheet sheet = this.getWorkbookSheet(sheetIndex);
                 short templateRowHeight = sheet.getRow(maxRowPosition).getHeight();
                 LoggerHelper.debug(LOGGER,"设置模板行[%s]行高为[%s]",maxRowPosition,templateRowHeight);
                 context.getLineHeightRecords().put(sheetIndex, designConditions.getWriteFieldNamesList(),templateRowHeight);
@@ -752,7 +748,7 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
      * @param sheet 工作表
      */
     private void resolveTemplate(Sheet sheet,boolean isFinal){
-        int sheetIndex = workbook.getXSSFWorkbook().getSheetIndex(sheet);
+        int sheetIndex = getSheetIndex(sheet);;
         if (!context.getResolvedSheetRecord().containsKey(sheetIndex) || isFinal){
             HashBasedTable<Integer, String, CellAddress> singleReferenceData = context.getSingleReferenceData();
             HashBasedTable<Integer, String, CellAddress> circleReferenceData = context.getCircleReferenceData();

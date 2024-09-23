@@ -7,10 +7,7 @@ import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
@@ -35,7 +32,7 @@ public class AxolotlSimpleBlackTheme extends AbstractStyleRender implements Exce
         super(LOGGER);
     }
     @Override
-    public AxolotlWriteResult init(SXSSFSheet sheet) {
+    public AxolotlWriteResult init(Sheet sheet) {
         if (isFirstBatch()){
             this.checkedAndUseCustomTheme(FONT_NAME,THEME_COLOR_XSSF);
             MAIN_TEXT_FONT = StyleHelper.createWorkBookFont(context.getWorkbook(), FONT_NAME, false, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK);
@@ -44,7 +41,7 @@ public class AxolotlSimpleBlackTheme extends AbstractStyleRender implements Exce
     }
 
     @Override
-    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
+    public AxolotlWriteResult renderHeader(Sheet sheet) {
         // 1.渲染标题
         int switchSheetIndex = context.getSwitchSheetIndex();
         AxolotlWriteResult isCreateTitleRow = this.createTitleRow(sheet);
@@ -68,8 +65,8 @@ public class AxolotlSimpleBlackTheme extends AbstractStyleRender implements Exce
     }
 
     @Override
-    public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
-        SXSSFWorkbook workbook = context.getWorkbook();
+    public AxolotlWriteResult renderData(Sheet sheet, List<?> data) {
+        Workbook workbook = context.getWorkbook();
         BorderStyle borderStyle = BorderStyle.THIN;
         IndexedColors borderColor = IndexedColors.BLACK;
         // 交叉样式
@@ -86,7 +83,7 @@ public class AxolotlSimpleBlackTheme extends AbstractStyleRender implements Exce
     }
 
     @Override
-    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+    public AxolotlWriteResult finish(Sheet sheet) {
         return super.finish(sheet);
     }
 

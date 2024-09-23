@@ -9,8 +9,11 @@ import cn.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.slf4j.Logger;
 
@@ -36,7 +39,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
      * 由文件加载而来的工作簿文件信息
      * 写入工作簿
      */
-    protected SXSSFWorkbook workbook;
+    protected Workbook workbook;
 
     /**
      * 写入上下文
@@ -49,8 +52,8 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
      * @param templateFile 模板文件
      * @return 工作簿
      */
-    protected SXSSFWorkbook initWorkbook(File templateFile) {
-        SXSSFWorkbook workbook;
+    protected Workbook initWorkbook(File templateFile) {
+        Workbook workbook;
         // 读取模板文件内容
         if (templateFile != null){
             debug(LOGGER, format("正在使用模板文件[%s]作为写入模板",templateFile.getAbsolutePath()));
@@ -80,16 +83,31 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
      * @param sheetIndex 工作表索引
      * @return 工作表
      */
-    protected XSSFSheet getWorkbookSheet(int sheetIndex) {
-        XSSFSheet sheet = workbook.getXSSFWorkbook().getSheetAt(sheetIndex);
+    protected Sheet getWorkbookSheet(int sheetIndex) {
+        Sheet sheet;
+        if (workbook.getClass() == SXSSFWorkbook.class){
+            sheet = ((SXSSFWorkbook) workbook).getXSSFWorkbook().getSheetAt(sheetIndex);
+        }else {
+            sheet = ((XSSFWorkbook) workbook).getSheetAt(sheetIndex);
+        }
         if (sheet == null){
             throw new AxolotlWriteException(LoggerHelper.format("工作簿索引[%s]对应的工作表不存在",sheetIndex));
         }
         return sheet;
     }
 
+    protected int getSheetIndex(Sheet sheet){
+        int sheetIndex;
+        if (workbook.getClass() == SXSSFWorkbook.class){
+            sheetIndex = ((SXSSFWorkbook) workbook).getXSSFWorkbook().getSheetIndex(sheet);
+        }else {
+            sheetIndex = ((XSSFWorkbook) workbook).getSheetIndex(sheet);
+        }
+        return sheetIndex;
+    }
+
     @Override
-    public SXSSFWorkbook getWorkbook() {
+    public Workbook getWorkbook() {
         return workbook;
     }
 
