@@ -23,6 +23,7 @@ import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
@@ -122,7 +123,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     }
 
     @Override
-    public AxolotlWriteResult init(SXSSFSheet sheet) {
+    public AxolotlWriteResult init(Sheet sheet) {
         AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
             CellConfigProperty globalConfig = new CellConfigProperty();
@@ -159,7 +160,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     }
 
     @Override
-    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
+    public AxolotlWriteResult renderHeader(Sheet sheet) {
         //读取表头配置
         CellConfigProperty headerConfig = new CellConfigProperty();
         configurableStyleConfig.headerStyleConfig(headerConfig);
@@ -197,7 +198,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
 
     private boolean alreadyNotice = false;
     @Override
-    public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
+    public AxolotlWriteResult renderData(Sheet sheet, List<?> data) {
         //创建系统列单元格样式 用于序号与空值填充
         CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
      //   XSSFCellStyle commonCellStyle = (XSSFCellStyle) createCellStyle(commonCellPropHolder);
@@ -210,7 +211,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
             int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
             alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
-            SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
+            Row dataRow = sheet.createRow(alreadyWriteRow);
             int writtenColumn = START_POSITION;
             int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
             // 写入数据
@@ -223,7 +224,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             int serialNumberColumnNumber = -1;
             boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
             if (autoInsertSerialNumber){
-                SXSSFCell cell = dataRow.createCell(writtenColumn);
+                Cell cell = dataRow.createCell(writtenColumn);
                 cell.setCellValue(serialNumber+1);
                 if(cellProperty != null){
                     //设置行高 执行顺序为1 优先级较低
@@ -236,7 +237,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             }
             for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
                 String fieldName = dataEntry.getKey();
-                SXSSFCell cell;
+                Cell cell;
                 if (columnMappingEmpty){
                     cell = dataRow.createCell(writtenColumn);
                 }else{
@@ -301,7 +302,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 if (autoInsertSerialNumber && alreadyColumnIdx == 0){
                     continue;
                 }
-                SXSSFCell cell = null;
+                Cell cell = null;
                 if (columnMappingEmpty){
                     if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
                         cell = dataRow.createCell(alreadyColumnIdx);
@@ -332,7 +333,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
     }
 
     @Override
-    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+    public AxolotlWriteResult finish(Sheet sheet) {
         LoggerHelper.debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
         int sheetIndex = context.getWorkbook().getSheetIndex(sheet);
         CellPropertyHolder cellProperty = commonCellPropHolder.get(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING);
@@ -341,7 +342,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
             Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(sheetIndex);
             LoggerHelper.debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
-            SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
+            Row row = sheet.createRow(sheet.getLastRowNum() + 1);
             if(cellProperty == null){
                 //未配置 取上一行行高
                 row.setHeight(sheet.getRow(sheet.getLastRowNum() - 1).getHeight());
@@ -351,7 +352,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             DataInverter<?> dataInverter = writeConfig.getDataInverter();
             Set<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes(sheetIndex);
             for (int i = 0; i < alreadyWrittenColumns; i++) {
-                SXSSFCell cell = row.createCell(i);
+                Cell cell = row.createCell(i);
                 String cellValue = writeConfig.getBlankValue();
                 if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                     cellValue = "合计";
@@ -369,7 +370,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 if(cellProperty == null){
                     //未配置 合计部分样式继承上一行
                     CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
-                    SXSSFWorkbook workbook = sheet.getWorkbook();
+                    Workbook workbook = sheet.getWorkbook();
                     CellStyle totalCellStyle = workbook.createCellStyle();
                     StyleHelper.setCellStyleAlignment(totalCellStyle,cellStyle.getAlignment(),cellStyle.getVerticalAlignment());
                     totalCellStyle.setFillForegroundColor(cellStyle.getFillForegroundColorColor());
@@ -401,7 +402,9 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
                 throw new AxolotlWriteException("自动计算列宽比例必须大于等于1");
             }
             for (int columnIdx = 0; columnIdx < alreadyWrittenColumns; columnIdx++) {
-                sheet.trackAllColumnsForAutoSizing();
+                if (sheet.getClass() == SXSSFSheet.class){
+                    ((SXSSFSheet)sheet).trackAllColumnsForAutoSizing();
+                }
                 sheet.autoSizeColumn(columnIdx,true);
                 sheet.setColumnWidth(columnIdx, (int) (sheet.getColumnWidth(columnIdx) * autoFitPadding));
             }
@@ -448,7 +451,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      * @param sheet 工作表
      * @return 渲染结果
      */
-    public AxolotlWriteResult createTitleRow(SXSSFSheet sheet){
+    public AxolotlWriteResult createTitleRow(Sheet sheet){
         String title = writeConfig.getTitle();
         if (Validator.strNotBlank(title)){
             LoggerHelper.debug(LOGGER,"设置工作表标题:[%s]",title);
@@ -456,9 +459,9 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
             Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
             int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
             alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
-            SXSSFRow titleRow = sheet.createRow(alreadyWriteRow);
+            Row titleRow = sheet.createRow(alreadyWriteRow);
             titleRow.setHeight(titleCellPropHolder.getRowHeight());
-            SXSSFCell startPositionCell = titleRow.createCell(START_POSITION);
+            Cell startPositionCell = titleRow.createCell(START_POSITION);
             startPositionCell.setCellValue(writeConfig.getTitle());
             return new AxolotlWriteResult(true, LoggerHelper.format("设置工作表标题:[%s]",title));
         }else{
@@ -474,7 +477,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      * Step.2 递归表头
      * @param sheet 工作表
      */
-    private AxolotlWriteResult defaultRenderHeaders(SXSSFSheet sheet){
+    private AxolotlWriteResult defaultRenderHeaders(Sheet sheet){
         int switchSheetIndex = context.getSwitchSheetIndex();
         List<Header> headers = context.getHeaders().get(switchSheetIndex);
         int headerMaxDepth;
@@ -610,7 +613,7 @@ public class AxolotlConfigurableTheme extends AbstractStyleRender implements Exc
      * @param headerRecursiveInfo 递归信息
      */
     @SneakyThrows
-    private void recursionRenderHeaders(SXSSFSheet sheet, List<Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
+    private void recursionRenderHeaders(Sheet sheet, List<Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
         if (headers != null && !headers.isEmpty()){
             int maxDepth = ExcelToolkit.getMaxDepth(headers, 0);
             int startRow = headerRecursiveInfo.getAllRow() - maxDepth -1;

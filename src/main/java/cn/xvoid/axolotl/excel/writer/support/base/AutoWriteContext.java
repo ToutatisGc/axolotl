@@ -4,6 +4,7 @@ import cn.xvoid.axolotl.excel.writer.components.widgets.Header;
 import com.google.common.collect.HashBasedTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.math.BigDecimal;
@@ -18,7 +19,7 @@ public class AutoWriteContext extends WriteContext{
     /**
      * 工作薄实例
      */
-    private SXSSFWorkbook workbook;
+    private Workbook workbook;
 
     /**
      * 表头信息

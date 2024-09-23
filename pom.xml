@@ -56,10 +56,6 @@
             <version>0.1.0</version>
             <exclusions>
                 <exclusion>
-                    <groupId>cn.xvoid</groupId>
-                    <artifactId>void-kotlin-runtime-support</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>commons-io</groupId>
                     <artifactId>commons-io</artifactId>
                 </exclusion>

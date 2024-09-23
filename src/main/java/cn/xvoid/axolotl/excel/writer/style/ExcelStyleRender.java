@@ -2,6 +2,7 @@ package cn.xvoid.axolotl.excel.writer.style;
 
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 
 import java.util.List;
@@ -26,28 +27,28 @@ public interface ExcelStyleRender {
      * 初始化。
      * 多次写入时，该方法只会被调用一次。
      * 可以用于创建全局样式等。
-     * @param sheet {@link SXSSFSheet} 表示工作表对象，用于设置表头样式。
+     * @param sheet {@link Sheet} 表示工作表对象，用于设置表头样式。
      */
-    AxolotlWriteResult init(SXSSFSheet sheet);
+    AxolotlWriteResult init(Sheet sheet);
 
     /**
      * 渲染 Excel 表头的样式。
      *
-     * @param sheet {@link SXSSFSheet} 表示工作表对象，用于设置表头样式。
+     * @param sheet {@link Sheet} 表示工作表对象，用于设置表头样式。
      */
-    AxolotlWriteResult renderHeader(SXSSFSheet sheet);
+    AxolotlWriteResult renderHeader(Sheet sheet);
 
     /**
      * 渲染 Excel 数据的样式。
      *
-     * @param sheet       {@link SXSSFSheet} 表示工作表对象，用于设置数据样式。
+     * @param sheet       {@link Sheet} 表示工作表对象，用于设置数据样式。
      * @param data {@link CommonWriteConfig} 表示 Excel 写入器的配置，用于根据需要进行更多的样式定制。
      */
-    AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data);
+    AxolotlWriteResult renderData(Sheet sheet, List<?> data);
 
     /**
      * 在渲染完成后，调用该方法。
      * 在Close()方法中调用。
      */
-    AxolotlWriteResult finish(SXSSFSheet sheet);
+    AxolotlWriteResult finish(Sheet sheet);
 }

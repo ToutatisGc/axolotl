@@ -7,10 +7,7 @@ import cn.xvoid.axolotl.excel.writer.style.StyleHelper;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 
 import org.slf4j.Logger;
@@ -33,7 +30,7 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
     }
 
     @Override
-    public AxolotlWriteResult init(SXSSFSheet sheet) {
+    public AxolotlWriteResult init(Sheet sheet) {
         if (isFirstBatch()){
             this.checkedAndUseCustomTheme(FONT_NAME,THEME_COLOR);
         }
@@ -41,7 +38,7 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
     }
 
     @Override
-    public AxolotlWriteResult renderHeader(SXSSFSheet sheet) {
+    public AxolotlWriteResult renderHeader(Sheet sheet) {
         // 1.创建标题行
         AxolotlWriteResult writeTitle = createTitleRow(sheet);
 
@@ -61,7 +58,7 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
     }
 
     @Override
-    public AxolotlWriteResult renderData(SXSSFSheet sheet, List<?> data) {
+    public AxolotlWriteResult renderData(Sheet sheet, List<?> data) {
         CellStyle dataStyle = this.createBlackMainTextCellStyle(BorderStyle.THIN, IndexedColors.BLACK, StyleHelper.WHITE_COLOR);
         StyleHelper.setCellAsPlainText(dataStyle);
         Map<String, Integer> columnMapping = context.getHeaderColumnIndexMapping().row(context.getSwitchSheetIndex());
@@ -75,7 +72,7 @@ public class AxolotlIndustrialOrangeTheme extends AbstractStyleRender implements
     }
 
     @Override
-    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+    public AxolotlWriteResult finish(Sheet sheet) {
         return super.finish(sheet);
     }
 }

@@ -21,6 +21,7 @@ import cn.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
@@ -451,7 +452,7 @@ public class AutoWriteTest {
             data.add(map);
         }
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(commonWriteConfig);
-        SXSSFWorkbook workbook = autoExcelWriter.getWorkbook();
+        Workbook workbook = autoExcelWriter.getWorkbook();
         autoExcelWriter.write(headers,data);
         autoExcelWriter.write(headers,data);
         autoExcelWriter.close();

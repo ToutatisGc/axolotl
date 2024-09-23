@@ -1,5 +1,6 @@
 package cn.xvoid.axolotl.excel.writer;
 
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.Closeable;
@@ -15,7 +16,7 @@ public interface AxolotlExcelWriter extends Closeable {
      * 获取工作簿
      * @return 工作簿
      */
-    SXSSFWorkbook getWorkbook();
+    Workbook getWorkbook();
 
     /**
      * 切换工作表

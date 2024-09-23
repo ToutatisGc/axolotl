@@ -30,6 +30,8 @@ import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
@@ -126,7 +128,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     }
 
     @Override
-    public AxolotlWriteResult init(SXSSFSheet sheet) {
+    public AxolotlWriteResult init(Sheet sheet) {
         AxolotlWriteResult axolotlWriteResult;
         if(isFirstBatch()){
             axolotlWriteResult = new AxolotlWriteResult(true,"初始化成功");
@@ -144,7 +146,11 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             }
             if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_CATCH_COLUMN_LENGTH)){
                 LoggerHelper.debug(LOGGER,"开启自动获取列宽");
-                sheet.trackAllColumnsForAutoSizing();
+                Workbook workbook = context.getWorkbook();
+                StylesTable stylesSource;
+                if (workbook.getClass() == SXSSFWorkbook.class){
+                    ((SXSSFSheet)sheet).trackAllColumnsForAutoSizing();
+                }
             }
         }else {
             axolotlWriteResult = new AxolotlWriteResult(true,"已初始化");
@@ -176,7 +182,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param sheet 工作表
      * @return 渲染结果
      */
-    public AxolotlWriteResult createTitleRow(SXSSFSheet sheet){
+    public AxolotlWriteResult createTitleRow(Sheet sheet){
         String title = writeConfig.getTitle();
         if (Validator.strNotBlank(title)){
             LoggerHelper.debug(LOGGER,"设置工作表标题:[%s]",title);
@@ -184,9 +190,9 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
             int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
             alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
-            SXSSFRow titleRow = sheet.createRow(alreadyWriteRow);
+            Row titleRow = sheet.createRow(alreadyWriteRow);
             titleRow.setHeight(StyleHelper.STANDARD_TITLE_ROW_HEIGHT);
-            SXSSFCell startPositionCell = titleRow.createCell(START_POSITION);
+            Cell startPositionCell = titleRow.createCell(START_POSITION);
             startPositionCell.setCellValue(writeConfig.getTitle());
             return new AxolotlWriteResult(true, LoggerHelper.format("设置工作表标题:[%s]",title));
         }else{
@@ -201,7 +207,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      *  Step.3 合并标题栏单元格并赋予样式
      * @param sheet 工作表
      */
-    public void mergeTitleRegion(SXSSFSheet sheet,int titleColumnCount,CellStyle titleStyle){
+    public void mergeTitleRegion(Sheet sheet,int titleColumnCount,CellStyle titleStyle){
         if (titleColumnCount > 1){
             LoggerHelper.debug(LOGGER,"合并标题栏单元格,共[%s]列",titleColumnCount);
             CellRangeAddress cellAddresses = new CellRangeAddress(START_POSITION, START_POSITION, START_POSITION, titleColumnCount-1);
@@ -218,7 +224,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param sheet 工作表
      * @param headerDefaultCellStyle 表头默认样式
      */
-    public AxolotlWriteResult defaultRenderHeaders(SXSSFSheet sheet, CellStyle headerDefaultCellStyle){
+    public AxolotlWriteResult defaultRenderHeaders(Sheet sheet, CellStyle headerDefaultCellStyle){
         int switchSheetIndex = context.getSwitchSheetIndex();
         List<Header> headers = context.getHeaders().get(switchSheetIndex);
         int headerMaxDepth;
@@ -317,7 +323,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         }else{
             AxolotlCellStyle axolotlCellStyle = header.getAxolotlCellStyle();
             if (axolotlCellStyle != null){
-                SXSSFWorkbook workbook = context.getWorkbook();
+                Workbook workbook = context.getWorkbook();
                 CellStyle cellStyle = workbook.createCellStyle();
                 //用默认样式给新样式赋值
                 cellStyle.setBorderTop(usedCellStyle.getBorderTop());
@@ -449,7 +455,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param headerRecursiveInfo 递归信息
      */
     @SneakyThrows
-    private void recursionRenderHeaders(SXSSFSheet sheet, List<Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
+    private void recursionRenderHeaders(Sheet sheet, List<Header> headers, HeaderRecursiveInfo headerRecursiveInfo){
         if (headers != null && !headers.isEmpty()){
             int maxDepth = ExcelToolkit.getMaxDepth(headers, 0);
             int startRow = headerRecursiveInfo.getAllRow() - maxDepth -1;
@@ -570,7 +576,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * 默认行为渲染数据
      * @param sheet 工作表
      */
-    public void defaultRenderNextData(SXSSFSheet sheet,Object data,CellStyle rowStyle){
+    public void defaultRenderNextData(Sheet sheet,Object data,CellStyle rowStyle){
         // 获取对象属性
         HashMap<String, Object> dataMap = getDataMap(data);
         // 初始化内容
@@ -579,7 +585,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         Map<Integer, Integer> alreadyWriteRowMap = context.getAlreadyWriteRow();
         int alreadyWriteRow = alreadyWriteRowMap.getOrDefault(switchSheetIndex,-1);
         alreadyWriteRowMap.put(switchSheetIndex,++alreadyWriteRow);
-        SXSSFRow dataRow = sheet.createRow(alreadyWriteRow);
+        Row dataRow = sheet.createRow(alreadyWriteRow);
         dataRow.setHeight(StyleHelper.STANDARD_ROW_HEIGHT);
         int writtenColumn = START_POSITION;
         int serialNumber = context.getAndIncrementSerialNumber() - context.getHeaderRowCount().get(switchSheetIndex);
@@ -591,14 +597,14 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         // 写入序号
         boolean autoInsertSerialNumber = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER);
         if (autoInsertSerialNumber){
-            SXSSFCell cell = dataRow.createCell(writtenColumn);
+            Cell cell = dataRow.createCell(writtenColumn);
             cell.setCellValue(serialNumber+1);
             cell.setCellStyle(rowStyle);
             writtenColumnMap.put(columnMappingEmpty?writtenColumn++:0,1);
         }
         for (Map.Entry<String, Object> dataEntry : dataMap.entrySet()) {
             String fieldName = dataEntry.getKey();
-            SXSSFCell cell;
+            Cell cell;
             if (columnMappingEmpty){
                 cell = dataRow.createCell(writtenColumn);
             }else{
@@ -630,7 +636,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
             if (autoInsertSerialNumber && alreadyColumnIdx == 0){
                 continue;
             }
-            SXSSFCell cell = null;
+            Cell cell = null;
             if (columnMappingEmpty){
                 if (!writtenColumnMap.containsKey(alreadyColumnIdx)){
                     cell = dataRow.createCell(alreadyColumnIdx);
@@ -655,7 +661,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
      * @param data 数据对象
      * @return 属性集合
      */
-    @SuppressWarnings({"rawtypes","unchecked"})
+    @SuppressWarnings({"unchecked"})
     public HashMap<String, Object> getDataMap(Object data){
         if(data == null){return new LinkedHashMap<>();}
         // 获取对象属性
@@ -757,7 +763,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
 
 
     @Override
-    public AxolotlWriteResult finish(SXSSFSheet sheet) {
+    public AxolotlWriteResult finish(Sheet sheet) {
         LoggerHelper.debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
         int sheetIndex = context.getWorkbook().getSheetIndex(sheet);
         int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(sheetIndex);
@@ -765,12 +771,12 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
             Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(sheetIndex);
             LoggerHelper.debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
-            SXSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
+            Row row = sheet.createRow(sheet.getLastRowNum() + 1);
             row.setHeight((short) 600);
             DataInverter<?> dataInverter = writeConfig.getDataInverter();
             Set<Integer> calculateColumnIndexes = writeConfig.getCalculateColumnIndexes(sheetIndex);
             for (int i = 0; i < alreadyWrittenColumns; i++) {
-                SXSSFCell cell = row.createCell(i);
+                Cell cell = row.createCell(i);
                 String cellValue = writeConfig.getBlankValue();
                 if (i == 0 && writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_SERIAL_NUMBER)){
                     cellValue = "合计";
@@ -785,7 +791,7 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
                 }
                 cell.setCellValue(cellValue);
                 CellStyle cellStyle = sheet.getRow(sheet.getLastRowNum() - 1).getCell(i).getCellStyle();
-                SXSSFWorkbook workbook = sheet.getWorkbook();
+                Workbook workbook = sheet.getWorkbook();
                 CellStyle totalCellStyle = workbook.createCellStyle();
                 Font font = StyleHelper.createWorkBookFont(
                         workbook, globalFontName, true, StyleHelper.STANDARD_TEXT_FONT_SIZE, IndexedColors.BLACK
@@ -870,7 +876,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         font.setBold(isBold);
         font.setFontName(fontName);
         font.setFontHeightInPoints(fontSize);
-        StylesTable stylesSource = context.getWorkbook().getXSSFWorkbook().getStylesSource();
+        Workbook workbook = context.getWorkbook();
+        StylesTable stylesSource;
+        if (workbook.getClass() == SXSSFWorkbook.class){
+            stylesSource = ((SXSSFWorkbook)workbook).getXSSFWorkbook().getStylesSource();
+        }else {
+            stylesSource = ((XSSFWorkbook)workbook).getStylesSource();
+        }
         font.registerTo(stylesSource);
         return font;
     }
@@ -905,7 +917,13 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
         font.setFontHeightInPoints(fontSize);
         font.setItalic(italic);
         font.setStrikeout(strikeout);
-        StylesTable stylesSource = context.getWorkbook().getXSSFWorkbook().getStylesSource();
+        Workbook workbook = context.getWorkbook();
+        StylesTable stylesSource;
+        if (workbook.getClass() == SXSSFWorkbook.class){
+            stylesSource = ((SXSSFWorkbook)workbook).getXSSFWorkbook().getStylesSource();
+        }else {
+            stylesSource = ((XSSFWorkbook)workbook).getStylesSource();
+        }
         font.registerTo(stylesSource);
         return font;
     }
