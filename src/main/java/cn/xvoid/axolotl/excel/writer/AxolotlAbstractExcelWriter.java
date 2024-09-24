@@ -4,8 +4,12 @@ import cn.hutool.core.util.IdUtil;
 import cn.xvoid.axolotl.common.CommonMimeType;
 import cn.xvoid.axolotl.excel.writer.components.widgets.AxolotlImage;
 import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
+import cn.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
+import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
+import cn.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.xvoid.axolotl.excel.writer.support.base.WriteContext;
+import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
@@ -74,31 +78,39 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
         return workbook;
     }
 
-    public void writeImage(AxolotlImage axolotlImage){
+    public void writeImage(int sheetIndex,AxolotlImage axolotlImage){
         if (axolotlImage == null){throw new AxolotlWriteException("图片对象不能为空");}
         axolotlImage.checkImage();
+        CommonWriteConfig writeConfig = getWriteConfig();
+        Sheet workbookSheet;
+        workbookSheet = ExcelToolkit.createOrCatchSheet(workbook, sheetIndex);
+        if (AutoWriteConfig.class.equals(writeConfig.getClass())){
+            AutoWriteConfig autoWriteConfig = (AutoWriteConfig) writeConfig;
+            ExcelStyleRender styleRender = autoWriteConfig.getStyleRender();
+            if (styleRender == null){
+                throw new AxolotlWriteException("请设置写入渲染器");
+            }
+            if (styleRender instanceof AbstractStyleRender innerStyleRender){
+                innerStyleRender.setWriteConfig(autoWriteConfig);
+                innerStyleRender.setContext((AutoWriteContext) writeContext);
+                innerStyleRender.getComponentRender().setConfig(writeConfig);
+                innerStyleRender.getComponentRender().setContext(writeContext);
+                if(writeContext.isFirstBatch(sheetIndex)){
+                    ((AutoWriteContext)writeContext).setWorkbook(workbook);
+                    innerStyleRender.init(workbookSheet);
+                    innerStyleRender.renderHeader(workbookSheet);
+                }
+            }
+        }
         int pictureIndex = workbook.addPicture(axolotlImage.getData(), axolotlImage.getImageFormat());
         CreationHelper helper = workbook.getCreationHelper();
         ClientAnchor clientAnchor = helper.createClientAnchor();
         clientAnchor.setAnchorType(axolotlImage.getAnchorType());
-        Sheet workbookSheet = getWorkbookSheet(writeContext.getSwitchSheetIndex());
+        clientAnchor.setCol1(axolotlImage.getStartColumn());
+        clientAnchor.setRow1(axolotlImage.getStartRow());
+        clientAnchor.setCol2(axolotlImage.getEndColumn());
+        clientAnchor.setRow2(axolotlImage.getEndRow());
         workbookSheet.createDrawingPatriarch().createPicture(clientAnchor, pictureIndex);
-//        try (XSSFWorkbook nWorkbook = new XSSFWorkbook()) {
-//            int pictureIndex = nWorkbook.addPicture(Base64.getDecoder().decode("imgBase64.getBytes()"), XSSFWorkbook.PICTURE_TYPE_JPEG);
-////            int pictureIndex = workbook.addPicture(new FileInputStream(FileToolkit.getResourceFileAsFile("workbook/write/simulation.png")), XSSFWorkbook.PICTURE_TYPE_JPEG);
-//            XSSFSheet sheet = nWorkbook.createSheet();
-//            XSSFCreationHelper creationHelper = nWorkbook.getCreationHelper();
-//            XSSFClientAnchor clientAnchor = creationHelper.createClientAnchor();
-//            clientAnchor.setAnchorType(ClientAnchor.AnchorType.MOVE_AND_RESIZE);
-//            clientAnchor.setCol1(0);
-//            clientAnchor.setRow1(0);
-//            clientAnchor.setCol2(1);
-//            clientAnchor.setRow2(2);
-//            sheet.createDrawingPatriarch().createPicture(clientAnchor, pictureIndex);
-//            nWorkbook.write(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
     }
 
 

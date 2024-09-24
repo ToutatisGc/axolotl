@@ -1,8 +1,13 @@
 package cn.xvoid.axolotl.excel.dev;
 
 import cn.hutool.core.util.IdUtil;
+import cn.xvoid.axolotl.Axolotls;
+import cn.xvoid.axolotl.excel.entities.writer.SecurityQuestion;
+import cn.xvoid.axolotl.excel.writer.AutoWriteConfig;
+import cn.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
 import cn.xvoid.axolotl.excel.writer.components.widgets.AxolotlImage;
 import cn.xvoid.toolkit.file.FileToolkit;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.xssf.usermodel.*;
@@ -36,8 +41,28 @@ public class ImageTest {
     }
 
     @Test
-    public void testImageData(){
+    public void testImageData() throws IOException {
         AxolotlImage axolotlImage = new AxolotlImage(FileToolkit.getResourceFileAsFile("workbook/write/simulation.png"));
+        axolotlImage.setPosition(1,1,3,3);
+        AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
+        autoWriteConfig.setOutputStream(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
+        autoWriteConfig.setTitle("测试图片");
+        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
+        autoExcelWriter.writeImage(0,axolotlImage);
+        autoExcelWriter.close();
+    }
+
+    @Test
+    public void testData() throws IOException {
+        AxolotlImage axolotlImage = new AxolotlImage(FileToolkit.getResourceFileAsFile("workbook/write/simulation.png"));
+        axolotlImage.setPosition(0,1,5,5);
+        AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
+        autoWriteConfig.setOutputStream(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
+        autoWriteConfig.setTitle("测试图片");
+        AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
+        autoExcelWriter.writeImage(0,axolotlImage);
+        autoExcelWriter.write(SecurityQuestion.class, Lists.newArrayList());
+        autoExcelWriter.close();
     }
 
     @Test

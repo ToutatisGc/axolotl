@@ -81,12 +81,12 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
             innerStyleRender.getComponentRender().setContext(writeContext);
         }
         if(writeContext.isFirstBatch(switchSheetIndex)){
-            sheet = workbook.createSheet();
+            sheet = ExcelToolkit.createOrCatchSheet(workbook, switchSheetIndex);
             writeContext.setWorkbook(workbook);
             styleRender.init(sheet);
             styleRender.renderHeader(sheet);
         }else {
-            sheet = workbook.getSheetAt(switchSheetIndex);
+            sheet = ExcelToolkit.createOrCatchSheet(workbook, switchSheetIndex);
         }
         if(datas != null){
             if (Validator.objNotNull(datas)){
@@ -114,11 +114,16 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
 
     @Override
     public void flush() {
-        ExcelStyleRender styleRender = writeConfig.getStyleRender();
+        ExcelStyleRender styleRender = getWriteConfig().getStyleRender();
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {
             styleRender.finish(getWorkbook().getSheetAt(i));
         }
+    }
+
+    @Override
+    public AutoWriteConfig getWriteConfig() {
+        return writeConfig;
     }
 
     @Override
