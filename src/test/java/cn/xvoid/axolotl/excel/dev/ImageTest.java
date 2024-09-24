@@ -1,6 +1,7 @@
 package cn.xvoid.axolotl.excel.dev;
 
 import cn.hutool.core.util.IdUtil;
+import cn.xvoid.axolotl.excel.writer.components.widgets.AxolotlImage;
 import cn.xvoid.toolkit.file.FileToolkit;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.ClientAnchor;
@@ -27,14 +28,16 @@ public class ImageTest {
             clientAnchor.setAnchorType(ClientAnchor.AnchorType.MOVE_AND_RESIZE);
             clientAnchor.setCol1(0);
             clientAnchor.setRow1(0);
-            clientAnchor.setCol2(2);
+            clientAnchor.setCol2(1);
             clientAnchor.setRow2(2);
             sheet.createDrawingPatriarch().createPicture(clientAnchor, pictureIndex);
-//            ClientAnchor anchor = new XSSFClientAnchor(0, 0, 0, 0, 1, 1, 1, 1);
-//            XSSFDrawing drawingPatriarch = sheet.createDrawingPatriarch();
-//            drawingPatriarch.createPicture(clientAnchor, pictureIndex);
             workbook.write(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
         }
+    }
+
+    @Test
+    public void testImageData(){
+        AxolotlImage axolotlImage = new AxolotlImage(FileToolkit.getResourceFileAsFile("workbook/write/simulation.png"));
     }
 
     @Test

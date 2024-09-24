@@ -51,20 +51,38 @@ public class TikaShell {
 
 
     /**
+     * 检测给定文件是否符合指定的MIME类型
+     * 此方法重载了detect方法，简化调用时不需要预先检查的场景
      *
+     * @param file 要检测的文件
+     * @param mimeType 指定的MIME类型
+     * @return 检测结果
      */
     public static DetectResult detect(File file, MimeType mimeType){
         return detect(file, mimeType, false);
     }
 
     /**
+     * 检测给定文件是否符合指定的MIME类型，允许设置是否已预先检查
+     * 此方法提供了预先检查的选项，以便在已知进行了预检查的情况下避免重复检查
      *
+     * @param file 要检测的文件
+     * @param mimeType 指定的MIME类型
+     * @param alreadyPreCheck 是否已经预先检查
+     * @return 检测结果
      */
     public static DetectResult detect(File file, MimeType mimeType,boolean alreadyPreCheck){
         return detect(file, mimeType, false,alreadyPreCheck);
     }
+
     /**
+     * 检测给定文件是否符合指定的MIME类型，并在检测失败时抛出异常
+     * 此方法适用于对文件有严格类型要求的场景，通过抛出异常来处理不合规的文件
      *
+     * @param file 要检测的文件
+     * @param mimeType 指定的MIME类型
+     * @return 检测结果
+     * @throws IllegalArgumentException 如果文件不符合指定的MIME类型
      */
     public static DetectResult detectThrowException(File file, MimeType mimeType){
         return detect(file, mimeType, true,false);
