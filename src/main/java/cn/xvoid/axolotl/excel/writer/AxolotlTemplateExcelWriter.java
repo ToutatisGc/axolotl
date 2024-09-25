@@ -911,4 +911,9 @@ public class AxolotlTemplateExcelWriter extends AxolotlAbstractExcelWriter {
         super.switchSheet(sheetIndex);
         this.resolveTemplate(this.getWorkbookSheet(sheetIndex),false);
     }
+
+    @Override
+    public CommonWriteConfig getWriteConfig() {
+        return config;
+    }
 }

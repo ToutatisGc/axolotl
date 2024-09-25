@@ -1,18 +1,19 @@
 package cn.xvoid.axolotl.excel.writer;
 
+import cn.xvoid.axolotl.excel.writer.components.widgets.AxolotlImage;
 import cn.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
+import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import com.google.common.collect.Lists;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -83,12 +84,12 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
             innerStyleRender.getComponentRender().setContext(writeContext);
         }
         if(writeContext.isFirstBatch(switchSheetIndex)){
-            sheet = workbook.createSheet();
+            sheet = ExcelToolkit.createOrCatchSheet(workbook, switchSheetIndex);
             writeContext.setWorkbook(workbook);
             styleRender.init(sheet);
             styleRender.renderHeader(sheet);
         }else {
-            sheet = workbook.getSheetAt(switchSheetIndex);
+            sheet = ExcelToolkit.createOrCatchSheet(workbook, switchSheetIndex);
         }
         if(datas != null){
             if (Validator.objNotNull(datas)){
@@ -116,11 +117,16 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
 
     @Override
     public void flush() {
-        ExcelStyleRender styleRender = writeConfig.getStyleRender();
+        ExcelStyleRender styleRender = getWriteConfig().getStyleRender();
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {
             styleRender.finish(getWorkbook().getSheetAt(i));
         }
+    }
+
+    @Override
+    public AutoWriteConfig getWriteConfig() {
+        return writeConfig;
     }
 
     @Override
@@ -131,4 +137,24 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         workbook.close();
     }
 
+    @Override
+    public void writeImage(int sheetIndex, AxolotlImage axolotlImage) {
+        ExcelStyleRender styleRender = writeConfig.getStyleRender();
+        Sheet sheet = ExcelToolkit.createOrCatchSheet(getWorkbook(), sheetIndex);
+        if (styleRender == null){
+            throw new AxolotlWriteException("请设置写入渲染器");
+        }
+        if (styleRender instanceof AbstractStyleRender innerStyleRender){
+            innerStyleRender.setWriteConfig(writeConfig);
+            innerStyleRender.setContext((AutoWriteContext) writeContext);
+            innerStyleRender.getComponentRender().setConfig(writeConfig);
+            innerStyleRender.getComponentRender().setContext(writeContext);
+            if(writeContext.isFirstBatch(sheetIndex)){
+                ((AutoWriteContext)writeContext).setWorkbook(workbook);
+                innerStyleRender.init(sheet);
+                innerStyleRender.renderHeader(sheet);
+            }
+        }
+        super.writeImage(sheetIndex, axolotlImage);
+    }
 }

@@ -767,9 +767,16 @@ public abstract class AbstractStyleRender implements ExcelStyleRender{
     public AxolotlWriteResult finish(Sheet sheet) {
         LoggerHelper.debug(LOGGER,"结束渲染工作表[%s]",sheet.getSheetName());
         int sheetIndex = context.getWorkbook().getSheetIndex(sheet);
-        int alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(sheetIndex);
+        Integer alreadyWrittenColumns = context.getAlreadyWrittenColumns().get(sheetIndex);
+        if (alreadyWrittenColumns == null){alreadyWrittenColumns = 0;}
         // 创建结尾合计行
-        if (writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING)){
+        boolean allowInsertEndingRow;
+        if (context.getDatas() == null || context.getDatas().isEmpty()){
+            allowInsertEndingRow = false;
+        }else {
+            allowInsertEndingRow = writeConfig.getWritePolicyAsBoolean(ExcelWritePolicy.AUTO_INSERT_TOTAL_IN_ENDING);
+        }
+        if (allowInsertEndingRow){
             Map<Integer, BigDecimal> endingTotalMapping = context.getEndingTotalMapping().row(sheetIndex);
             LoggerHelper.debug(LOGGER,"开始创建结尾合计行,合计数据为:%s",endingTotalMapping);
             Row row = sheet.createRow(sheet.getLastRowNum() + 1);
