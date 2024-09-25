@@ -45,6 +45,10 @@ public class CommonMimeType {
      */
     public static final MimeType OCTET_STREAM;
 
+
+    public static final MimeType JPEG;
+    public static final MimeType PNG;
+
     static {
         try {
             MimeTypes defaultMimeTypes = MimeTypes.getDefaultMimeTypes();
@@ -54,6 +58,8 @@ public class CommonMimeType {
             TIKA_OOXML_EXCEL = defaultMimeTypes.forName("application/x-tika-ooxml");
             ZIP = defaultMimeTypes.forName("application/zip");
             OCTET_STREAM = defaultMimeTypes.forName("application/octet-stream");
+            JPEG = defaultMimeTypes.forName("image/jpeg");
+            PNG = defaultMimeTypes.forName("image/png");
         } catch (MimeTypeException e) {
             throw new RuntimeException(e);
         }

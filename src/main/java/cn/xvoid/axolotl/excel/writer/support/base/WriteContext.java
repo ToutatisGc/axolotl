@@ -34,7 +34,8 @@ public class WriteContext extends AbstractContext {
      * @return 是否第一批次写入
      */
     public boolean isFirstBatch(int sheetIndex){
-        return 1 == currentWrittenBatch.get(sheetIndex);
+        Integer i = currentWrittenBatch.get(sheetIndex);
+        return i == null || 1 == i;
     }
 
     public String getCurrentWrittenBatchAndIncrement(int sheetIndex){

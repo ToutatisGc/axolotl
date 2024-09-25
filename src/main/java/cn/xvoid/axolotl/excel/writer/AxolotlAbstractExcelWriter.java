@@ -1,26 +1,33 @@
 package cn.xvoid.axolotl.excel.writer;
 
+import cn.hutool.core.util.IdUtil;
 import cn.xvoid.axolotl.common.CommonMimeType;
+import cn.xvoid.axolotl.excel.writer.components.widgets.AxolotlImage;
 import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
+import cn.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
+import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
+import cn.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.xvoid.axolotl.excel.writer.support.base.WriteContext;
+import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.axolotl.toolkit.LoggerHelper;
 import cn.xvoid.axolotl.toolkit.tika.DetectResult;
 import cn.xvoid.axolotl.toolkit.tika.TikaShell;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
+import org.apache.poi.xssf.usermodel.*;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import static cn.xvoid.axolotl.toolkit.LoggerHelper.*;
 
@@ -45,6 +52,8 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
      * 写入上下文
      */
     protected WriteContext writeContext;
+
+    private final Map<Integer,Integer> mapHashCache = new HashMap<>();
 
     /**
      * 初始化工作簿
@@ -74,6 +83,31 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
             workbook = new SXSSFWorkbook();
         }
         return workbook;
+    }
+
+    @Override
+    public void writeImage(int sheetIndex, AxolotlImage axolotlImage){
+        if (axolotlImage == null){throw new AxolotlWriteException("图片对象不能为空");}
+        axolotlImage.checkImage();
+        Sheet sheet;
+        sheet = ExcelToolkit.createOrCatchSheet(workbook, sheetIndex);
+        byte[] data = axolotlImage.getData();
+        int dataHash = Arrays.hashCode(data);
+        int workPictureIndex;
+        if (mapHashCache.containsKey(dataHash)){
+            workPictureIndex = mapHashCache.get(dataHash);
+        }else {
+            workPictureIndex = workbook.addPicture(data, axolotlImage.getImageFormat());
+            mapHashCache.put(dataHash,workPictureIndex);
+        }
+        CreationHelper helper = workbook.getCreationHelper();
+        ClientAnchor clientAnchor = helper.createClientAnchor();
+        clientAnchor.setAnchorType(axolotlImage.getAnchorType());
+        clientAnchor.setCol1(axolotlImage.getStartColumn());
+        clientAnchor.setRow1(axolotlImage.getStartRow());
+        clientAnchor.setCol2(axolotlImage.getEndColumn());
+        clientAnchor.setRow2(axolotlImage.getEndRow());
+        sheet.createDrawingPatriarch().createPicture(clientAnchor, workPictureIndex);
     }
 
 
@@ -114,7 +148,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
     @Override
     public void switchSheet(int sheetIndex) {
         LoggerHelper.debug(LOGGER,"切换到工作表[%s]",sheetIndex);
-        this.writeContext.setSwitchSheetIndex(sheetIndex);
+        writeContext.setSwitchSheetIndex(sheetIndex);
     }
 
     /**

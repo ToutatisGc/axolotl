@@ -5,8 +5,10 @@ import cn.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.xvoid.axolotl.excel.reader.ReadConfigBuilder;
 import cn.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
+import cn.xvoid.axolotl.excel.reader.hooks.ReadProgressHook;
 import cn.xvoid.axolotl.excel.reader.support.docker.AxolotlCellMapInfo;
 import cn.xvoid.toolkit.file.FileToolkit;
+import cn.xvoid.toolkit.number.Calculator;
 import org.junit.Test;
 
 import java.io.File;
@@ -17,12 +19,18 @@ public class ReadTest {
 
     @Test
     public void testDataValidation() {
-        File file = FileToolkit.getResourceFileAsFile("workbook/有效性测试.xlsx");
+        File file = FileToolkit.getResourceFileAsFile("sec/issue2.xlsx");
         AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<Map> mapList = excelReader.readSheetData(
-                new ReadConfigBuilder<>(Map.class)
+                new ReadConfigBuilder<>(Map.class).build(),
+                (current, total) -> System.err.println("当前进度：" + Calculator.evaluateAsPlainText("%d/%d*%d".formatted(current, total, 100)) + "%")
         );
         System.err.println(mapList);
+    }
+
+    @Test
+    public void testnum(){
+        System.err.println(1/10);
     }
 
     @Test

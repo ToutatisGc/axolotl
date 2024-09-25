@@ -11,6 +11,7 @@ import cn.xvoid.toolkit.log.LoggerToolkitKt;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
@@ -118,20 +119,30 @@ public class ExcelToolkit {
         while (sheetIterator.hasNext()) {
             Sheet tmpSheet = sheetIterator.next();
             Sheet sxssfSheet = newWorkbook.createSheet(tmpSheet.getSheetName());
-            cloneOldSheet2NewSheet(sxssfSheet, tmpSheet);
+            cloneOldSheet2NewSheet(sxssfSheet, tmpSheet,true);
         }
     }
 
-    public static void cloneOldSheet2NewSheet(Sheet newSheet, Sheet oldSheet){
+    public static void cloneOldSheet2NewSheet(Sheet newSheet, Sheet oldSheet,boolean cloneMergeRegions){
+        List<CellRangeAddress> mergedRegions = oldSheet.getMergedRegions();
         for (Row tmpRow : oldSheet) {
             if (tmpRow == null){continue;}
             Row sxssfRow = newSheet.createRow(tmpRow.getRowNum());
             cloneOldRow2NewRow(sxssfRow, tmpRow);
         }
+        for (int i = 0; i < oldSheet.getRow(0).getLastCellNum(); i++) {
+            newSheet.setColumnWidth(i, oldSheet.getColumnWidth(i));
+        }
+        if (cloneMergeRegions){
+            for (CellRangeAddress mergedRegion : mergedRegions) {
+                newSheet.addMergedRegion(mergedRegion);
+            }
+        }
     }
 
     public static void cloneOldRow2NewRow(Row newRow, Row oldRow){
         Iterator<Cell> cellIterator = oldRow.cellIterator();
+        newRow.setHeight(oldRow.getHeight());
         while (cellIterator.hasNext()) {
             Cell tmpCell = cellIterator.next();
             if (tmpCell == null){continue;}
@@ -163,6 +174,32 @@ public class ExcelToolkit {
                 newCell.setBlank();
                 break;
         }
+    }
+
+    /**
+     * 根据指定索引创建或获取工作表。
+     * 如果工作表不存在，则创建新的工作表；如果存在，则直接返回。
+     *
+     * @param workbook Excel工作簿对象，用于确定在哪个工作簿中创建或获取工作表
+     * @param sheetIndex 工作表的索引，用于确定创建或获取哪个工作表
+     * @return 返回指定索引的工作表对象
+     */
+    public static Sheet createOrCatchSheet(Workbook workbook, int sheetIndex){
+        Workbook tmp = workbook;
+
+        if (SXSSFWorkbook.class.equals(workbook.getClass())){
+            tmp = ((SXSSFWorkbook) workbook).getXSSFWorkbook();
+        }
+        int numberOfSheets = tmp.getNumberOfSheets();
+        if (numberOfSheets <= sheetIndex){
+            if (numberOfSheets == 0 && sheetIndex == 0){
+                return workbook.createSheet();
+            }else{
+                int i = sheetIndex - numberOfSheets;
+                while (i-- >= 0){workbook.createSheet();}
+            }
+        }
+        return tmp.getSheetAt(sheetIndex);
     }
 
     /**

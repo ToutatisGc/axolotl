@@ -1,10 +1,14 @@
 package cn.xvoid.axolotl.excel.dev;
 
+import cn.hutool.core.util.IdUtil;
 import cn.xvoid.axolotl.Axolotls;
 import cn.xvoid.axolotl.excel.entities.reader.*;
 import cn.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.xvoid.axolotl.excel.reader.ReadConfigBuilder;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
+import cn.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
+import cn.xvoid.axolotl.excel.writer.TemplateWriteConfig;
+import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.toolkit.file.FileToolkit;
 import com.alibaba.fastjson.JSON;
 import com.github.pjfanning.xlsx.StreamingReader;
@@ -13,21 +17,14 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 public class SimpleTest {
 
@@ -193,4 +190,26 @@ public class SimpleTest {
         System.err.println(headerTestEntities);
     }
 
+    @Test
+    public void cloneTest() throws FileNotFoundException {
+        File file = FileToolkit.getResourceFileAsFile("sec/岗位模板.xlsx");
+        TemplateWriteConfig templateWriteConfig = new TemplateWriteConfig();
+        templateWriteConfig.setOutputStream(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
+        AxolotlTemplateExcelWriter templateExcelWriter = Axolotls.getTemplateExcelWriter(FileToolkit.getResourceFileAsFile("sec/岗位模板.xlsx"), templateWriteConfig);
+        SXSSFWorkbook workbook = (SXSSFWorkbook) templateExcelWriter.getWorkbook();
+
+        Sheet orginSheet =  workbook.getXSSFWorkbook().getSheetAt(0);
+        for (int i = 0; i < 2; i++) {
+            Sheet cloneSheet = ExcelToolkit.createOrCatchSheet(workbook, i + 1);
+            ExcelToolkit.cloneOldSheet2NewSheet(cloneSheet,orginSheet,true);
+        }
+        for (int i = 0; i <= 2; i++) {
+            templateExcelWriter.switchSheet(i);
+            HashMap<String, String> fixMapping = new HashMap<>();
+            fixMapping.put("POST_NAME", "岗位名称"+i);
+            templateExcelWriter.write(fixMapping,null);
+            workbook.setSheetName(i, "岗位"+i);
+        }
+        templateExcelWriter.close();
+    }
 }
