@@ -144,7 +144,8 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         if (styleRender == null){
             throw new AxolotlWriteException("请设置写入渲染器");
         }
-        if (styleRender instanceof AbstractStyleRender innerStyleRender){
+        if (styleRender instanceof AbstractStyleRender){
+            AbstractStyleRender innerStyleRender = (AbstractStyleRender) styleRender;
             innerStyleRender.setWriteConfig(writeConfig);
             innerStyleRender.setContext((AutoWriteContext) writeContext);
             innerStyleRender.getComponentRender().setConfig(writeConfig);
