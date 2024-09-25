@@ -11,6 +11,7 @@ import cn.xvoid.toolkit.log.LoggerToolkitKt;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
@@ -118,20 +119,30 @@ public class ExcelToolkit {
         while (sheetIterator.hasNext()) {
             Sheet tmpSheet = sheetIterator.next();
             Sheet sxssfSheet = newWorkbook.createSheet(tmpSheet.getSheetName());
-            cloneOldSheet2NewSheet(sxssfSheet, tmpSheet);
+            cloneOldSheet2NewSheet(sxssfSheet, tmpSheet,true);
         }
     }
 
-    public static void cloneOldSheet2NewSheet(Sheet newSheet, Sheet oldSheet){
+    public static void cloneOldSheet2NewSheet(Sheet newSheet, Sheet oldSheet,boolean cloneMergeRegions){
+        List<CellRangeAddress> mergedRegions = oldSheet.getMergedRegions();
         for (Row tmpRow : oldSheet) {
             if (tmpRow == null){continue;}
             Row sxssfRow = newSheet.createRow(tmpRow.getRowNum());
             cloneOldRow2NewRow(sxssfRow, tmpRow);
         }
+        for (int i = 0; i < oldSheet.getRow(0).getLastCellNum(); i++) {
+            newSheet.setColumnWidth(i, oldSheet.getColumnWidth(i));
+        }
+        if (cloneMergeRegions){
+            for (CellRangeAddress mergedRegion : mergedRegions) {
+                newSheet.addMergedRegion(mergedRegion);
+            }
+        }
     }
 
     public static void cloneOldRow2NewRow(Row newRow, Row oldRow){
         Iterator<Cell> cellIterator = oldRow.cellIterator();
+        newRow.setHeight(oldRow.getHeight());
         while (cellIterator.hasNext()) {
             Cell tmpCell = cellIterator.next();
             if (tmpCell == null){continue;}
@@ -162,7 +173,12 @@ public class ExcelToolkit {
      * @return 返回指定索引的工作表对象
      */
     public static Sheet createOrCatchSheet(Workbook workbook, int sheetIndex){
-        int numberOfSheets = workbook.getNumberOfSheets();
+        Workbook tmp = workbook;
+
+        if (SXSSFWorkbook.class.equals(workbook.getClass())){
+            tmp = ((SXSSFWorkbook) workbook).getXSSFWorkbook();
+        }
+        int numberOfSheets = tmp.getNumberOfSheets();
         if (numberOfSheets <= sheetIndex){
             if (numberOfSheets == 0 && sheetIndex == 0){
                 return workbook.createSheet();
@@ -171,7 +187,7 @@ public class ExcelToolkit {
                 while (i-- >= 0){workbook.createSheet();}
             }
         }
-        return workbook.getSheetAt(sheetIndex);
+        return tmp.getSheetAt(sheetIndex);
     }
 
     /**

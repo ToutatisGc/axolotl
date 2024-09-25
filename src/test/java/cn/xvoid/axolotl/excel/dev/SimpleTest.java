@@ -22,14 +22,13 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SimpleTest {
 
@@ -201,11 +200,17 @@ public class SimpleTest {
         TemplateWriteConfig templateWriteConfig = new TemplateWriteConfig();
         templateWriteConfig.setOutputStream(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
         AxolotlTemplateExcelWriter templateExcelWriter = Axolotls.getTemplateExcelWriter(FileToolkit.getResourceFileAsFile("sec/岗位模板.xlsx"), templateWriteConfig);
+        SXSSFWorkbook workbook = (SXSSFWorkbook) templateExcelWriter.getWorkbook();
 
-        Workbook workbook = templateExcelWriter.getWorkbook();
-        Sheet orginSheet =  ((SXSSFSheet)workbook.getSheetAt(0));
+        Sheet orginSheet =  workbook.getXSSFWorkbook().getSheetAt(0);
         for (int i = 0; i < 2; i++) {
-            ExcelToolkit.cloneOldSheet2NewSheet(ExcelToolkit.createOrCatchSheet(workbook,i+1),orginSheet);
+            ExcelToolkit.cloneOldSheet2NewSheet(ExcelToolkit.createOrCatchSheet(workbook,i+1),orginSheet,true);
+        }
+        for (int i = 0; i <= 2; i++) {
+            templateExcelWriter.switchSheet(i);
+            HashMap<String, String> fixMapping = new HashMap<>();
+            fixMapping.put("POST_NAME", "岗位名称"+i);
+            templateExcelWriter.write(fixMapping,null);
         }
         templateExcelWriter.close();
     }
