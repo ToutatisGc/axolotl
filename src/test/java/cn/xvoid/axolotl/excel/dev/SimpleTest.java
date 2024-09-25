@@ -204,13 +204,15 @@ public class SimpleTest {
 
         Sheet orginSheet =  workbook.getXSSFWorkbook().getSheetAt(0);
         for (int i = 0; i < 2; i++) {
-            ExcelToolkit.cloneOldSheet2NewSheet(ExcelToolkit.createOrCatchSheet(workbook,i+1),orginSheet,true);
+            Sheet cloneSheet = ExcelToolkit.createOrCatchSheet(workbook, i + 1);
+            ExcelToolkit.cloneOldSheet2NewSheet(cloneSheet,orginSheet,true);
         }
         for (int i = 0; i <= 2; i++) {
             templateExcelWriter.switchSheet(i);
             HashMap<String, String> fixMapping = new HashMap<>();
             fixMapping.put("POST_NAME", "岗位名称"+i);
             templateExcelWriter.write(fixMapping,null);
+            workbook.setSheetName(i, "岗位"+i);
         }
         templateExcelWriter.close();
     }
