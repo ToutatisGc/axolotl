@@ -5,6 +5,8 @@ import cn.xvoid.axolotl.Axolotls;
 import cn.xvoid.axolotl.excel.entities.writer.SecurityQuestion;
 import cn.xvoid.axolotl.excel.writer.AutoWriteConfig;
 import cn.xvoid.axolotl.excel.writer.AxolotlAutoExcelWriter;
+import cn.xvoid.axolotl.excel.writer.AxolotlTemplateExcelWriter;
+import cn.xvoid.axolotl.excel.writer.TemplateWriteConfig;
 import cn.xvoid.axolotl.excel.writer.components.widgets.AxolotlImage;
 import cn.xvoid.toolkit.file.FileToolkit;
 import com.google.common.collect.Lists;
@@ -13,10 +15,7 @@ import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.xssf.usermodel.*;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Base64;
 
 public class ImageTest {
@@ -54,15 +53,29 @@ public class ImageTest {
 
     @Test
     public void testData() throws IOException {
-        AxolotlImage axolotlImage = new AxolotlImage(FileToolkit.getResourceFileAsFile("workbook/write/simulation.png"));
-        axolotlImage.setPosition(0,1,5,5);
+
         AutoWriteConfig autoWriteConfig = new AutoWriteConfig();
         autoWriteConfig.setOutputStream(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
         autoWriteConfig.setTitle("测试图片");
         AxolotlAutoExcelWriter autoExcelWriter = Axolotls.getAutoExcelWriter(autoWriteConfig);
-        autoExcelWriter.writeImage(0,axolotlImage);
+        for (int i = 0; i < 5; i++) {
+            AxolotlImage axolotlImage = new AxolotlImage(FileToolkit.getResourceFileAsFile("workbook/write/306d9fbfbc8d359fba54c0cafbd8da9(1).jpg"));
+            axolotlImage.setPosition(0,i*2,i*4,i*4);
+            autoExcelWriter.writeImage(0,axolotlImage);
+        }
         autoExcelWriter.write(SecurityQuestion.class, Lists.newArrayList());
         autoExcelWriter.close();
+    }
+
+    @Test
+    public void testTemplateWriteImage() throws FileNotFoundException {
+        AxolotlImage axolotlImage = new AxolotlImage(FileToolkit.getResourceFileAsFile("workbook/write/simulation.png"));
+        axolotlImage.setPosition(0,1,5,5);
+        TemplateWriteConfig templateWriteConfig = new TemplateWriteConfig();
+        templateWriteConfig.setOutputStream(new FileOutputStream("D:\\"+ IdUtil.randomUUID() +".xlsx"));
+        AxolotlTemplateExcelWriter templateExcelWriter = Axolotls.getTemplateExcelWriter(FileToolkit.getResourceFileAsFile("sec/岗位模板.xlsx"), templateWriteConfig);
+        templateExcelWriter.writeImage(3,axolotlImage);
+        templateExcelWriter.close();
     }
 
     @Test

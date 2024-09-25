@@ -168,7 +168,7 @@ public class ExcelToolkit {
                 return workbook.createSheet();
             }else{
                 int i = sheetIndex - numberOfSheets;
-                while (i-- > 0){workbook.createSheet();}
+                while (i-- >= 0){workbook.createSheet();}
             }
         }
         return workbook.getSheetAt(sheetIndex);

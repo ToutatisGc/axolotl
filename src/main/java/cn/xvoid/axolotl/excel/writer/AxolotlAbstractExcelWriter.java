@@ -24,7 +24,10 @@ import org.apache.poi.xssf.usermodel.*;
 import org.slf4j.Logger;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 抽象工作簿写入器
@@ -47,6 +50,8 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
      * 写入上下文
      */
     protected WriteContext writeContext;
+
+    private final Map<Integer,Integer> mapHashCache = new HashMap<>();
 
     /**
      * 初始化工作簿
@@ -78,31 +83,21 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
         return workbook;
     }
 
-    public void writeImage(int sheetIndex,AxolotlImage axolotlImage){
+    @Override
+    public void writeImage(int sheetIndex, AxolotlImage axolotlImage){
         if (axolotlImage == null){throw new AxolotlWriteException("图片对象不能为空");}
         axolotlImage.checkImage();
-        CommonWriteConfig writeConfig = getWriteConfig();
-        Sheet workbookSheet;
-        workbookSheet = ExcelToolkit.createOrCatchSheet(workbook, sheetIndex);
-        if (AutoWriteConfig.class.equals(writeConfig.getClass())){
-            AutoWriteConfig autoWriteConfig = (AutoWriteConfig) writeConfig;
-            ExcelStyleRender styleRender = autoWriteConfig.getStyleRender();
-            if (styleRender == null){
-                throw new AxolotlWriteException("请设置写入渲染器");
-            }
-            if (styleRender instanceof AbstractStyleRender innerStyleRender){
-                innerStyleRender.setWriteConfig(autoWriteConfig);
-                innerStyleRender.setContext((AutoWriteContext) writeContext);
-                innerStyleRender.getComponentRender().setConfig(writeConfig);
-                innerStyleRender.getComponentRender().setContext(writeContext);
-                if(writeContext.isFirstBatch(sheetIndex)){
-                    ((AutoWriteContext)writeContext).setWorkbook(workbook);
-                    innerStyleRender.init(workbookSheet);
-                    innerStyleRender.renderHeader(workbookSheet);
-                }
-            }
+        Sheet sheet;
+        sheet = ExcelToolkit.createOrCatchSheet(workbook, sheetIndex);
+        byte[] data = axolotlImage.getData();
+        int dataHash = Arrays.hashCode(data);
+        int workPictureIndex;
+        if (mapHashCache.containsKey(dataHash)){
+            workPictureIndex = mapHashCache.get(dataHash);
+        }else {
+            workPictureIndex = workbook.addPicture(data, axolotlImage.getImageFormat());
+            mapHashCache.put(dataHash,workPictureIndex);
         }
-        int pictureIndex = workbook.addPicture(axolotlImage.getData(), axolotlImage.getImageFormat());
         CreationHelper helper = workbook.getCreationHelper();
         ClientAnchor clientAnchor = helper.createClientAnchor();
         clientAnchor.setAnchorType(axolotlImage.getAnchorType());
@@ -110,7 +105,7 @@ public abstract class AxolotlAbstractExcelWriter implements AxolotlExcelWriter{
         clientAnchor.setRow1(axolotlImage.getStartRow());
         clientAnchor.setCol2(axolotlImage.getEndColumn());
         clientAnchor.setRow2(axolotlImage.getEndRow());
-        workbookSheet.createDrawingPatriarch().createPicture(clientAnchor, pictureIndex);
+        sheet.createDrawingPatriarch().createPicture(clientAnchor, workPictureIndex);
     }
 
 

@@ -1,11 +1,13 @@
 package cn.xvoid.axolotl.excel.writer;
 
+import cn.xvoid.axolotl.excel.writer.components.widgets.AxolotlImage;
 import cn.xvoid.axolotl.excel.writer.components.widgets.Header;
 import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.xvoid.axolotl.excel.writer.style.AbstractStyleRender;
 import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.support.base.AutoWriteContext;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
+import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.xvoid.axolotl.toolkit.ExcelToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
@@ -134,4 +136,24 @@ public class AxolotlAutoExcelWriter extends AxolotlAbstractExcelWriter {
         workbook.close();
     }
 
+    @Override
+    public void writeImage(int sheetIndex, AxolotlImage axolotlImage) {
+        ExcelStyleRender styleRender = writeConfig.getStyleRender();
+        Sheet sheet = ExcelToolkit.createOrCatchSheet(getWorkbook(), sheetIndex);
+        if (styleRender == null){
+            throw new AxolotlWriteException("请设置写入渲染器");
+        }
+        if (styleRender instanceof AbstractStyleRender innerStyleRender){
+            innerStyleRender.setWriteConfig(writeConfig);
+            innerStyleRender.setContext((AutoWriteContext) writeContext);
+            innerStyleRender.getComponentRender().setConfig(writeConfig);
+            innerStyleRender.getComponentRender().setContext(writeContext);
+            if(writeContext.isFirstBatch(sheetIndex)){
+                ((AutoWriteContext)writeContext).setWorkbook(workbook);
+                innerStyleRender.init(sheet);
+                innerStyleRender.renderHeader(sheet);
+            }
+        }
+        super.writeImage(sheetIndex, axolotlImage);
+    }
 }
