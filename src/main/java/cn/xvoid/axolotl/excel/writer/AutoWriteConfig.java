@@ -5,6 +5,7 @@ import cn.xvoid.axolotl.excel.writer.exceptions.AxolotlWriteException;
 import cn.xvoid.axolotl.excel.writer.style.ExcelStyleRender;
 import cn.xvoid.axolotl.excel.writer.support.base.CommonWriteConfig;
 import cn.xvoid.axolotl.excel.writer.themes.ExcelWriteThemes;
+import cn.xvoid.axolotl.exceptions.AxolotlException;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.validator.Validator;
 import com.google.common.collect.HashBasedTable;
@@ -112,7 +113,9 @@ public class AutoWriteConfig extends CommonWriteConfig {
         try {
             this.styleRender = styleRenderClass.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+            AxolotlException axolotlException = new AxolotlException(String.format("创建[%s]渲染器实例失败", styleRenderClass));
+            axolotlException.initCause(e);
+            throw axolotlException;
         }
     }
 

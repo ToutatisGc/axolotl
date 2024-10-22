@@ -4,6 +4,8 @@ import cn.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.xvoid.axolotl.excel.reader.AxolotlStreamExcelReader;
 import cn.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
+import cn.xvoid.axolotl.excel.reader.hooks.BatchReadTask;
+import cn.xvoid.axolotl.excel.reader.hooks.ReadProgressHook;
 import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadException;
 import cn.xvoid.axolotl.excel.reader.support.stream.AxolotlExcelStream;
 import cn.xvoid.axolotl.excel.writer.AutoWriteConfig;
@@ -17,6 +19,7 @@ import cn.xvoid.axolotl.excel.writer.support.AutoSheetDataPackage;
 import cn.xvoid.axolotl.excel.writer.support.TemplateSheetDataPackage;
 import cn.xvoid.axolotl.excel.writer.support.base.AxolotlWriteResult;
 import cn.xvoid.axolotl.excel.writer.support.base.ExcelWritePolicy;
+import cn.xvoid.axolotl.exceptions.AxolotlException;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -294,14 +297,16 @@ public class AxolotlFaster {
      * @param target 载入的目标配置类
      */
     private static void copyTemplateWriteConfig(TemplateWriteConfig source,TemplateWriteConfig target){
-        source.setOutputStream(target.getOutputStream());
-        //合并字典映射信息
-        target.getDictionaryMapping().putAll(source.getDictionaryMapping());
-        source.setDictionaryMapping(target.getDictionaryMapping());
         try {
-            BeanUtils.copyProperties(target,source);
+            source.setOutputStream(target.getOutputStream());
+            //合并字典映射信息
+            target.getDictionaryMapping().putAll(source.getDictionaryMapping());
+            source.setDictionaryMapping(target.getDictionaryMapping());
+            BeanUtils.copyProperties(target, source);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            AxolotlException axolotlException = new AxolotlException("载入模板写入配置信息失败");
+            axolotlException.initCause(e);
+            throw axolotlException;
         }
     }
 
@@ -510,18 +515,20 @@ public class AxolotlFaster {
      * @param templateWriteConfig 模板写入配置
      */
     public static TemplateSheetDataPackage buildTemplateWriteSheetInfo(int sheetIndex, Map<String,?> fixMapping, List<?> datas, TemplateWriteConfig templateWriteConfig){
-        TemplateWriteConfig config = new TemplateWriteConfig();
         try {
-            BeanUtils.copyProperties(config,templateWriteConfig);
+            TemplateWriteConfig config = new TemplateWriteConfig();
+            BeanUtils.copyProperties(config, templateWriteConfig);
+            config.setSheetIndex(sheetIndex);
+            TemplateSheetDataPackage sheetInfo = new TemplateSheetDataPackage();
+            sheetInfo.setTemplateWriteConfig(config);
+            sheetInfo.setFixMapping(fixMapping != null ? new HashMap<>(fixMapping) : null);
+            sheetInfo.setDatas(datas != null ? new ArrayList<>(datas) : null);
+            return sheetInfo;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            AxolotlException axolotlException = new AxolotlException("构建模板写入配置失败");
+            axolotlException.initCause(e);
+            throw axolotlException;
         }
-        config.setSheetIndex(sheetIndex);
-        TemplateSheetDataPackage sheetInfo = new TemplateSheetDataPackage();
-        sheetInfo.setTemplateWriteConfig(config);
-        sheetInfo.setFixMapping(fixMapping != null ? new HashMap<>(fixMapping) : null);
-        sheetInfo.setDatas(datas != null ? new ArrayList<>(datas) : null);
-        return sheetInfo;
     }
 
 
@@ -1774,27 +1781,30 @@ public class AxolotlFaster {
      * @param target 载入的目标配置类
      */
     private static void copyAutoWriteConfig(AutoWriteConfig source,AutoWriteConfig target){
-        source.setOutputStream(target.getOutputStream());
-        for (Integer sheetIndex : source.getCalculateColumnIndexes().keySet()) {
-            if(target.getCalculateColumnIndexes().containsKey(sheetIndex)){
-                Set<Integer> old = target.getCalculateColumnIndexes().get(sheetIndex);
-                source.getCalculateColumnIndexes().get(sheetIndex).addAll(old);
-            }
-        }
-        for (Integer sheetIndex : target.getCalculateColumnIndexes().keySet()) {
-            if(!source.getCalculateColumnIndexes().containsKey(sheetIndex)){
-                Set<Integer> old = target.getCalculateColumnIndexes().get(sheetIndex);
-                source.getCalculateColumnIndexes().put(sheetIndex,old);
-            }
-        }
-        target.getSpecialRowHeightMapping().putAll(source.getSpecialRowHeightMapping());
-        target.getDictionaryMapping().putAll(source.getDictionaryMapping());
-        source.setSpecialRowHeightMapping(target.getSpecialRowHeightMapping());
-        source.setDictionaryMapping(target.getDictionaryMapping());
         try {
-            BeanUtils.copyProperties(target,source);
+            source.setOutputStream(target.getOutputStream());
+            for (Integer sheetIndex : source.getCalculateColumnIndexes().keySet()) {
+                if (target.getCalculateColumnIndexes().containsKey(sheetIndex)) {
+                    Set<Integer> old = target.getCalculateColumnIndexes().get(sheetIndex);
+                    source.getCalculateColumnIndexes().get(sheetIndex).addAll(old);
+                }
+            }
+            for (Integer sheetIndex : target.getCalculateColumnIndexes().keySet()) {
+                if (!source.getCalculateColumnIndexes().containsKey(sheetIndex)) {
+                    Set<Integer> old = target.getCalculateColumnIndexes().get(sheetIndex);
+                    source.getCalculateColumnIndexes().put(sheetIndex, old);
+                }
+            }
+            target.getSpecialRowHeightMapping().putAll(source.getSpecialRowHeightMapping());
+            target.getDictionaryMapping().putAll(source.getDictionaryMapping());
+            source.setSpecialRowHeightMapping(target.getSpecialRowHeightMapping());
+            source.setDictionaryMapping(target.getDictionaryMapping());
+
+            BeanUtils.copyProperties(target, source);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            AxolotlException axolotlException = new AxolotlException("载入自动写入配置信息失败");
+            axolotlException.initCause(e);
+            throw axolotlException;
         }
     }
 
@@ -2998,18 +3008,20 @@ public class AxolotlFaster {
      * @param autoWriteConfig 写入配置
      */
     public static AutoSheetDataPackage buildAutoWriteSheetInfo(int sheetIndex, List<Header> headers, List<?> data, AutoWriteConfig autoWriteConfig){
-        AutoWriteConfig config = new AutoWriteConfig();
         try {
-            BeanUtils.copyProperties(config,autoWriteConfig);
+            AutoWriteConfig config = new AutoWriteConfig();
+            BeanUtils.copyProperties(config, autoWriteConfig);
+            config.setSheetIndex(sheetIndex);
+            AutoSheetDataPackage sheetDataPackage = new AutoSheetDataPackage();
+            sheetDataPackage.setAutoWriteConfig(config);
+            sheetDataPackage.setHeaders(headers != null ? new ArrayList<>(headers) : null);
+            sheetDataPackage.setData(data != null ? new ArrayList<>(data) : null);
+            return sheetDataPackage;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            AxolotlException axolotlException = new AxolotlException("构建自动写入配置失败");
+            axolotlException.initCause(e);
+            throw axolotlException;
         }
-        config.setSheetIndex(sheetIndex);
-        AutoSheetDataPackage sheetDataPackage = new AutoSheetDataPackage();
-        sheetDataPackage.setAutoWriteConfig(config);
-        sheetDataPackage.setHeaders(headers != null ? new ArrayList<>(headers) : null);
-        sheetDataPackage.setData(data != null ? new ArrayList<>(data) : null);
-        return sheetDataPackage;
     }
 
     /**
@@ -3027,6 +3039,710 @@ public class AxolotlFaster {
     public static AxolotlExcelReader<?> getExcelReader(InputStream inputStream){
         return Axolotls.getExcelReader(inputStream);
     }
+
+    /**
+     * 获取Excel读取器
+     * @param excelFile excel文件
+     * @param clazz 读取的Java类型
+     */
+    public static <T> AxolotlExcelReader<T> getExcelReader(File excelFile,Class<T> clazz){
+        return Axolotls.getExcelReader(excelFile,clazz);
+    }
+
+    /**
+     * 获取Excel读取器
+     * @param inputStream excel文件流
+     * @param clazz 读取的Java类型
+     */
+    public static <T> AxolotlExcelReader<T> getExcelReader(InputStream inputStream,Class<T> clazz){
+        return Axolotls.getExcelReader(inputStream,clazz);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader 读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param config 读取配置对象，包含读取的条件和规则
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, ReaderConfig<T> config){
+        if(reader == null){
+            throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR, "读取器不能为空");
+        }
+        reader.batchReadData(batchSize,config,readTask,readProgressHook);
+    }
+
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        if(reader == null){
+            throw new AxolotlExcelReadException(AxolotlExcelReadException.ExceptionType.READ_EXCEL_ERROR, "读取器不能为空");
+        }
+        ReaderConfig<T> config = new ReaderConfig<>();
+        if(sheetIndex != null){
+            config.setSheetIndex(sheetIndex);
+        }
+        if(initialRowPositionOffset != null){
+            config.setInitialRowPositionOffset(initialRowPositionOffset);
+        }
+        if(startRowIndex != null){
+            config.setStartIndex(startRowIndex);
+        }
+        if(endRowIndex != null){
+            config.setEndIndex(endRowIndex);
+        }
+        if(startColumnIndex != null){
+            config.setSheetColumnEffectiveRangeStart(startColumnIndex);
+        }
+        if(endColumnIndex != null){
+            config.setSheetColumnEffectiveRangeEnd(endColumnIndex);
+        }
+        if(searchHeaderMaxRows != null){
+            config.setSearchHeaderMaxRows(searchHeaderMaxRows);
+        }
+        if(dict != null){
+            for (String fieldName : dict.keySet()) {
+                if(fieldName != null){
+                    Object dictParam = dict.get(fieldName);
+                    if(dictParam != null){
+                        if(dictParam instanceof List<?>){
+                            config.setDict(config.getSheetIndex(),fieldName, new ArrayList<>((List<?>) dictParam));
+                        }else if(dictParam instanceof Map<?,?>){
+                            config.setDict(config.getSheetIndex(),fieldName, new HashMap<>((Map<String, String>) dictParam));
+                        }
+                    }
+                }
+            }
+        }
+        if(validateReadRowData != null){
+            config.setBooleanReadPolicy(ExcelReadPolicy.VALIDATE_READ_ROW_DATA,validateReadRowData);
+        }
+        if(trimCellValue != null){
+            config.setBooleanReadPolicy(ExcelReadPolicy.TRIM_CELL_VALUE,trimCellValue);
+        }
+        config.setCastClass(clazz);
+        reader.batchReadData(batchSize,config,readTask,readProgressHook);
+    }
+
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Map<String,Object> dict, Boolean validateReadRowData){
+         batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,searchHeaderMaxRows,dict,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Map<String,Object> dict){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,searchHeaderMaxRows,dict,null,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Boolean validateReadRowData, Boolean trimCellValue){
+         batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,searchHeaderMaxRows,null,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,searchHeaderMaxRows,null,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Integer searchHeaderMaxRows){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,searchHeaderMaxRows,null,null,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,null,null,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,null,null,null,null,null,dict,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Map<String,Object> dict){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,null,null,null,null,null,dict,null,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,null,null,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,null,null,null,null,null,null,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,null,null,null,null,null,null,null,null);
+    }
+
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Map<String,Object> dict){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,dict,null,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,null,null,null,null,null,null);
+    }
+
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,startColumnIndex,endColumnIndex,null,dict,null,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,startColumnIndex,endColumnIndex,null,null,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,startColumnIndex,endColumnIndex,null,null,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param initialRowPositionOffset  初始行偏移量
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,initialRowPositionOffset,null,null,startColumnIndex,endColumnIndex,null,null,null,null);
+    }
+
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,null,null,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,null,null,null,dict,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Map<String,Object> dict){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,null,null,null,dict,null,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,null,null,null,null,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,null,null,null,null,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,null,null,null,null,null,null);
+    }
+
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,null,dict,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Map<String,Object> dict){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,null,dict,null,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData, Boolean trimCellValue){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,null,null,validateReadRowData,trimCellValue);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     * @param validateReadRowData 是否开启数据有效性校验
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex, Boolean validateReadRowData){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,null,null,validateReadRowData,null);
+    }
+
+    /**
+     * 批量读取数据方法
+     * @param reader  读取器
+     * @param batchSize 每批次读取的数据行数
+     * @param readTask 执行读取任务的对象，负责处理读取到的数据
+     * @param readProgressHook 读取进度钩子，可以用于监控读取进度
+     * @param clazz  读取的Java类型
+     * @param sheetIndex sheet索引
+     * @param startRowIndex 读取范围：读取开始 行索引
+     * @param endRowIndex 读取范围：读取结束 行索引
+     * @param startColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
+     */
+    public static <T> void batchReadData(AxolotlExcelReader<T> reader, int batchSize, BatchReadTask<T> readTask, ReadProgressHook readProgressHook, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex){
+        batchReadData(reader,batchSize,readTask,readProgressHook,clazz,sheetIndex,null,startRowIndex,endRowIndex,startColumnIndex,endColumnIndex,null,null,null,null);
+    }
+
 
     /**
      * 读取sheet为一个List
@@ -3051,7 +3767,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
@@ -3117,7 +3833,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
@@ -3136,7 +3852,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  List集合
@@ -3154,7 +3870,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -3173,7 +3889,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  List集合
@@ -3191,7 +3907,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @return 读取结果  List集合
      */
@@ -3364,7 +4080,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -3381,7 +4097,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  List集合
@@ -3397,7 +4113,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  List集合
      */
@@ -3412,7 +4128,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  List集合
@@ -3428,7 +4144,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  List集合
      */
@@ -3443,7 +4159,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @return 读取结果  List集合
      */
     public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex){
@@ -3547,7 +4263,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -3565,7 +4281,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  List集合
@@ -3582,7 +4298,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  List集合
      */
@@ -3598,7 +4314,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  List集合
@@ -3615,7 +4331,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  List集合
      */
@@ -3631,7 +4347,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @return 读取结果  List集合
      */
     public static <T> List<T> readSheetAsList(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex){
@@ -3660,7 +4376,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
@@ -3726,7 +4442,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
@@ -3745,7 +4461,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  java对象
@@ -3763,7 +4479,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -3782,7 +4498,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  java对象
@@ -3800,7 +4516,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param searchHeaderMaxRows 按表头名绑定列时，读取表头最大行数 默认为10
      * @return 读取结果  java对象
      */
@@ -3972,7 +4688,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -3989,7 +4705,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  java对象
@@ -4005,7 +4721,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  java对象
      */
@@ -4020,7 +4736,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  java对象
@@ -4036,7 +4752,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  java对象
      */
@@ -4051,7 +4767,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @return 读取结果  java对象
      */
     public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex){
@@ -4153,7 +4869,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -4171,7 +4887,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  java对象
@@ -4188,7 +4904,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  java对象
      */
@@ -4204,7 +4920,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  java对象
@@ -4221,7 +4937,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  java对象
      */
@@ -4237,7 +4953,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @return 读取结果  java对象
      */
     public static <T> T readSheetAsObject(AxolotlExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex){
@@ -4278,7 +4994,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -4340,7 +5056,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  流形式的迭代器
@@ -4358,7 +5074,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  流形式的迭代器
      */
@@ -4375,7 +5091,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  流形式的迭代器
@@ -4393,7 +5109,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  流形式的迭代器
      */
@@ -4410,7 +5126,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
 
      * @return 读取结果  流形式的迭代器
      */
@@ -4583,7 +5299,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -4600,7 +5316,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  流形式的迭代器
@@ -4616,7 +5332,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  流形式的迭代器
      */
@@ -4631,7 +5347,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  流形式的迭代器
@@ -4647,7 +5363,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  流形式的迭代器
      */
@@ -4662,7 +5378,7 @@ public class AxolotlFaster {
      * @param sheetIndex sheet索引
      * @param initialRowPositionOffset  初始行偏移量
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @return 读取结果  流形式的迭代器
      */
     public static <T> AxolotlExcelStream<T> readSheetUseStream(AxolotlStreamExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer initialRowPositionOffset, Integer startColumnIndex, Integer endColumnIndex){
@@ -4764,7 +5480,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
@@ -4782,7 +5498,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  流形式的迭代器
@@ -4799,7 +5515,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param dict 字典值  Map(字段名,Map(字典名,字典值))  或   Map(字段名,List(Map或实体类{key:字典名,value:字典值}))
      * @return 读取结果  流形式的迭代器
      */
@@ -4815,7 +5531,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @param trimCellValue 是否开启单元格修整  开启后读取时将去掉单元格所有的空格和换行符
      * @return 读取结果  流形式的迭代器
@@ -4832,7 +5548,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @param validateReadRowData 是否开启数据有效性校验
      * @return 读取结果  流形式的迭代器
      */
@@ -4848,7 +5564,7 @@ public class AxolotlFaster {
      * @param startRowIndex 读取范围：读取开始 行索引
      * @param endRowIndex 读取范围：读取结束 行索引
      * @param startColumnIndex 读取范围：读取开始 列索引
-     * @param endColumnIndex 读取范围：读取开始 列索引
+     * @param endColumnIndex 读取范围：读取结束 列索引
      * @return 读取结果  流形式的迭代器
      */
     public static <T> AxolotlExcelStream<T> readSheetUseStream(AxolotlStreamExcelReader<?> reader, Class<T> clazz, Integer sheetIndex, Integer startRowIndex, Integer endRowIndex, Integer startColumnIndex, Integer endColumnIndex){

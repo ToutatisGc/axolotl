@@ -13,6 +13,8 @@ import cn.xvoid.axolotl.excel.reader.support.exceptions.AxolotlExcelReadExceptio
 import cn.xvoid.toolkit.clazz.ReflectToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkit;
 import cn.xvoid.toolkit.log.LoggerToolkitKt;
+import lombok.SneakyThrows;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.slf4j.Logger;
 
@@ -310,25 +312,45 @@ public class AxolotlExcelReader<T> extends AxolotlAbstractExcelReader<T> impleme
      * @param readTask 执行读取任务的对象，负责处理读取到的数据
      * @param readProgressHook 读取进度钩子，可以用于监控读取进度
      */
-    @Deprecated
+    @SneakyThrows
     public void batchReadData(int batchSize, ReaderConfig<T> readerConfig, BatchReadTask<T> readTask, ReadProgressHook readProgressHook){
 
         Sheet sheet = this.searchSheet(readerConfig);
         this.preCheckAndFixReadConfig(readerConfig);
         if (sheet == null){return;}
         this.spreadMergedCells(sheet,readerConfig);
-        this.set_sheetLevelReaderConfig(readerConfig);
-        int batchCount = sheet.getLastRowNum() / batchSize;
-        // TODO 可能批次有点问题
+
+        //this.set_sheetLevelReaderConfig(readerConfig);
+
+        ReaderConfig<T> thisReaderConfig = new ReaderConfig<>();
+        BeanUtils.copyProperties(thisReaderConfig, readerConfig);
+
+        int startIndex = readerConfig.getStartIndex()+readerConfig.getInitialRowPositionOffset();
+        int endIndex = readerConfig.getEndIndex();
+        int readNum = endIndex - startIndex;
+        int batchCount = readNum / batchSize;
+        int remainderBatch = readNum % batchSize;
+
         for (int i = 0; i < batchCount; i++) {
-            // TODO 复制config属性,拷贝出新的配置
-//            i * batchSize, (i + 1) * batchSize
-//            _sheetLevelReaderConfig.setStartIndex(start);
-//            _sheetLevelReaderConfig.setEndIndex(end);
+            int thisStartIndex = startIndex + (i * batchSize);
+            int thisEndIndex = startIndex + ((i+1) * batchSize);
+
+            thisReaderConfig.setStartIndex(thisStartIndex);
+            thisReaderConfig.setEndIndex(thisEndIndex);
             List<T> ts = new ArrayList<>();
-            this.readSheetData(sheet,readerConfig,ts,readProgressHook);
+            this.readSheetData(sheet,thisReaderConfig,ts,readProgressHook);
             readTask.execute(ts);
         }
+
+        if(remainderBatch != 0){
+            int thisStartIndex = (batchCount * batchSize) + startIndex;
+            thisReaderConfig.setStartIndex(thisStartIndex);
+            thisReaderConfig.setEndIndex(endIndex);
+            List<T> ts = new ArrayList<>();
+            this.readSheetData(sheet,thisReaderConfig,ts,readProgressHook);
+            readTask.execute(ts);
+        }
+
     }
 
     /**

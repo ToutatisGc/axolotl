@@ -742,7 +742,7 @@ public abstract class AxolotlAbstractExcelReader<T> {
         // 不在表有效索引范围中
         if (readerConfig != null){
             int endColumnRange = readerConfig.getSheetColumnEffectiveRange()[1] == -1 ? row.getLastCellNum() : readerConfig.getSheetColumnEffectiveRange()[1];
-            if(readerConfig.getSheetColumnEffectiveRange()[0] > index || endColumnRange < index){
+            if(readerConfig.getSheetColumnEffectiveRange()[0] > index || endColumnRange <= index){
                 return this.getBlankCellValue(mappingInfo);
             }
         }
