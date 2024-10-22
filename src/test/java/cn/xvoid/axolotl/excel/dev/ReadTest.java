@@ -1,10 +1,13 @@
 package cn.xvoid.axolotl.excel.dev;
 
+import cn.xvoid.axolotl.AxolotlFaster;
 import cn.xvoid.axolotl.Axolotls;
+import cn.xvoid.axolotl.excel.entities.reader.DmsMerge;
 import cn.xvoid.axolotl.excel.reader.AxolotlExcelReader;
 import cn.xvoid.axolotl.excel.reader.ReadConfigBuilder;
 import cn.xvoid.axolotl.excel.reader.ReaderConfig;
 import cn.xvoid.axolotl.excel.reader.constant.ExcelReadPolicy;
+import cn.xvoid.axolotl.excel.reader.hooks.BatchReadTask;
 import cn.xvoid.axolotl.excel.reader.hooks.ReadProgressHook;
 import cn.xvoid.axolotl.excel.reader.support.docker.AxolotlCellMapInfo;
 import cn.xvoid.toolkit.file.FileToolkit;
@@ -58,6 +61,40 @@ public class ReadTest {
         AxolotlExcelReader<Object> excelReader = Axolotls.getExcelReader(file);
         List<Map<String, Object>> maps = excelReader.readSheetDataAsFlatMap(null);
         System.err.println(maps);
+    }
+
+    @Test
+    public void testReadBatchReadData() {
+        AxolotlExcelReader<DmsMerge> excelReader = Axolotls.getExcelReader(new File("C:\\Users\\Administrator\\Desktop\\ceshi.xlsx"), DmsMerge.class);
+       /* ReaderConfig<DmsMerge> readerConfig = new ReaderConfig<>();
+        readerConfig.setCastClass(DmsMerge.class);
+        readerConfig.setStartIndex(40);
+        readerConfig.setSheetColumnEffectiveRange(0,999);
+
+        excelReader.batchReadData(10, readerConfig, new BatchReadTask<DmsMerge>() {
+            @Override
+            public void execute(List<DmsMerge> data) {
+                System.out.println(data);
+            }
+        }, new ReadProgressHook() {
+            @Override
+            public void onReadProgress(int current, int total) {
+                System.out.println("["+current+"]-["+total+"]");
+            }
+        });*/
+
+        AxolotlFaster.batchReadData(excelReader, 25, new BatchReadTask<DmsMerge>() {
+            @Override
+            public void execute(List<DmsMerge> data) {
+                System.out.println(data);
+            }
+        },  new ReadProgressHook() {
+            @Override
+            public void onReadProgress(int current, int total) {
+                System.out.println("["+current+"]-["+total+"]");
+            }
+        }, DmsMerge.class,0,null,0,7);
+
     }
 
 }
